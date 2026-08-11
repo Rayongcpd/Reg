@@ -19,6 +19,7 @@ const AppState = {
   selectedCase: null,
   activeDetailTab: 'timeline',
   viewMode: 'grid', // 'grid' | 'table'
+  casePage: 1,
   searchTerm: '',
   filterType: 'ALL',
   filterStatus: 'ALL',
@@ -29,6 +30,7 @@ const AppState = {
   selectedReg: null,
   activeRegDetailTab: 'regTimeline',
   regViewMode: 'grid', // 'grid' | 'table'
+  regPage: 1,
   regSearchTerm: '',
   regFilterCoopType: 'ALL',
   regFilterDocType: 'ALL',
@@ -249,6 +251,7 @@ function applyFilters() {
   }
 
   AppState.filteredCases = list;
+  AppState.casePage = 1;
   renderCasesList();
   updateHubStatsDisplay();
 }
@@ -269,27 +272,43 @@ function renderCasesList() {
   const gridContainer = document.getElementById('casesGrid');
   const tableContainer = document.getElementById('casesTableWrap');
   const emptyState = document.getElementById('emptyState');
+  const paginationContainer = document.getElementById('casesPagination');
 
   if (!gridContainer || !tableContainer || !emptyState) return;
 
   if (AppState.filteredCases.length === 0) {
     gridContainer.style.display = 'none';
     tableContainer.style.display = 'none';
+    if (paginationContainer) paginationContainer.style.display = 'none';
     emptyState.style.display = 'block';
     return;
   }
 
   emptyState.style.display = 'none';
 
+  // ponytail: 6 items per page for card grid, 10 items per page for table
+  const pageSize = AppState.viewMode === 'grid' ? 6 : 10;
+  const total = AppState.filteredCases.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  if (AppState.casePage > totalPages) AppState.casePage = totalPages;
+  if (AppState.casePage < 1) AppState.casePage = 1;
+
+  const startIndex = (AppState.casePage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, total);
+  const pageItems = AppState.filteredCases.slice(startIndex, endIndex);
+
   if (AppState.viewMode === 'grid') {
     gridContainer.style.display = 'grid';
     tableContainer.style.display = 'none';
-    renderGrid(gridContainer);
+    renderGrid(gridContainer, pageItems);
   } else {
     gridContainer.style.display = 'none';
     tableContainer.style.display = 'block';
-    renderTable(tableContainer);
+    renderTable(tableContainer, pageItems, startIndex);
   }
+
+  renderPaginationUI('casesPagination', AppState.casePage, totalPages, total, startIndex, endIndex, 'changeCasePage');
 }
 
 function renderCardIssuesHtml(item) {
@@ -333,8 +352,8 @@ function renderCardIssuesHtml(item) {
   `;
 }
 
-function renderGrid(container) {
-  container.innerHTML = AppState.filteredCases.map(item => {
+function renderGrid(container, items = AppState.filteredCases) {
+  container.innerHTML = items.map(item => {
     const isDone = item.caseStatus === 'เสร็จสิ้น' || item.currentStep >= 10;
     const progressPercent = Math.min(100, Math.round((item.currentStep / 10) * 100));
     const stepObj = CONFIG.LIQUIDATION_STEPS.find(s => s.number === item.currentStep) || { title: `ขั้นตอนที่ ${item.currentStep}` };
@@ -394,10 +413,10 @@ function renderGrid(container) {
   }).join('');
 }
 
-function renderTable(container) {
+function renderTable(container, items = AppState.filteredCases, startIndex = 0) {
   const tbody = document.getElementById('casesTableBody');
   if (!tbody) return;
-  tbody.innerHTML = AppState.filteredCases.map((item, idx) => {
+  tbody.innerHTML = items.map((item, idx) => {
     const isDone = item.caseStatus === 'เสร็จสิ้น' || item.currentStep >= 10;
     const progressPercent = Math.min(100, Math.round((item.currentStep / 10) * 100));
     const dissolutionType = item.dissolutionType || (item.orderNumber && item.orderNumber.includes('ประกาศ') ? 'ประกาศเลิก' : 'คำสั่งเลิก');
@@ -410,7 +429,7 @@ function renderTable(container) {
 
     return `
       <tr>
-        <td style="text-align: center; color: var(--text-muted);">${idx + 1}</td>
+        <td style="text-align: center; color: var(--text-muted);">${startIndex + idx + 1}</td>
         <td>
           <strong style="color: var(--primary);">${escapeHtml(item.coopName)}</strong>
           <div style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(item.regNumber)} | ${escapeHtml(item.location)}</div>
@@ -1152,6 +1171,7 @@ function applyRegFilters() {
   }
 
   AppState.filteredRegulations = list;
+  AppState.regPage = 1;
   renderRegulationsList();
   updateHubStatsDisplay();
 }
@@ -1172,27 +1192,43 @@ function renderRegulationsList() {
   const gridContainer = document.getElementById('regGrid');
   const tableContainer = document.getElementById('regTableWrap');
   const emptyState = document.getElementById('regEmptyState');
+  const paginationContainer = document.getElementById('regPagination');
 
   if (!gridContainer || !tableContainer || !emptyState) return;
 
   if (AppState.filteredRegulations.length === 0) {
     gridContainer.style.display = 'none';
     tableContainer.style.display = 'none';
+    if (paginationContainer) paginationContainer.style.display = 'none';
     emptyState.style.display = 'block';
     return;
   }
 
   emptyState.style.display = 'none';
 
+  // ponytail: 6 items per page for card grid, 10 items per page for table
+  const pageSize = AppState.regViewMode === 'grid' ? 6 : 10;
+  const total = AppState.filteredRegulations.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  if (AppState.regPage > totalPages) AppState.regPage = totalPages;
+  if (AppState.regPage < 1) AppState.regPage = 1;
+
+  const startIndex = (AppState.regPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, total);
+  const pageItems = AppState.filteredRegulations.slice(startIndex, endIndex);
+
   if (AppState.regViewMode === 'grid') {
     gridContainer.style.display = 'grid';
     tableContainer.style.display = 'none';
-    renderRegGrid(gridContainer);
+    renderRegGrid(gridContainer, pageItems);
   } else {
     gridContainer.style.display = 'none';
     tableContainer.style.display = 'block';
-    renderRegTable(tableContainer);
+    renderRegTable(tableContainer, pageItems, startIndex);
   }
+
+  renderPaginationUI('regPagination', AppState.regPage, totalPages, total, startIndex, endIndex, 'changeRegPage');
 }
 
 function renderRegCardIssuesHtml(item) {
@@ -1215,8 +1251,8 @@ function renderRegCardIssuesHtml(item) {
   `;
 }
 
-function renderRegGrid(container) {
-  container.innerHTML = AppState.filteredRegulations.map(item => {
+function renderRegGrid(container, items = AppState.filteredRegulations) {
+  container.innerHTML = items.map(item => {
     const isApproved = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || item.currentStep >= 5;
     const isNeedFix = item.status === 'ส่งคืนแก้ไข';
     const progressPercent = Math.min(100, Math.round((item.currentStep / 5) * 100));
@@ -1289,11 +1325,11 @@ function renderRegGrid(container) {
   }).join('');
 }
 
-function renderRegTable(container) {
+function renderRegTable(container, items = AppState.filteredRegulations, startIndex = 0) {
   const tbody = document.getElementById('regTableBody');
   if (!tbody) return;
 
-  tbody.innerHTML = AppState.filteredRegulations.map((item, idx) => {
+  tbody.innerHTML = items.map((item, idx) => {
     const isApproved = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || item.currentStep >= 5;
     const isNeedFix = item.status === 'ส่งคืนแก้ไข';
     const progressPercent = Math.min(100, Math.round((item.currentStep / 5) * 100));
@@ -1313,7 +1349,7 @@ function renderRegTable(container) {
 
     return `
       <tr>
-        <td style="text-align: center; color: var(--text-muted);">${idx + 1}</td>
+        <td style="text-align: center; color: var(--text-muted);">${startIndex + idx + 1}</td>
         <td>
           <strong style="color: var(--primary);">${escapeHtml(item.coopName)}</strong>
           <div style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(item.regNumber)} | <span class="case-type-badge ${isFarmerGroup ? 'farmer-group' : ''}" style="font-size: 0.7rem;">${escapeHtml(item.coopType || 'สหกรณ์')}</span></div>
@@ -2009,12 +2045,14 @@ function setupEventListeners() {
   if (btnGridView && btnTableView) {
     btnGridView.addEventListener('click', () => {
       AppState.viewMode = 'grid';
+      AppState.casePage = 1;
       btnGridView.classList.add('active');
       btnTableView.classList.remove('active');
       renderCasesList();
     });
     btnTableView.addEventListener('click', () => {
       AppState.viewMode = 'table';
+      AppState.casePage = 1;
       btnTableView.classList.add('active');
       btnGridView.classList.remove('active');
       renderCasesList();
@@ -2051,12 +2089,14 @@ function setupEventListeners() {
   if (btnRegGridView && btnRegTableView) {
     btnRegGridView.addEventListener('click', () => {
       AppState.regViewMode = 'grid';
+      AppState.regPage = 1;
       btnRegGridView.classList.add('active');
       btnRegTableView.classList.remove('active');
       renderRegulationsList();
     });
     btnRegTableView.addEventListener('click', () => {
       AppState.regViewMode = 'table';
+      AppState.regPage = 1;
       btnRegTableView.classList.add('active');
       btnRegGridView.classList.remove('active');
       renderRegulationsList();
@@ -2250,6 +2290,76 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+function renderPaginationUI(containerId, currentPage, totalPages, totalItems, startIndex, endIndex, onPageChangeFnName) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  if (totalItems === 0) {
+    container.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'flex';
+
+  const infoHtml = `<div class="pagination-info">แสดง <strong>${startIndex + 1} - ${endIndex}</strong> จากทั้งหมด <strong>${totalItems}</strong> รายการ</div>`;
+
+  if (totalPages <= 1) {
+    container.innerHTML = infoHtml + `<div class="pagination-controls"></div>`;
+    return;
+  }
+
+  let pagesHtml = '';
+  const prevDisabled = currentPage <= 1 ? 'disabled' : '';
+  pagesHtml += `<button type="button" class="pagination-btn" ${prevDisabled} onclick="${onPageChangeFnName}(${currentPage - 1})" title="หน้าก่อนหน้า">« ก่อนหน้า</button>`;
+
+  const pages = [];
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (currentPage > 3) pages.push('...');
+
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+    for (let i = start; i <= end; i++) pages.push(i);
+
+    if (currentPage < totalPages - 2) pages.push('...');
+    pages.push(totalPages);
+  }
+
+  pages.forEach(p => {
+    if (p === '...') {
+      pagesHtml += `<span class="pagination-ellipsis">…</span>`;
+    } else {
+      const activeClass = p === currentPage ? 'active' : '';
+      pagesHtml += `<button type="button" class="pagination-btn ${activeClass}" onclick="${onPageChangeFnName}(${p})">${p}</button>`;
+    }
+  });
+
+  const nextDisabled = currentPage >= totalPages ? 'disabled' : '';
+  pagesHtml += `<button type="button" class="pagination-btn" ${nextDisabled} onclick="${onPageChangeFnName}(${currentPage + 1})" title="หน้าถัดไป">ถัดไป »</button>`;
+
+  container.innerHTML = infoHtml + `<div class="pagination-controls">${pagesHtml}</div>`;
+}
+
+function changeCasePage(newPage) {
+  AppState.casePage = newPage;
+  renderCasesList();
+  const el = document.getElementById('casesGrid');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function changeRegPage(newPage) {
+  AppState.regPage = newPage;
+  renderRegulationsList();
+  const el = document.getElementById('regGrid');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Expose to window for inline onclick handlers
+window.changeCasePage = changeCasePage;
+window.changeRegPage = changeRegPage;
 
 async function openAuditLogModal() {
   // ponytail: admin-only guard for audit log access
