@@ -1535,6 +1535,76 @@ function switchRegDetailTab(tab) {
   document.getElementById('tabRegDocuments').style.display = tab === 'regDocuments' ? 'block' : 'none';
 }
 
+function resetCreateRegItems() {
+  const container = document.getElementById('createRegItemsList');
+  if (!container) return;
+  container.innerHTML = `
+    <div class="reg-input-row" style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span class="reg-row-title" style="font-weight: 600; font-size: 0.85rem; color: var(--primary);">📜 รายการระเบียบ / ข้อบังคับที่ 1</span>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label style="font-size: 0.82rem;">ประเภทรายการ <span style="color: red;">*</span></label>
+          <select name="itemDocType" class="form-control" required>
+            <option value="ข้อบังคับสหกรณ์">ข้อบังคับสหกรณ์ / ข้อบังคับกลุ่มเกษตรกร</option>
+            <option value="ระเบียบสหกรณ์" selected>ระเบียบสหกรณ์ / ระเบียบกลุ่มเกษตรกร</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label style="font-size: 0.82rem;">ชื่อระเบียบ / ข้อบังคับ <span style="color: red;">*</span></label>
+          <input type="text" name="itemTitle" class="form-control" placeholder="เช่น ระเบียบว่าด้วยการให้เงินกู้แก่สมาชิก พ.ศ. 2567" required>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function addRegulationRowToCreateForm() {
+  const container = document.getElementById('createRegItemsList');
+  if (!container) return;
+  const currentCount = container.querySelectorAll('.reg-input-row').length;
+  const nextNum = currentCount + 1;
+
+  const newRow = document.createElement('div');
+  newRow.className = 'reg-input-row';
+  newRow.style.cssText = 'background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px; position: relative; animation: fadeIn 0.2s ease-in;';
+  newRow.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+      <span class="reg-row-title" style="font-weight: 600; font-size: 0.85rem; color: var(--primary);">📜 รายการระเบียบ / ข้อบังคับที่ ${nextNum}</span>
+      <button type="button" class="btn btn-danger btn-sm" onclick="removeRegulationRow(this)" style="padding: 2px 8px; font-size: 0.75rem;">
+        ✕ ลบออก
+      </button>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="margin-bottom: 0;">
+        <label style="font-size: 0.82rem;">ประเภทรายการ <span style="color: red;">*</span></label>
+        <select name="itemDocType" class="form-control" required>
+          <option value="ข้อบังคับสหกรณ์">ข้อบังคับสหกรณ์ / ข้อบังคับกลุ่มเกษตรกร</option>
+          <option value="ระเบียบสหกรณ์" selected>ระเบียบสหกรณ์ / ระเบียบกลุ่มเกษตรกร</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom: 0;">
+        <label style="font-size: 0.82rem;">ชื่อระเบียบ / ข้อบังคับ <span style="color: red;">*</span></label>
+        <input type="text" name="itemTitle" class="form-control" placeholder="เช่น ระเบียบว่าด้วยการรับฝากเงิน พ.ศ. 2567" required>
+      </div>
+    </div>
+  `;
+  container.appendChild(newRow);
+}
+
+function removeRegulationRow(btn) {
+  const row = btn.closest('.reg-input-row');
+  if (row) {
+    row.remove();
+    const rows = document.querySelectorAll('#createRegItemsList .reg-input-row');
+    rows.forEach((r, idx) => {
+      const title = r.querySelector('.reg-row-title');
+      if (title) title.innerText = `📜 รายการระเบียบ / ข้อบังคับที่ ${idx + 1}`;
+    });
+  }
+}
+
 function openCreateRegModal() {
   if (!AppState.currentUser) {
     showToast('กรุณาเข้าสู่ระบบในฐานะ Admin ก่อน', 'warning');
@@ -1542,6 +1612,7 @@ function openCreateRegModal() {
     return;
   }
   document.getElementById('createRegForm').reset();
+  resetCreateRegItems();
   document.getElementById('createRegSubmitDate').value = todayThaiDate();
   openModal('createRegModal');
 }
@@ -1549,28 +1620,46 @@ function openCreateRegModal() {
 async function handleCreateRegSubmit(e) {
   e.preventDefault();
   const form = e.target;
+
+  const itemRows = document.querySelectorAll('#createRegItemsList .reg-input-row');
+  const items = [];
+  itemRows.forEach(row => {
+    const docTypeSelect = row.querySelector('select[name="itemDocType"]');
+    const titleInput = row.querySelector('input[name="itemTitle"]');
+    if (titleInput && titleInput.value.trim() !== '') {
+      items.push({
+        docType: docTypeSelect ? docTypeSelect.value : 'ระเบียบสหกรณ์',
+        title: titleInput.value.trim()
+      });
+    }
+  });
+
+  const coopName = form.coopName.value.trim();
+  if (!coopName || items.length === 0) {
+    showToast('กรุณากรอกชื่อสหกรณ์และระบุชื่อระเบียบ/ข้อบังคับอย่างน้อย 1 รายการ', 'warning');
+    return;
+  }
+
   const payload = {
-    coopName: form.coopName.value.trim(),
+    coopName: coopName,
     regNumber: form.regNumber.value.trim(),
     coopType: form.coopType ? form.coopType.value : 'สหกรณ์การเกษตร',
-    docType: form.docType.value,
-    title: form.title.value.trim(),
     docNumber: form.docNumber.value.trim(),
     submitDate: fromThaiDateInput(form.submitDate.value),
     officerName: form.officerName.value.trim(),
     officerContact: form.officerContact.value.trim(),
-    note: form.note.value.trim()
+    note: form.note.value.trim(),
+    items: items,
+    // ponytail: fallback single fields for backward compatibility
+    docType: items[0].docType,
+    title: items[0].title
   };
-
-  if (!payload.coopName || !payload.title) {
-    showToast('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน', 'warning');
-    return;
-  }
 
   setLoading(true);
   try {
     await ApiClient.post('createRegulation', payload);
-    showToast(`ยื่นเรื่อง ${payload.docType} สำเร็จ`, 'success');
+    const count = items.length;
+    showToast(`ยื่นเรื่องระเบียบ/ข้อบังคับสำเร็จ (${count} รายการ)`, 'success');
     closeModal('createRegModal');
     await loadRegulationsData();
   } catch (err) {

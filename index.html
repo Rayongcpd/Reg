@@ -1130,21 +1130,6 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label>ประเภทรายการ <span style="color: red;">*</span></label>
-              <select name="docType" class="form-control" required>
-                <option value="ข้อบังคับสหกรณ์">ข้อบังคับสหกรณ์ / ข้อบังคับกลุ่มเกษตรกร</option>
-                <option value="ระเบียบสหกรณ์">ระเบียบสหกรณ์ / ระเบียบกลุ่มเกษตรกร</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>ชื่อระเบียบ / ข้อบังคับ <span style="color: red;">*</span></label>
-              <input type="text" name="title" class="form-control"
-                placeholder="เช่น ระเบียบว่าด้วยการให้เงินกู้แก่สมาชิก พ.ศ. 2567" required>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
               <label>เลขที่รับเรื่อง / หนังสือส่ง</label>
               <input type="text" name="docNumber" class="form-control"
                 placeholder="เช่น สห.ขก 01/2567 หรือ รับที่ 124/67">
@@ -1172,6 +1157,22 @@
             <input type="text" name="note" class="form-control"
               placeholder="เช่น มติที่ประชุมใหญ่สามัญประจำปี 2566 เมื่อวันที่ 10 มี.ค. 67">
           </div>
+
+          <hr style="border: none; border-top: 1px dashed var(--border-color); margin: 1rem 0;">
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <div>
+              <h4 style="font-size: 1rem; color: var(--primary); margin: 0;">📜 รายการระเบียบ / ข้อบังคับที่ยื่นเรื่อง</h4>
+              <span style="font-size: 0.78rem; color: var(--text-muted);">สามารถเพิ่มได้มากกว่า 1 ระเบียบ/ข้อบังคับในคราวเดียว</span>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="addRegulationRowToCreateForm()">
+              + เพิ่มระเบียบ/ข้อบังคับอีกรายการ
+            </button>
+          </div>
+
+          <!-- Container for Dynamic Regulation Input Rows -->
+          <div id="createRegItemsList"
+            style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 1rem;"></div>
         </div>
 
         <div class="modal-footer">
