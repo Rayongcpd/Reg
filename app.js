@@ -1860,6 +1860,7 @@ function updateAuthUI() {
   const userProfile = document.getElementById('navUserProfile');
   const adminAddCaseBtn = document.getElementById('adminAddCaseBtn');
   const adminAddRegBtn = document.getElementById('adminAddRegBtn');
+  const adminAuditLogBtn = document.getElementById('adminAuditLogBtn');
 
   if (AppState.currentUser) {
     if (loginBtn) loginBtn.style.display = 'none';
@@ -1870,11 +1871,13 @@ function updateAuthUI() {
     }
     if (adminAddCaseBtn) adminAddCaseBtn.style.display = AppState.currentView === 'liquidation' ? 'inline-flex' : 'none';
     if (adminAddRegBtn) adminAddRegBtn.style.display = AppState.currentView === 'regulations' ? 'inline-flex' : 'none';
+    if (adminAuditLogBtn) adminAuditLogBtn.style.display = 'inline-flex';
   } else {
     if (loginBtn) loginBtn.style.display = 'inline-flex';
     if (userProfile) userProfile.style.display = 'none';
     if (adminAddCaseBtn) adminAddCaseBtn.style.display = 'none';
     if (adminAddRegBtn) adminAddRegBtn.style.display = 'none';
+    if (adminAuditLogBtn) adminAuditLogBtn.style.display = 'none';
   }
 }
 
@@ -2158,6 +2161,12 @@ function escapeHtml(str) {
 }
 
 async function openAuditLogModal() {
+  // ponytail: admin-only guard for audit log access
+  if (!AppState.currentUser) {
+    showToast('กรุณาเข้าสู่ระบบในฐานะ Admin ก่อน', 'warning');
+    openModal('loginModal');
+    return;
+  }
   setLoading(true);
   try {
     const logs = await ApiClient.get('getAuditLogs');
