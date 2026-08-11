@@ -182,19 +182,17 @@
       </section>
 
       <!-- Department Announcements & Quick Tips Banner -->
-      <section
-        style="background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem 2rem; margin-bottom: 3rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;">
-        <div style="display: flex; align-items: center; gap: 1rem;">
+      <section class="hub-announcement-banner">
+        <div class="hub-announcement-content">
           <span style="font-size: 2.5rem;">💡</span>
           <div>
-            <h4 style="margin: 0; color: var(--primary); font-size: 1.05rem;">คำแนะนำสำหรับเจ้าหน้าที่ส่งเสริมสหกรณ์
-            </h4>
+            <h4 style="margin: 0; color: var(--primary); font-size: 1.05rem;">คำแนะนำสำหรับเจ้าหน้าที่ส่งเสริมสหกรณ์</h4>
             <p style="margin: 4px 0 0; font-size: 0.88rem; color: var(--text-muted);">
               ท่านสามารถใช้ระบบนี้ในการกำกับดูแลสหกรณ์ในความรับผิดชอบได้ทั้ง 2 ด้าน โดยข้อมูลจะถูกแยกส่วนกันอย่างชัดเจน
             </p>
           </div>
         </div>
-        <div style="display: flex; gap: 10px;">
+        <div class="hub-announcement-actions">
           <button class="btn btn-secondary btn-sm" onclick="switchAppView('liquidation')">
             ⚖️ ดูงานชำระบัญชี
           </button>
@@ -319,7 +317,7 @@
       <section id="casesGrid" class="cases-grid"></section>
 
       <!-- Table View -->
-      <section id="casesTableWrap" class="table-wrap" style="display: none;">
+      <section id="casesTableWrap" class="table-wrap table-responsive" style="display: none;">
         <table class="data-table">
           <thead>
             <tr>
@@ -466,7 +464,7 @@
       <section id="regGrid" class="cases-grid"></section>
 
       <!-- Regulations Table View -->
-      <section id="regTableWrap" class="table-wrap" style="display: none;">
+      <section id="regTableWrap" class="table-wrap table-responsive" style="display: none;">
         <table class="data-table">
           <thead>
             <tr>
