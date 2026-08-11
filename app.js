@@ -705,7 +705,7 @@ function resetCreateCaseLiquidators() {
         </div>
         <div class="form-group" style="margin-bottom: 8px;">
           <label style="font-size: 0.82rem;">วันที่เริ่มปฏิบัติหน้าที่</label>
-          <input type="date" name="liqStartDate" class="form-control">
+          <input type="text" name="liqStartDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
         </div>
       </div>
       <div class="form-group" style="margin-bottom: 0;">
@@ -749,7 +749,7 @@ function addLiquidatorRowToCreateForm() {
       </div>
       <div class="form-group" style="margin-bottom: 8px;">
         <label style="font-size: 0.82rem;">วันที่เริ่มปฏิบัติหน้าที่</label>
-        <input type="date" name="liqStartDate" class="form-control">
+        <input type="text" name="liqStartDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
       </div>
     </div>
     <div class="form-group" style="margin-bottom: 0;">
@@ -780,7 +780,7 @@ function openCreateCaseModal() {
   }
   document.getElementById('createCaseForm').reset();
   resetCreateCaseLiquidators();
-  document.getElementById('createOrderDate').valueAsDate = new Date();
+  document.getElementById('createOrderDate').value = todayThaiDate();
   openModal('createCaseModal');
 }
 
@@ -801,7 +801,7 @@ async function handleCreateCaseSubmit(e) {
         name: nameInput.value.trim(),
         position: posInput ? posInput.value.trim() : '',
         orderNumber: orderInput ? orderInput.value.trim() : '',
-        startDate: dateInput ? dateInput.value : '',
+        startDate: dateInput ? fromThaiDateInput(dateInput.value) : '',
         contact: contactInput ? contactInput.value.trim() : ''
       });
     }
@@ -814,7 +814,7 @@ async function handleCreateCaseSubmit(e) {
     location: form.location.value.trim(),
     dissolutionType: form.dissolutionType ? form.dissolutionType.value : 'คำสั่งเลิก',
     orderNumber: form.orderNumber.value.trim(),
-    orderDate: form.orderDate.value,
+    orderDate: fromThaiDateInput(form.orderDate.value),
     liquidators: liquidators,
     note: form.note.value.trim()
   };
@@ -846,8 +846,8 @@ function openUpdateStepModal(stepNumber) {
   document.getElementById('updateStepNumber').value = stepNumber;
   document.getElementById('updateStepTitle').innerText = `แก้ไขขั้นตอนที่ ${stepNumber}: ${step.stepName}`;
   document.getElementById('updateStepStatus').value = step.status || 'ยังไม่เริ่ม';
-  document.getElementById('updateStepStartDate').value = step.startDate ? step.startDate.split('T')[0] : '';
-  document.getElementById('updateStepEndDate').value = step.endDate ? step.endDate.split('T')[0] : '';
+  document.getElementById('updateStepStartDate').value = toThaiDateInput(step.startDate);
+  document.getElementById('updateStepEndDate').value = toThaiDateInput(step.endDate);
   document.getElementById('updateStepIssue').value = step.issue || '';
   document.getElementById('updateStepNote').value = step.note || '';
 
@@ -864,8 +864,8 @@ async function handleUpdateStepSubmit(e) {
     caseId: caseData.caseId,
     stepNumber: parseInt(form.stepNumber.value, 10),
     status: form.status.value,
-    startDate: form.startDate.value,
-    endDate: form.endDate.value,
+    startDate: fromThaiDateInput(form.startDate.value),
+    endDate: fromThaiDateInput(form.endDate.value),
     issue: form.issue.value.trim(),
     note: form.note.value.trim()
   };
@@ -886,7 +886,7 @@ async function handleUpdateStepSubmit(e) {
 
 function openAddLiquidatorModal() {
   document.getElementById('addLiquidatorForm').reset();
-  document.getElementById('liqStartDate').valueAsDate = new Date();
+  document.getElementById('liqStartDate').value = todayThaiDate();
   openModal('addLiquidatorModal');
 }
 
@@ -901,7 +901,7 @@ async function handleAddLiquidatorSubmit(e) {
     name: form.name.value.trim(),
     position: form.position.value.trim(),
     orderNumber: form.orderNumber.value.trim(),
-    startDate: form.startDate.value,
+    startDate: fromThaiDateInput(form.startDate.value),
     contact: form.contact.value.trim(),
     setPreviousToInactive: form.setPreviousToInactive.checked,
     previousReason: form.previousReason.value.trim()
@@ -937,8 +937,8 @@ function openEditLiquidatorModal(liquidatorId) {
   document.getElementById('editLiqPosition').value = lq.position || '';
   document.getElementById('editLiqOrderNumber').value = lq.orderNumber || '';
   document.getElementById('editLiqStatus').value = lq.status || 'ปัจจุบัน';
-  document.getElementById('editLiqStartDate').value = lq.startDate ? lq.startDate.split('T')[0] : '';
-  document.getElementById('editLiqEndDate').value = lq.endDate ? lq.endDate.split('T')[0] : '';
+  document.getElementById('editLiqStartDate').value = toThaiDateInput(lq.startDate);
+  document.getElementById('editLiqEndDate').value = toThaiDateInput(lq.endDate);
   document.getElementById('editLiqReason').value = lq.reason || '';
   document.getElementById('editLiqContact').value = lq.contact || '';
 
@@ -958,8 +958,8 @@ async function handleEditLiquidatorSubmit(e) {
     position: form.position.value.trim(),
     orderNumber: form.orderNumber.value.trim(),
     status: form.status.value,
-    startDate: form.startDate.value,
-    endDate: form.endDate.value,
+    startDate: fromThaiDateInput(form.startDate.value),
+    endDate: fromThaiDateInput(form.endDate.value),
     reason: form.reason.value.trim(),
     contact: form.contact.value.trim()
   };
@@ -988,7 +988,7 @@ function openEditCaseInfoModal() {
   document.getElementById('editCaseLocation').value = caseData.location || '';
   document.getElementById('editCaseDissolutionType').value = caseData.dissolutionType || 'คำสั่งเลิก';
   document.getElementById('editCaseOrderNumber').value = caseData.orderNumber || '';
-  document.getElementById('editCaseOrderDate').value = caseData.orderDate ? caseData.orderDate.split('T')[0] : '';
+  document.getElementById('editCaseOrderDate').value = toThaiDateInput(caseData.orderDate);
   document.getElementById('editCaseStatus').value = caseData.caseStatus || 'กำลังชำระบัญชี';
   document.getElementById('editCaseNote').value = caseData.note || '';
 
@@ -1009,7 +1009,7 @@ async function handleEditCaseSubmit(e) {
     location: form.location.value.trim(),
     dissolutionType: form.dissolutionType.value,
     orderNumber: form.orderNumber.value.trim(),
-    orderDate: form.orderDate.value,
+    orderDate: fromThaiDateInput(form.orderDate.value),
     caseStatus: form.caseStatus.value,
     note: form.note.value.trim()
   };
@@ -1542,7 +1542,7 @@ function openCreateRegModal() {
     return;
   }
   document.getElementById('createRegForm').reset();
-  document.getElementById('createRegSubmitDate').valueAsDate = new Date();
+  document.getElementById('createRegSubmitDate').value = todayThaiDate();
   openModal('createRegModal');
 }
 
@@ -1556,7 +1556,7 @@ async function handleCreateRegSubmit(e) {
     docType: form.docType.value,
     title: form.title.value.trim(),
     docNumber: form.docNumber.value.trim(),
-    submitDate: form.submitDate.value,
+    submitDate: fromThaiDateInput(form.submitDate.value),
     officerName: form.officerName.value.trim(),
     officerContact: form.officerContact.value.trim(),
     note: form.note.value.trim()
@@ -1589,8 +1589,8 @@ function openUpdateRegStepModal(stepNumber) {
   document.getElementById('updateRegStepNumber').value = stepNumber;
   document.getElementById('updateRegStepTitle').innerText = `แก้ไขขั้นตอนที่ ${stepNumber}: ${step.stepName}`;
   document.getElementById('updateRegStepStatus').value = step.status || 'ยังไม่เริ่ม';
-  document.getElementById('updateRegStepStartDate').value = step.startDate ? step.startDate.split('T')[0] : '';
-  document.getElementById('updateRegStepEndDate').value = step.endDate ? step.endDate.split('T')[0] : '';
+  document.getElementById('updateRegStepStartDate').value = toThaiDateInput(step.startDate);
+  document.getElementById('updateRegStepEndDate').value = toThaiDateInput(step.endDate);
   document.getElementById('updateRegStepIssue').value = step.issue || '';
   document.getElementById('updateRegStepNote').value = step.note || '';
 
@@ -1607,8 +1607,8 @@ async function handleUpdateRegStepSubmit(e) {
     regId: regData.regId,
     stepNumber: parseInt(form.stepNumber.value, 10),
     status: form.status.value,
-    startDate: form.startDate.value,
-    endDate: form.endDate.value,
+    startDate: fromThaiDateInput(form.startDate.value),
+    endDate: fromThaiDateInput(form.endDate.value),
     issue: form.issue.value.trim(),
     note: form.note.value.trim()
   };
@@ -1638,7 +1638,7 @@ function openEditRegInfoModal() {
   document.getElementById('editRegDocType').value = regData.docType || 'ข้อบังคับสหกรณ์';
   document.getElementById('editRegTitle').value = regData.title || '';
   document.getElementById('editRegDocNumber').value = regData.docNumber || '';
-  document.getElementById('editRegSubmitDate').value = regData.submitDate ? regData.submitDate.split('T')[0] : '';
+  document.getElementById('editRegSubmitDate').value = toThaiDateInput(regData.submitDate);
   document.getElementById('editRegOfficerName').value = regData.officerName || '';
   document.getElementById('editRegOfficerContact').value = regData.officerContact || '';
   document.getElementById('editRegOverallStatus').value = regData.status || 'อยู่ระหว่างพิจารณา';
@@ -1660,7 +1660,7 @@ async function handleEditRegSubmit(e) {
     docType: form.docType.value,
     title: form.title.value.trim(),
     docNumber: form.docNumber.value.trim(),
-    submitDate: form.submitDate.value,
+    submitDate: fromThaiDateInput(form.submitDate.value),
     officerName: form.officerName.value.trim(),
     officerContact: form.officerContact.value.trim(),
     status: form.status.value,
@@ -2095,6 +2095,57 @@ function formatThaiDate(dateStr) {
     return dateStr;
   }
 }
+
+// ponytail: Thai Buddhist Era date input helpers for form fields
+// Converts ISO date string (yyyy-mm-dd) to Thai input format (dd/mm/พ.ศ.)
+function toThaiDateInput(isoStr) {
+  if (!isoStr) return '';
+  const d = new Date(isoStr);
+  if (isNaN(d.getTime())) return '';
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear() + 543;
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+// Converts Thai input format (dd/mm/พ.ศ.) back to ISO date string (yyyy-mm-dd) for backend
+function fromThaiDateInput(thaiStr) {
+  if (!thaiStr) return '';
+  const parts = thaiStr.split('/');
+  if (parts.length !== 3) return '';
+  const dd = parts[0], mm = parts[1], buddhistYear = parseInt(parts[2], 10);
+  if (isNaN(buddhistYear)) return '';
+  const ceYear = buddhistYear - 543;
+  return `${ceYear}-${mm}-${dd}`;
+}
+
+// Returns today in Thai date input format
+function todayThaiDate() {
+  const d = new Date();
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear() + 543;
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+// Auto-format Thai date input: inserts '/' after dd and mm as user types, digits only
+function initThaiDateInputs() {
+  document.addEventListener('input', function (e) {
+    if (!e.target.classList.contains('thai-date-input')) return;
+    let v = e.target.value.replace(/[^\d/]/g, '');
+    // Auto-insert slashes
+    const digits = v.replace(/\//g, '');
+    if (digits.length >= 4) {
+      v = digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4, 8);
+    } else if (digits.length >= 2) {
+      v = digits.slice(0, 2) + '/' + digits.slice(2);
+    }
+    e.target.value = v;
+  });
+}
+
+// Call once on page load
+document.addEventListener('DOMContentLoaded', initThaiDateInputs);
 
 function escapeHtml(str) {
   if (!str) return '';
