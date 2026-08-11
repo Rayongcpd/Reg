@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบศูนย์บริการงานนายทะเบียนและส่งเสริมสหกรณ์ - กรมส่งเสริมสหกรณ์</title>
+  <meta name="description"
+    content="ระบบติดตามการชำระบัญชีสหกรณ์ และระบบติดตามการพิจารณาระเบียบ/ข้อบังคับสหกรณ์ กรมส่งเสริมสหกรณ์ กระทรวงเกษตรและสหกรณ์">
+
+  <!-- CSS Styles -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Google Identity Services (GIS) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+
+<body>
+
+  <!-- Global Loading Indicator -->
+  <div id="globalLoader"
+    style="position: fixed; inset: 0; background: rgba(255,255,255,0.7); backdrop-filter: blur(2px); z-index: 9999; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 12px;">
+    <div class="loading-spinner spinner-primary" style="width: 40px; height: 40px; border-width: 4px;"></div>
+    <span
+      style="font-family: var(--font-heading); font-weight: 500; color: var(--primary);">กำลังประมวลผลข้อมูล...</span>
+  </div>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="container navbar-inner" style="gap: 12px;">
+      <a href="#" class="brand" onclick="switchAppView('portal'); return false;">
+        <div class="brand-logo">🏛️</div>
+        <div class="brand-text">
+          <h1>ระบบงานนายทะเบียนสหกรณ์</h1>
+          <p>กรมส่งเสริมสหกรณ์ กระทรวงเกษตรและสหกรณ์</p>
+        </div>
+      </a>
+
+      <!-- Module Switcher (Segmented Button) -->
+      <div class="nav-module-switcher">
+        <button id="btnNavHub" class="nav-module-btn active" onclick="switchAppView('portal')">
+          🏠 หน้าหลัก
+        </button>
+        <button id="btnNavLiquidation" class="nav-module-btn" onclick="switchAppView('liquidation')">
+          ⚖️ ชำระบัญชี
+        </button>
+        <button id="btnNavRegulations" class="nav-module-btn" onclick="switchAppView('regulations')">
+          📜 ระเบียบ / ข้อบังคับ
+        </button>
+      </div>
+
+      <div class="navbar-actions">
+        <span id="appModeBadge" class="badge-mode demo" title="คลิกเพื่อดูการตั้งค่าโหมด">🧪 โหมดทดสอบ (Demo)</span>
+
+        <!-- Audit Log Button -->
+        <button class="btn btn-secondary btn-sm" onclick="openAuditLogModal()" title="ดูประวัติการบันทึกข้อมูล">
+          📋 Audit Log
+        </button>
+
+        <!-- Reset Demo Data Button -->
+        <button id="resetDemoBtn" class="btn btn-secondary btn-sm" onclick="resetDemoData()"
+          title="รีเซ็ตข้อมูลตัวอย่างกลับเป็นค่าเริ่มต้น">
+          🔄 รีเซ็ต Demo
+        </button>
+
+        <!-- Admin Add Buttons (Context-aware) -->
+        <button id="adminAddCaseBtn" class="btn btn-success btn-sm" onclick="openCreateCaseModal()"
+          style="display: none;">
+          + เพิ่มรายการชำระบัญชี
+        </button>
+        <button id="adminAddRegBtn" class="btn btn-success btn-sm" onclick="openCreateRegModal()"
+          style="display: none;">
+          + ยื่นเรื่องระเบียบใหม่
+        </button>
+
+        <!-- Login Button -->
+        <button id="navLoginBtn" class="btn btn-primary btn-sm" onclick="openModal('loginModal')">
+          🔑 เข้าสู่ระบบ Admin
+        </button>
+
+        <!-- User Profile (Visible when logged in) -->
+        <div id="navUserProfile" style="display: none; align-items: center; gap: 10px;">
+          <div style="text-align: right; line-height: 1.2;">
+            <div id="navUserName" style="font-weight: 600; font-size: 0.88rem; color: var(--primary);">ผู้ดูแลระบบ</div>
+            <div id="navUserRole" style="font-size: 0.75rem; color: var(--accent-emerald);">Admin</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="logout()" title="ออกจากระบบ">
+            🚪 ออก
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ========================================================================= -->
+  <!-- VIEW 1: PORTAL HUB (หน้าเมนูหลักศูนย์รวมงานนายทะเบียน) -->
+  <!-- ========================================================================= -->
+  <div id="viewPortalHub" class="app-view">
+    <header class="hub-hero">
+      <div class="container hero-content">
+        <h2 class="hero-title" style="font-size: 2rem; margin-bottom: 0.5rem;">
+          ศูนย์บริการข้อมูลและติดตามงานนายทะเบียนสหกรณ์</h2>
+        <p class="hero-subtitle" style="max-width: 720px; margin: 0 auto 1.5rem; opacity: 0.95;">
+          ระบบสารสนเทศเพื่อการกำกับ ดูแล และส่งเสริมสหกรณ์ ตรวจสอบความคืบหน้างานชำระบัญชี
+          และการพิจารณาเห็นชอบ/รับจดทะเบียนระเบียบและข้อบังคับสหกรณ์
+        </p>
+
+        <!-- Global Search across modules -->
+        <div class="hero-search-box" style="max-width: 650px; margin: 0 auto;">
+          <input type="text" id="hubGlobalSearchInput" placeholder="ค้นหาชื่อสหกรณ์, เลขทะเบียน หรือคำสั่ง/ระเบียบ...">
+          <button class="hero-search-btn" onclick="handleHubGlobalSearch()">
+            🔍 ค้นหา
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container" style="flex: 1;">
+      <!-- Hub Service Selection Cards -->
+      <section class="hub-grid">
+        <!-- Service Card 1: Liquidation -->
+        <div class="hub-card" onclick="switchAppView('liquidation')">
+          <div class="hub-icon-wrapper">
+            ⚖️
+          </div>
+          <h3 class="hub-card-title">ระบบติดตามการชำระบัญชีสหกรณ์</h3>
+          <p class="hub-card-desc">
+            ติดตามสถานะและขั้นตอนการชำระบัญชี 10 ขั้นตอน คำสั่งเลิก/ประกาศเลิกสหกรณ์ ประวัติผู้ชำระบัญชี
+            และเอกสารแนบตามกฎหมายว่าด้วยสหกรณ์
+          </p>
+
+          <div class="hub-stat-badges">
+            <div class="hub-stat-pill">
+              <span>รายการทั้งหมด</span>
+              <strong id="hubStatLiqTotal">0</strong>
+            </div>
+            <div class="hub-stat-pill">
+              <span>กำลังชำระบัญชี</span>
+              <strong id="hubStatLiqActive" style="color: var(--accent-amber);">0</strong>
+            </div>
+            <div class="hub-stat-pill">
+              <span>เสร็จสิ้นแล้ว</span>
+              <strong id="hubStatLiqDone" style="color: var(--accent-emerald);">0</strong>
+            </div>
+            <div class="hub-stat-pill">
+              <span>มีปัญหาอุปสรรค</span>
+              <strong id="hubStatLiqIssues" style="color: var(--accent-rose);">0</strong>
+            </div>
+          </div>
+
+          <button class="btn btn-primary hub-card-btn">
+            เข้าสู่ระบบติดตามการชำระบัญชี ➔
+          </button>
+        </div>
+
+        <!-- Service Card 2: Regulations & Bylaws -->
+        <div class="hub-card hub-card-reg" onclick="switchAppView('regulations')">
+          <div class="hub-icon-wrapper" style="color: #0d9488;">
+            📜
+          </div>
+          <h3 class="hub-card-title">ระบบติดตาม ระเบียบ / ข้อบังคับสหกรณ์</h3>
+          <p class="hub-card-desc">
+            ตรวจสอบความคืบหน้าการยื่นขอความเห็นชอบ รับทราบ และรับจดทะเบียน ข้อบังคับและระเบียบสหกรณ์ 5 ขั้นตอน
+            สำหรับเจ้าหน้าที่ส่งเสริมและสหกรณ์
+          </p>
+
+          <div class="hub-stat-badges">
+            <div class="hub-stat-pill">
+              <span>เรื่องทั้งหมด</span>
+              <strong id="hubStatRegTotal">0</strong>
+            </div>
+            <div class="hub-stat-pill">
+              <span>อยู่ระหว่างพิจารณา</span>
+              <strong id="hubStatRegReview" style="color: #0284c7;">0</strong>
+            </div>
+            <div class="hub-stat-pill">
+              <span>รับจดทะเบียน/เห็นชอบ/รับทราบ</span>
+              <strong id="hubStatRegDone" style="color: var(--accent-emerald);">0</strong>
+            </div>
+            <div class="hub-stat-pill">
+              <span>ส่งคืนแก้ไข</span>
+              <strong id="hubStatRegIssues" style="color: var(--accent-rose);">0</strong>
+            </div>
+          </div>
+
+          <button class="btn btn-primary hub-card-btn" style="background: linear-gradient(135deg, #0d9488, #0f766e);">
+            เข้าสู่ระบบติดตามระเบียบ/ข้อบังคับ ➔
+          </button>
+        </div>
+      </section>
+
+      <!-- Department Announcements & Quick Tips Banner -->
+      <section
+        style="background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem 2rem; margin-bottom: 3rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <span style="font-size: 2.5rem;">💡</span>
+          <div>
+            <h4 style="margin: 0; color: var(--primary); font-size: 1.05rem;">คำแนะนำสำหรับเจ้าหน้าที่ส่งเสริมสหกรณ์
+            </h4>
+            <p style="margin: 4px 0 0; font-size: 0.88rem; color: var(--text-muted);">
+              ท่านสามารถใช้ระบบนี้ในการกำกับดูแลสหกรณ์ในความรับผิดชอบได้ทั้ง 2 ด้าน โดยข้อมูลจะถูกแยกส่วนกันอย่างชัดเจน
+            </p>
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-secondary btn-sm" onclick="switchAppView('liquidation')">
+            ⚖️ ดูงานชำระบัญชี
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="switchAppView('regulations')">
+            📜 ดูงานระเบียบข้อบังคับ
+          </button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- VIEW 2: LIQUIDATION MODULE (ระบบติดตามการชำระบัญชีสหกรณ์) -->
+  <!-- ========================================================================= -->
+  <div id="viewLiquidation" class="app-view" style="display: none;">
+    <header class="hero-section">
+      <div class="container hero-content">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 0.5rem;">
+          <span class="status-badge"
+            style="background: rgba(255,255,255,0.2); color: #fff; font-size: 0.85rem;">โมดูลที่ 1</span>
+          <span style="color: rgba(255,255,255,0.8); font-size: 0.85rem;">• 10 ขั้นตอนมาตรฐานตาม พ.ร.บ. สหกรณ์</span>
+        </div>
+        <h2 class="hero-title">ระบบติดตามการชำระบัญชีสหกรณ์</h2>
+        <p class="hero-subtitle">ตรวจสอบความคืบหน้ากระบวนการชำระบัญชี 10 ขั้นตอน คำสั่งเลิก/ประกาศเลิก
+          และรายชื่อผู้ชำระบัญชี</p>
+
+        <!-- Quick Search Bar -->
+        <div class="hero-search-box">
+          <input type="text" id="heroSearchInput"
+            placeholder="พิมพ์ชื่อสหกรณ์, เลขทะเบียน, คำสั่งเลิก, หรือชื่อผู้ชำระบัญชี...">
+          <button id="heroSearchBtn" class="hero-search-btn">
+            🔍 ค้นหา
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container" style="flex: 1;">
+      <!-- KPI Summary Stats Section -->
+      <section class="stats-section">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon total">🏛️</div>
+            <div class="stat-info">
+              <div class="stat-label">สหกรณ์ที่เลิกทั้งหมด</div>
+              <div id="statTotal" class="stat-value">0</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon active">⏳</div>
+            <div class="stat-info">
+              <div class="stat-label">กำลังชำระบัญชี</div>
+              <div id="statActive" class="stat-value">0</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon done">✅</div>
+            <div class="stat-info">
+              <div class="stat-label">ชำระบัญชีเสร็จสิ้น</div>
+              <div id="statCompleted" class="stat-value">0</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon issues">⚠️</div>
+            <div class="stat-info">
+              <div class="stat-label">มีปัญหาอุปสรรค</div>
+              <div id="statIssues" class="stat-value">0</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Filters and Controls Bar -->
+      <section class="control-bar">
+        <div class="filter-group">
+          <label style="font-weight: 500; font-size: 0.9rem; color: var(--text-muted);">ตัวกรอง:</label>
+
+          <select id="filterCoopType" class="custom-select">
+            <option value="ALL">ทุกประเภทสถาบัน (สหกรณ์ / กลุ่มเกษตรกร)</option>
+            <optgroup label="🏛️ สหกรณ์ (7 ประเภท)">
+              <option value="สหกรณ์การเกษตร">สหกรณ์การเกษตร</option>
+              <option value="สหกรณ์ประมง">สหกรณ์ประมง</option>
+              <option value="สหกรณ์นิคม">สหกรณ์นิคม</option>
+              <option value="สหกรณ์ร้านค้า">สหกรณ์ร้านค้า</option>
+              <option value="สหกรณ์บริการ">สหกรณ์บริการ</option>
+              <option value="สหกรณ์ออมทรัพย์">สหกรณ์ออมทรัพย์</option>
+              <option value="สหกรณ์เครดิตยูเนี่ยน">สหกรณ์เครดิตยูเนี่ยน</option>
+            </optgroup>
+            <optgroup label="🌾 กลุ่มเกษตรกร (แยกตามประเภทอาชีพ)">
+              <option value="กลุ่มเกษตรกร">กลุ่มเกษตรกร (ทุกประเภท)</option>
+              <option value="กลุ่มเกษตรกรทำนา">กลุ่มเกษตรกรทำนา</option>
+              <option value="กลุ่มเกษตรกรทำไร่">กลุ่มเกษตรกรทำไร่</option>
+              <option value="กลุ่มเกษตรกรทำสวน">กลุ่มเกษตรกรทำสวน</option>
+              <option value="กลุ่มเกษตรกรเลี้ยงสัตว์">กลุ่มเกษตรกรเลี้ยงสัตว์</option>
+              <option value="กลุ่มเกษตรกรประมง">กลุ่มเกษตรกรประมง (เพาะเลี้ยงสัตว์น้ำ)</option>
+              <option value="กลุ่มเกษตรกรอื่นๆ">กลุ่มเกษตรกรอื่นๆ</option>
+            </optgroup>
+          </select>
+
+          <select id="filterCaseStatus" class="custom-select">
+            <option value="ALL">ทุกสถานะการดำเนินงาน</option>
+            <option value="ACTIVE">เฉพาะที่กำลังชำระบัญชี</option>
+            <option value="COMPLETED">เฉพาะที่เสร็จสิ้นแล้ว</option>
+            <option value="ISSUES">เฉพาะที่มีปัญหาอุปสรรค</option>
+          </select>
+        </div>
+
+        <div class="view-switch-group">
+          <button id="btnGridView" class="view-btn active" title="แสดงแบบการ์ด">
+            🔲 การ์ด
+          </button>
+          <button id="btnTableView" class="view-btn" title="แสดงแบบตาราง">
+            📋 ตาราง
+          </button>
+        </div>
+      </section>
+
+      <!-- Cards Grid View -->
+      <section id="casesGrid" class="cases-grid"></section>
+
+      <!-- Table View -->
+      <section id="casesTableWrap" class="table-wrap" style="display: none;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 50px; text-align: center;">ลำดับ</th>
+              <th>สหกรณ์ / เลขทะเบียน / ที่ตั้ง</th>
+              <th>ประเภท</th>
+              <th>คำสั่ง / ประกาศเลิก</th>
+              <th>ความคืบหน้า</th>
+              <th>ผู้ชำระบัญชี</th>
+              <th>สถานะ</th>
+              <th style="text-align: right;">การจัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="casesTableBody"></tbody>
+        </table>
+      </section>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="empty-state" style="display: none;">
+        <div class="empty-icon">📂</div>
+        <h3 style="margin-bottom: 0.5rem; color: var(--primary);">ไม่พบข้อมูลรายการชำระบัญชี</h3>
+        <p>ลองปรับคำค้นหา หรือเปลี่ยนเงื่อนไขตัวกรองใหม่อีกครั้ง</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- VIEW 3: REGULATIONS & BYLAWS MODULE (ระบบติดตามระเบียบและข้อบังคับสหกรณ์) -->
+  <!-- ========================================================================= -->
+  <div id="viewRegulations" class="app-view" style="display: none;">
+    <header class="hero-section" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #0e3760 100%);">
+      <div class="container hero-content">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 0.5rem;">
+          <span class="status-badge"
+            style="background: rgba(255,255,255,0.2); color: #fff; font-size: 0.85rem;">โมดูลที่ 2</span>
+          <span style="color: rgba(255,255,255,0.8); font-size: 0.85rem;">• 5 ขั้นตอนการพิจารณาเห็นชอบ /
+            รับจดทะเบียน</span>
+        </div>
+        <h2 class="hero-title">ระบบติดตาม ระเบียบ และ ข้อบังคับสหกรณ์</h2>
+        <p class="hero-subtitle">ตรวจสอบสถานะการยื่นขอความเห็นชอบ รับทราบ และรับจดทะเบียน
+          ข้อบังคับและระเบียบสหกรณ์สำหรับเจ้าหน้าที่ส่งเสริม</p>
+
+        <!-- Search Bar -->
+        <div class="hero-search-box">
+          <input type="text" id="regSearchInput"
+            placeholder="พิมพ์ชื่อสหกรณ์, ชื่อระเบียบ/ข้อบังคับ, เลขที่รับเรื่อง, หรือชื่อผู้รับผิดชอบ...">
+          <button id="regSearchBtn" class="hero-search-btn" style="background: #0f766e;" onclick="applyRegFilters()">
+            🔍 ค้นหา
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container" style="flex: 1;">
+      <!-- KPI Stats Section for Regulations -->
+      <section class="stats-section">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon total">📜</div>
+            <div class="stat-info">
+              <div class="stat-label">เรื่องที่ยื่นทั้งหมด</div>
+              <div id="regStatTotal" class="stat-value">0</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon active" style="background: #e0f2fe; color: #0284c7;">🔍</div>
+            <div class="stat-info">
+              <div class="stat-label">อยู่ระหว่างพิจารณา/ตรวจ</div>
+              <div id="regStatReview" class="stat-value">0</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon done">✅</div>
+            <div class="stat-info">
+              <div class="stat-label">รับจดทะเบียน / เห็นชอบ / รับทราบ</div>
+              <div id="regStatApproved" class="stat-value">0</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon issues">✏️</div>
+            <div class="stat-info">
+              <div class="stat-label">รอแก้ไข / ส่งคืน</div>
+              <div id="regStatFixes" class="stat-value">0</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Control Bar for Regulations -->
+      <section class="control-bar">
+        <div class="filter-group">
+          <label style="font-weight: 500; font-size: 0.9rem; color: var(--text-muted);">ตัวกรอง:</label>
+
+          <select id="filterRegCoopType" class="custom-select">
+            <option value="ALL">ทุกประเภทสถาบัน (สหกรณ์ / กลุ่มเกษตรกร)</option>
+            <optgroup label="🏛️ สหกรณ์ (7 ประเภท)">
+              <option value="สหกรณ์การเกษตร">สหกรณ์การเกษตร</option>
+              <option value="สหกรณ์ประมง">สหกรณ์ประมง</option>
+              <option value="สหกรณ์นิคม">สหกรณ์นิคม</option>
+              <option value="สหกรณ์ร้านค้า">สหกรณ์ร้านค้า</option>
+              <option value="สหกรณ์บริการ">สหกรณ์บริการ</option>
+              <option value="สหกรณ์ออมทรัพย์">สหกรณ์ออมทรัพย์</option>
+              <option value="สหกรณ์เครดิตยูเนี่ยน">สหกรณ์เครดิตยูเนี่ยน</option>
+            </optgroup>
+            <optgroup label="🌾 กลุ่มเกษตรกร (แยกตามประเภทอาชีพ)">
+              <option value="กลุ่มเกษตรกร">กลุ่มเกษตรกร (ทุกประเภท)</option>
+              <option value="กลุ่มเกษตรกรทำนา">กลุ่มเกษตรกรทำนา</option>
+              <option value="กลุ่มเกษตรกรทำไร่">กลุ่มเกษตรกรทำไร่</option>
+              <option value="กลุ่มเกษตรกรทำสวน">กลุ่มเกษตรกรทำสวน</option>
+              <option value="กลุ่มเกษตรกรเลี้ยงสัตว์">กลุ่มเกษตรกรเลี้ยงสัตว์</option>
+              <option value="กลุ่มเกษตรกรประมง">กลุ่มเกษตรกรประมง (เพาะเลี้ยงสัตว์น้ำ)</option>
+              <option value="กลุ่มเกษตรกรอื่นๆ">กลุ่มเกษตรกรอื่นๆ</option>
+            </optgroup>
+          </select>
+
+          <select id="filterRegDocType" class="custom-select">
+            <option value="ALL">ทุกประเภทเอกสาร</option>
+            <option value="ข้อบังคับสหกรณ์">ข้อบังคับสหกรณ์ / กลุ่มเกษตรกร</option>
+            <option value="ระเบียบสหกรณ์">ระเบียบสหกรณ์ / กลุ่มเกษตรกร</option>
+          </select>
+
+          <select id="filterRegStatus" class="custom-select">
+            <option value="ALL">ทุกสถานะการดำเนินงาน</option>
+            <option value="IN_REVIEW">อยู่ระหว่างพิจารณา/ตรวจสอบ</option>
+            <option value="APPROVED">รับจดทะเบียน/เห็นชอบ/รับทราบ</option>
+            <option value="NEED_FIX">รอแก้ไข/ส่งคืน</option>
+          </select>
+        </div>
+
+        <div class="view-switch-group">
+          <button id="btnRegGridView" class="view-btn active" title="แสดงแบบการ์ด">
+            🔲 การ์ด
+          </button>
+          <button id="btnRegTableView" class="view-btn" title="แสดงแบบตาราง">
+            📋 ตาราง
+          </button>
+        </div>
+      </section>
+
+      <!-- Regulations Grid View -->
+      <section id="regGrid" class="cases-grid"></section>
+
+      <!-- Regulations Table View -->
+      <section id="regTableWrap" class="table-wrap" style="display: none;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 50px; text-align: center;">ลำดับ</th>
+              <th>สหกรณ์ / เลขทะเบียน</th>
+              <th>ประเภท</th>
+              <th>ชื่อระเบียบ / ข้อบังคับ</th>
+              <th>เลขที่รับเรื่อง & วันที่</th>
+              <th>ขั้นตอนปัจจุบัน</th>
+              <th>ผู้รับผิดชอบ</th>
+              <th>สถานะ</th>
+              <th style="text-align: right;">การจัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="regTableBody"></tbody>
+        </table>
+      </section>
+
+      <!-- Empty State for Regulations -->
+      <div id="regEmptyState" class="empty-state" style="display: none;">
+        <div class="empty-icon">📜</div>
+        <h3 style="margin-bottom: 0.5rem; color: var(--primary);">ไม่พบข้อมูลระเบียบหรือข้อบังคับ</h3>
+        <p>ลองปรับคำค้นหา หรือเปลี่ยนเงื่อนไขตัวกรองใหม่อีกครั้ง</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>© 2026 กรมส่งเสริมสหกรณ์ กระทรวงเกษตรและสหกรณ์ | ศูนย์บริการงานนายทะเบียนและติดตามการดำเนินงานสหกรณ์</p>
+    </div>
+  </footer>
+
+  <!-- ========================================================================= -->
+  <!-- MODALS SECTION -->
+  <!-- ========================================================================= -->
+
+  <!-- 1. Case Detail Modal (Liquidation) -->
+  <div id="caseDetailModal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 900px;">
+      <div class="modal-header">
+        <div>
+          <span class="case-type-badge" id="detailCoopType">สหกรณ์การเกษตร</span>
+          <h3 id="detailCoopName" style="margin-top: 4px; font-size: 1.3rem;">ชื่อสหกรณ์</h3>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('caseDetailModal')">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 0;">
+        <div class="modal-quick-info">
+          <div class="info-cell">
+            <span class="info-label">เลขทะเบียน</span>
+            <strong id="detailRegNumber" class="info-value">-</strong>
+          </div>
+          <div class="info-cell">
+            <span class="info-label">ที่ตั้ง / อำเภอ</span>
+            <strong id="detailLocation" class="info-value">-</strong>
+          </div>
+          <div class="info-cell">
+            <span class="info-label" id="detailDissolutionLabel">คำสั่ง / ประกาศเลิกเลขที่</span>
+            <strong id="detailOrderNumber" class="info-value">-</strong>
+          </div>
+          <div class="info-cell">
+            <span class="info-label">วันที่ออกคำสั่ง/ประกาศ</span>
+            <strong id="detailOrderDate" class="info-value">-</strong>
+          </div>
+          <div class="info-cell">
+            <span class="info-label">สถานะปัจจุบัน</span>
+            <span id="detailStatusBadge" class="status-badge active">กำลังชำระบัญชี</span>
+          </div>
+        </div>
+
+        <div class="modal-tabs">
+          <div class="modal-tab active" data-tab="timeline" onclick="switchDetailTab('timeline')">
+            ⏱️ 10 ขั้นตอนการชำระบัญชี
+          </div>
+          <div class="modal-tab" data-tab="liquidators" onclick="switchDetailTab('liquidators')">
+            👥 ผู้ชำระบัญชี
+          </div>
+          <div class="modal-tab" data-tab="documents" onclick="switchDetailTab('documents')">
+            📁 เอกสารแนบ
+          </div>
+        </div>
+
+        <div style="padding: 1.5rem;">
+          <div id="tabTimeline" class="tab-pane">
+            <div id="timelineContainer" class="stepper-list"></div>
+          </div>
+          <div id="tabLiquidators" class="tab-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <span style="font-weight: 600; color: var(--text-main);">รายนามผู้ชำระบัญชีและประวัติการแต่งตั้ง</span>
+              <button id="adminAddLiqBtn" class="btn btn-primary btn-sm" onclick="openAddLiquidatorModal()"
+                style="display: none;">
+                + แต่งตั้งผู้ชำระบัญชีใหม่
+              </button>
+            </div>
+            <div id="liquidatorsContainer" style="display: flex; flex-direction: column; gap: 12px;"></div>
+          </div>
+          <div id="tabDocuments" class="tab-pane" style="display: none;">
+            <div id="documentsContainer"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div id="detailAdminActions" style="display: none; gap: 8px;">
+          <button class="btn btn-secondary btn-sm" onclick="openEditCaseInfoModal()">
+            📝 แก้ไขข้อมูล
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCurrentCase()">
+            🗑️ ลบรายการนี้
+          </button>
+        </div>
+        <button class="btn btn-secondary" onclick="closeModal('caseDetailModal')">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Create Case Modal (Liquidation Admin) -->
+  <div id="createCaseModal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3>➕ เพิ่มรายการชำระบัญชีใหม่</h3>
+        <button class="modal-close-btn" onclick="closeModal('createCaseModal')">&times;</button>
+      </div>
+      <form id="createCaseForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>ชื่อสหกรณ์ที่เลิก <span style="color: red;">*</span></label>
+            <input type="text" name="coopName" class="form-control" placeholder="เช่น สหกรณ์การเกษตรพัฒนา จำกัด"
+              required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>เลขทะเบียนสหกรณ์</label>
+              <input type="text" name="regNumber" class="form-control" placeholder="เช่น ก.0123/2545">
+            </div>
+            <div class="form-group">
+              <label>ประเภทสถาบัน</label>
+              <select name="coopType" class="form-control">
+                <optgroup label="🏛️ สหกรณ์ (7 ประเภท)">
+                  <option value="สหกรณ์การเกษตร">สหกรณ์การเกษตร</option>
+                  <option value="สหกรณ์ประมง">สหกรณ์ประมง</option>
+                  <option value="สหกรณ์นิคม">สหกรณ์นิคม</option>
+                  <option value="สหกรณ์ร้านค้า">สหกรณ์ร้านค้า</option>
+                  <option value="สหกรณ์บริการ">สหกรณ์บริการ</option>
+                  <option value="สหกรณ์ออมทรัพย์">สหกรณ์ออมทรัพย์</option>
+                  <option value="สหกรณ์เครดิตยูเนี่ยน">สหกรณ์เครดิตยูเนี่ยน</option>
+                </optgroup>
+                <optgroup label="🌾 กลุ่มเกษตรกร (แยกตามประเภทอาชีพ)">
+                  <option value="กลุ่มเกษตรกรทำนา">กลุ่มเกษตรกรทำนา</option>
+                  <option value="กลุ่มเกษตรกรทำไร่">กลุ่มเกษตรกรทำไร่</option>
+                  <option value="กลุ่มเกษตรกรทำสวน">กลุ่มเกษตรกรทำสวน</option>
+                  <option value="กลุ่มเกษตรกรเลี้ยงสัตว์">กลุ่มเกษตรกรเลี้ยงสัตว์</option>
+                  <option value="กลุ่มเกษตรกรประมง">กลุ่มเกษตรกรประมง (เพาะเลี้ยงสัตว์น้ำ)</option>
+                  <option value="กลุ่มเกษตรกรอื่นๆ">กลุ่มเกษตรกรอื่นๆ</option>
+                </optgroup>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>ที่ตั้ง / อำเภอ / จังหวัด</label>
+            <input type="text" name="location" class="form-control" placeholder="เช่น อ.เมือง จ.อุดรธานี">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>ประเภทการเลิกสหกรณ์ <span style="color: red;">*</span></label>
+              <select name="dissolutionType" id="createDissolutionType" class="form-control">
+                <option value="คำสั่งเลิก">คำสั่งเลิก (นายทะเบียนสหกรณ์สั่งเลิก)</option>
+                <option value="ประกาศเลิก">ประกาศเลิก (ที่ประชุมใหญ่มีมติ/เลิกตามข้อบังคับ)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label id="createOrderNumberLabel">เลขที่คำสั่ง / ประกาศเลิก</label>
+              <input type="text" name="orderNumber" class="form-control"
+                placeholder="เช่น คำสั่ง นทส. ที่ 15/2566 หรือ ประกาศ ที่ 01/2566">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>วันที่ออกคำสั่ง / ประกาศเลิก</label>
+              <input type="date" id="createOrderDate" name="orderDate" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>หมายเหตุรวม</label>
+              <input type="text" name="note" class="form-control" placeholder="รายละเอียดหรือบันทึกเพิ่มเติม">
+            </div>
+          </div>
+
+          <hr style="border: none; border-top: 1px dashed var(--border-color); margin: 1rem 0;">
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <div>
+              <h4 style="font-size: 1rem; color: var(--primary); margin: 0;">👥 ข้อมูลผู้ชำระบัญชีเริ่มต้น</h4>
+              <span style="font-size: 0.78rem; color: var(--text-muted);">เลขคำสั่งแต่งตั้งแยกต่างหากจากการเลิกสหกรณ์
+                และแต่งตั้งได้หลายคน</span>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="addLiquidatorRowToCreateForm()">
+              + เพิ่มผู้ชำระบัญชีอีกคน
+            </button>
+          </div>
+
+          <!-- Container for Dynamic Liquidator Input Rows -->
+          <div id="createCaseLiquidatorsList"
+            style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 1rem;"></div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('createCaseModal')">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">บันทึกสร้างรายการใหม่</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. Update Step Modal (Liquidation Admin) -->
+  <div id="updateStepModal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 id="updateStepTitle">แก้ไขสถานะขั้นตอน</h3>
+        <button class="modal-close-btn" onclick="closeModal('updateStepModal')">&times;</button>
+      </div>
+      <form id="updateStepForm">
+        <input type="hidden" id="updateStepNumber" name="stepNumber">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>สถานะการดำเนินงาน <span style="color: red;">*</span></label>
+            <select id="updateStepStatus" name="status" class="form-control" required>
+              <option value="ยังไม่เริ่ม">⚪ ยังไม่เริ่ม</option>
+              <option value="กำลังดำเนินการ">🟡 กำลังดำเนินการ</option>
+              <option value="เสร็จสิ้น">🟢 เสร็จสิ้นแล้ว</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>วันที่เริ่มต้นขั้นตอนนี้</label>
+              <input type="date" id="updateStepStartDate" name="startDate" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>วันที่สิ้นสุด / แล้วเสร็จ</label>
+              <input type="date" id="updateStepEndDate" name="endDate" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>ปัญหาและอุปสรรคในขั้นตอนนี้ (ถ้ามี)</label>
+            <textarea id="updateStepIssue" name="issue" class="form-control" rows="2"
+              placeholder="เช่น ลูกหนี้ไม่มาติดต่อ หรืออยู่ระหว่างรอผลสอบบัญชี..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>บันทึกหมายเหตุเพิ่มเติม</label>
+            <textarea id="updateStepNote" name="note" class="form-control" rows="2"
+              placeholder="รายละเอียดหรือการประสานงาน..."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('updateStepModal')">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">บันทึกการอัพเดต</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. Add Liquidator Modal -->
+  <div id="addLiquidatorModal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3>👤 แต่งตั้งผู้ชำระบัญชี</h3>
+        <button class="modal-close-btn" onclick="closeModal('addLiquidatorModal')">&times;</button>
+      </div>
+      <form id="addLiquidatorForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>ชื่อ-นามสกุล ผู้ชำระบัญชี <span style="color: red;">*</span></label>
+            <input type="text" name="name" class="form-control" placeholder="เช่น นางสาววิไลลักษณ์ มั่นคง" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>ตำแหน่ง / สังกัด</label>
+              <input type="text" name="position" class="form-control" placeholder="เช่น นักวิชาการสหกรณ์ชำนาญการ">
+            </div>
+            <div class="form-group">
+              <label>คำสั่งแต่งตั้งเลขที่</label>
+              <input type="text" name="orderNumber" class="form-control" placeholder="เช่น คำสั่ง นทส. ที่ 68/2567">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>วันที่เริ่มปฏิบัติหน้าที่</label>
+              <input type="date" id="liqStartDate" name="startDate" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>เบอร์โทรศัพท์ติดต่อ</label>
+              <input type="text" name="contact" class="form-control" placeholder="เช่น 089-987-6543">
+            </div>
+          </div>
+
+          <div
+            style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px; margin-top: 10px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; font-weight: 600;">
+              <input type="checkbox" name="setPreviousToInactive" value="1">
+              <span>แต่งตั้งแทนผู้ชำระบัญชีเดิม (ปรับสถานะผู้เดิมเป็น "พ้นหน้าที่แล้ว" อัตโนมัติ)</span>
+            </label>
+            <div class="form-group" style="margin-top: 10px; margin-bottom: 0;">
+              <label style="font-size: 0.82rem; color: var(--text-muted);">เหตุผลการเปลี่ยนตัวผู้ชำระบัญชีเดิม
+                (กรณีแต่งตั้งแทน)</label>
+              <input type="text" name="previousReason" class="form-control"
+                placeholder="เช่น เกษียณอายุราชการ / ย้ายสถานที่ปฏิบัติราชการ / ลาออก">
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('addLiquidatorModal')">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">บันทึกข้อมูลผู้ชำระบัญชี</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. Edit Liquidator Modal (Admin) -->
+  <div id="editLiquidatorModal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3>✏️ แก้ไขข้อมูลผู้ชำระบัญชี</h3>
+        <button class="modal-close-btn" onclick="closeModal('editLiquidatorModal')">&times;</button>
+      </div>
+      <form id="editLiquidatorForm">
+        <input type="hidden" id="editLiqId" name="liquidatorId">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>ชื่อ-นามสกุล</label>
+            <input type="text" id="editLiqName" name="name" class="form-control" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>ตำแหน่ง / สังกัด</label>
+              <input type="text" id="editLiqPosition" name="position" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>เลขที่คำสั่งแต่งตั้ง</label>
+              <input type="text" id="editLiqOrderNumber" name="orderNumber" class="form-control"
+                placeholder="เช่น คำสั่ง นทส. ที่ 16/2566">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>สถานะการปฏิบัติหน้าที่</label>
+              <select id="editLiqStatus" name="status" class="form-control">
+                <option value="ปัจจุบัน">ปัจจุบัน</option>
+                <option value="พ้นหน้าที่แล้ว">พ้นหน้าที่แล้ว</option>
+                <option value="เสร็จสิ้นภารกิจ">เสร็จสิ้นภารกิจ</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>เบอร์โทรศัพท์ติดต่อ</label>
+              <input type="text" id="editLiqContact" name="contact" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>วันที่เริ่มปฏิบัติหน้าที่</label>
+              <input type="date" id="editLiqStartDate" name="startDate" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>วันที่พ้นหน้าที่</label>
+              <input type="date" id="editLiqEndDate" name="endDate" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>เหตุผลการเปลี่ยนแปลง (ถ้ามี)</label>
+            <input type="text" id="editLiqReason" name="reason" class="form-control">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('editLiquidatorModal')">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">บันทึกการแก้ไข</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 6. Edit Case Info Modal (Admin) -->
+  <div id="editCaseModal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3>📝 แก้ไขข้อมูลการชำระบัญชี / สหกรณ์</h3>
+        <button class="modal-close-btn" onclick="closeModal('editCaseModal')">&times;</button>
+      </div>
+      <form id="editCaseForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>ชื่อสหกรณ์ <span style="color: red;">*</span></label>
+            <input type="text" id="editCaseCoopName" name="coopName" class="form-control" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>เลขทะเบียนสหกรณ์</label>
+              <input type="text" id="editCaseRegNumber" name="regNumber" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>ประเภทสถาบัน</label>
+              <select id="editCaseCoopType" name="coopType" class="form-control">
+                <optgroup label="🏛️ สหกรณ์ (7 ประเภท)">
+                  <option value="สหกรณ์การเกษตร">สหกรณ์การเกษตร</option>
+                  <option value="สหกรณ์ประมง">สหกรณ์ประมง</option>
+                  <option value="สหกรณ์นิคม">สหกรณ์นิคม</option>
+                  <option value="สหกรณ์ร้านค้า">สหกรณ์ร้านค้า</option>
+                  <option value="สหกรณ์บริการ">สหกรณ์บริการ</option>
+                  <option value="สหกรณ์ออมทรัพย์">สหกรณ์ออมทรัพย์</option>
+                  <option value="สหกรณ์เครดิตยูเนี่ยน">สหกรณ์เครดิตยูเนี่ยน</option>
+                </optgroup>
+                <optgroup label="🌾 กลุ่มเกษตรกร (แยกตามประเภทอาชีพ)">
+                  <option value="กลุ่มเกษตรกร">กลุ่มเกษตรกร (ทั่วไป)</option>
+                  <option value="กลุ่มเกษตรกรทำนา">กลุ่มเกษตรกรทำนา</option>
+                  <option value="กลุ่มเกษตรกรทำไร่">กลุ่มเกษตรกรทำไร่</option>
+                  <option value="กลุ่มเกษตรกรทำสวน">กลุ่มเกษตรกรทำสวน</option>
+                  <option value="กลุ่มเกษตรกรเลี้ยงสัตว์">กลุ่มเกษตรกรเลี้ยงสัตว์</option>
+                  <option value="กลุ่มเกษตรกรประมง">กลุ่มเกษตรกรประมง (เพาะเลี้ยงสัตว์น้ำ)</option>
+                  <option value="กลุ่มเกษตรกรอื่นๆ">กลุ่มเกษตรกรอื่นๆ</option>
+                </optgroup>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>ที่ตั้ง / อำเภอ / จังหวัด</label>
+            <input type="text" id="editCaseLocation" name="location" class="form-control">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>ประเภทการเลิกสหกรณ์</label>
+              <select id="editCaseDissolutionType" name="dissolutionType" class="form-control">
+                <option value="คำสั่งเลิก">คำสั่งเลิก (นายทะเบียนสหกรณ์สั่งเลิก)</option>
+                <option value="ประกาศเลิก">ประกาศเลิก (ที่ประชุมใหญ่มีมติ/เลิกตามข้อบังคับ)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>เลขที่คำสั่ง / ประกาศเลิก</label>
+              <input type="text" id="editCaseOrderNumber" name="orderNumber" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>วันที่ออกคำสั่ง / ประกาศเลิก</label>
+              <input type="date" id="editCaseOrderDate" name="orderDate" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>สถานะการดำเนินงาน</label>
+              <select id="editCaseStatus" name="caseStatus" class="form-control">
+                <option value="กำลังชำระบัญชี">กำลังชำระบัญชี</option>
+                <option value="เสร็จสิ้น">เสร็จสิ้น</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>หมายเหตุรวม</label>
+            <input type="text" id="editCaseNote" name="note" class="form-control">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('editCaseModal')">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">บันทึกการแก้ไข</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 7. Upload Document Modal (Liquidation) -->
+  <div id="uploadDocModal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 550px;">
+      <div class="modal-header">
+        <h3>📎 แนบไฟล์เอกสารการชำระบัญชี</h3>
+        <button class="modal-close-btn" onclick="closeModal('uploadDocModal')">&times;</button>
+      </div>
+      <form id="uploadDocForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>ผูกกับขั้นตอนที่ (ถ้ามี)</label>
+            <select name="stepNumber" class="form-control">
+              <option value="">-- เอกสารทั่วไป --</option>
+              <option value="1">ขั้นที่ 1: ประกาศเลิกและแต่งตั้งผู้ชำระบัญชี</option>
+              <option value="2">ขั้นที่ 2: งบการเงิน ณ วันเลิก (ม.80)</option>
+              <option value="3">ขั้นที่ 3: ส่งงบให้ผู้สอบบัญชี</option>
+              <option value="4">ขั้นที่ 4: รายงานผู้สอบบัญชีรับรอง</option>
+              <option value="5">ขั้นที่ 5: อนุมัติงบการเงิน ณ วันเลิก</option>
+              <option value="6">ขั้นที่ 6: จัดการทรัพย์สินและหนี้สิน</option>
+              <option value="7">ขั้นที่ 7: รายงานผลและงบเสร็จสิ้น (ม.87)</option>
+              <option value="8">ขั้นที่ 8: ผู้สอบบัญชีรับรองงบเสร็จสิ้น</option>
+              <option value="9">ขั้นที่ 9: ประกาศถอนชื่อสหกรณ์</option>
+              <option value="10">ขั้นที่ 10: ส่งมอบสมุดบัญชีเอกสาร</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>ประเภทเอกสาร</label>
+            <select name="docType" class="form-control">
+              <option value="คำสั่ง/ประกาศ">คำสั่ง/ประกาศ</option>
+              <option value="งบการเงิน/รายงาน">งบการเงิน/รายงาน</option>
+              <option value="หนังสือราชการ">หนังสือราชการ</option>
+              <option value="เอกสารประกอบอื่นๆ">เอกสารประกอบอื่นๆ</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>เลือกไฟล์เอกสาร (PDF, รูปภาพ, Word ขนาดไม่เกิน 10MB) <span style="color: red;">*</span></label>
+            <div id="fileDropzone" class="file-dropzone">
+              <span style="font-size: 2rem;">📤</span>
+              <p style="margin: 6px 0; font-weight: 500;">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">รองรับ .pdf, .jpg, .png, .docx</span>
+              <input type="file" id="docFileInput" name="docFile" style="display: none;"
+                accept=".pdf,.jpg,.jpeg,.png,.docx,.doc,.xlsx">
+            </div>
+            <div id="uploadFilePreview"
+              style="margin-top: 8px; font-size: 0.85rem; color: var(--primary); display: none;"></div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('uploadDocModal')">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">อัพโหลดเอกสาร</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- REGULATIONS & BYLAWS MODALS -->
+  <!-- ========================================================================= -->
+
+  <!-- 8. Regulation Detail Modal -->
+  <div id="regDetailModal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 900px;">
+      <div class="modal-header">
+        <div>
+          <span class="case-type-badge reg-type-bylaw" id="detailRegDocType">ข้อบังคับสหกรณ์</span>
+          <h3 id="detailRegTitle" style="margin-top: 4px; font-size: 1.3rem;">ชื่อระเบียบ/ข้อบังคับ</h3>
+          <span id="detailRegCoopName" style="font-size: 0.9rem; color: var(--text-muted);">ชื่อสหกรณ์</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('regDetailModal')">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 0;">
+        <div class="modal-quick-info">
+          <div class="info-cell">
+            <span class="info-label">เลขที่รับเรื่อง</span>
+            <strong id="detailRegDocNumber" class="info-value">-</strong>
+          </div>
+          <div class="info-cell">
+            <span class="info-label">วันที่ยื่นเรื่อง</span>
+            <strong id="detailRegSubmitDate" class="info-value">-</strong>
+          </div>
+          <div class="info-cell">
+            <span class="info-label">จนท. ผู้รับผิดชอบ</span>
+            <strong id="detailRegOfficer" class="info-value">-</strong>
+          </div>
+          <div class="info-cell">
+            <span class="info-label">เบอร์ติดต่อ จนท.</span>
+            <strong id="detailRegContact" class="info-value">-</strong>
+          </div>
+          <div class="info-cell">
+            <span class="info-label">สถานะปัจจุบัน</span>
+            <span id="detailRegStatusBadge" class="status-badge active">อยู่ระหว่างพิจารณา</span>
+          </div>
+        </div>
+
+        <div class="modal-tabs">
+          <div class="modal-tab active" data-tab="regTimeline" onclick="switchRegDetailTab('regTimeline')">
+            ⏱️ 5 ขั้นตอนการพิจารณา
+          </div>
+          <div class="modal-tab" data-tab="regDocuments" onclick="switchRegDetailTab('regDocuments')">
+            📁 เอกสารร่างและมติที่ประชุม
+          </div>
+        </div>
+
+        <div style="padding: 1.5rem;">
+          <div id="tabRegTimeline" class="tab-pane">
+            <div id="regTimelineContainer" class="stepper-list"></div>
+          </div>
+          <div id="tabRegDocuments" class="tab-pane" style="display: none;">
+            <div id="regDocumentsContainer"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div id="detailRegAdminActions" style="display: none; gap: 8px;">
+          <button class="btn btn-secondary btn-sm" onclick="openEditRegInfoModal()">
+            📝 แก้ไขข้อมูลเรื่อง
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCurrentReg()">
+            🗑️ ลบเรื่องนี้
+          </button>
+        </div>
+        <button class="btn btn-secondary" onclick="closeModal('regDetailModal')">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. Create Regulation Modal (Admin) -->
+  <div id="createRegModal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3>➕ ยื่นเรื่องระเบียบ / ข้อบังคับสหกรณ์ใหม่</h3>
+        <button class="modal-close-btn" onclick="closeModal('createRegModal')">&times;</button>
+      </div>
+      <form id="createRegForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>ชื่อสหกรณ์ที่ยื่นเรื่อง <span style="color: red;">*</span></label>
+            <input type="text" name="coopName" class="form-control" placeholder="เช่น สหกรณ์ออมทรัพย์ครูขอนแก่น จำกัด"
+              required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>เลขทะเบียนสหกรณ์</label>
+              <input type="text" name="regNumber" class="form-control" placeholder="เช่น อ.0456/2540">
+            </div>
+            <div class="form-group">
+              <label>ประเภทสถาบัน</label>
+              <select name="coopType" class="form-control">
+                <optgroup label="🏛️ สหกรณ์ (7 ประเภท)">
+                  <option value="สหกรณ์การเกษตร">สหกรณ์การเกษตร</option>
+                  <option value="สหกรณ์ประมง">สหกรณ์ประมง</option>
+                  <option value="สหกรณ์นิคม">สหกรณ์นิคม</option>
+                  <option value="สหกรณ์ร้านค้า">สหกรณ์ร้านค้า</option>
+                  <option value="สหกรณ์บริการ">สหกรณ์บริการ</option>
+                  <option value="สหกรณ์ออมทรัพย์">สหกรณ์ออมทรัพย์</option>
+                  <option value="สหกรณ์เครดิตยูเนี่ยน">สหกรณ์เครดิตยูเนี่ยน</option>
+                </optgroup>
+                <optgroup label="🌾 กลุ่มเกษตรกร (แยกตามประเภทอาชีพ)">
+                  <option value="กลุ่มเกษตรกรทำนา">กลุ่มเกษตรกรทำนา</option>
+                  <option value="กลุ่มเกษตรกรทำไร่">กลุ่มเกษตรกรทำไร่</option>
+                  <option value="กลุ่มเกษตรกรทำสวน">กลุ่มเกษตรกรทำสวน</option>
+                  <option value="กลุ่มเกษตรกรเลี้ยงสัตว์">กลุ่มเกษตรกรเลี้ยงสัตว์</option>
+                  <option value="กลุ่มเกษตรกรประมง">กลุ่มเกษตรกรประมง (เพาะเลี้ยงสัตว์น้ำ)</option>
+                  <option value="กลุ่มเกษตรกรอื่นๆ">กลุ่มเกษตรกรอื่นๆ</option>
+                </optgroup>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>ประเภทรายการ <span style="color: red;">*</span></label>
+              <select name="docType" class="form-control" required>
+                <option value="ข้อบังคับสหกรณ์">ข้อบังคับสหกรณ์ / ข้อบังคับกลุ่มเกษตรกร</option>
+                <option value="ระเบียบสหกรณ์">ระเบียบสหกรณ์ / ระเบียบกลุ่มเกษตรกร</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>ชื่อระเบียบ / ข้อบังคับ <span style="color: red;">*</span></label>
+              <input type="text" name="title" class="form-control"
+                placeholder="เช่น ระเบียบว่าด้วยการให้เงินกู้แก่สมาชิก พ.ศ. 2567" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>เลขที่รับเรื่อง / หนังสือส่ง</label>
+              <input type="text" name="docNumber" class="form-control"
+                placeholder="เช่น สห.ขก 01/2567 หรือ รับที่ 124/67">
+            </div>
+            <div class="form-group">
+              <label>วันที่ยื่นเรื่อง / รับเรื่อง</label>
+              <input type="date" id="createRegSubmitDate" name="submitDate" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>เจ้าหน้าที่กลุ่มจัดตั้งฯผู้รับผิดชอบ <span style="color: red;">*</span></label>
+              <input type="text" name="officerName" class="form-control" placeholder="เช่น นายสมเกียรติ สหกรณ์ดี"
+                required>
+            </div>
+            <div class="form-group">
+              <label>เบอร์โทรศัพท์ติดต่อ จนท.</label>
+              <input type="text" name="officerContact" class="form-control" placeholder="เช่น 081-999-8877">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>หมายเหตุ / รายละเอียดการประชุม</label>
+            <input type="text" name="note" class="form-control"
+              placeholder="เช่น มติที่ประชุมใหญ่สามัญประจำปี 2566 เมื่อวันที่ 10 มี.ค. 67">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('createRegModal')">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">บันทึกยื่นเรื่องใหม่</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 10. Update Regulation Step Modal (Admin) -->
+  <div id="updateRegStepModal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 id="updateRegStepTitle">แก้ไขขั้นตอนการพิจารณา</h3>
+        <button class="modal-close-btn" onclick="closeModal('updateRegStepModal')">&times;</button>
+      </div>
+      <form id="updateRegStepForm">
+        <input type="hidden" id="updateRegStepNumber" name="stepNumber">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>สถานะขั้นตอน <span style="color: red;">*</span></label>
+            <select id="updateRegStepStatus" name="status" class="form-control" required>
+              <option value="ยังไม่เริ่ม">⚪ ยังไม่เริ่ม</option>
+              <option value="กำลังดำเนินการ">🟡 กำลังดำเนินการ / อยู่ระหว่างตรวจ</option>
+              <option value="เสร็จสิ้น">🟢 เสร็จสิ้น / ผ่านการพิจารณาแล้ว</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>วันที่เริ่มต้น</label>
+              <input type="date" id="updateRegStepStartDate" name="startDate" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>วันที่แล้วเสร็จ</label>
+              <input type="date" id="updateRegStepEndDate" name="endDate" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>ข้อสังเกต / จุดที่ต้องแก้ไขปรับปรุง (ถ้ามี)</label>
+            <textarea id="updateRegStepIssue" name="issue" class="form-control" rows="2"
+              placeholder="เช่น ข้อความในข้อ 14 ขัดต่อระเบียบนายทะเบียนฯ ต้องตัดวรรคสองออก..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>บันทึกเพิ่มเติม</label>
+            <textarea id="updateRegStepNote" name="note" class="form-control" rows="2"
+              placeholder="บันทึกการส่งหนังสือ หรือผลการตรวจ..."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('updateRegStepModal')">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">บันทึกการอัพเดต</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 11. Edit Regulation Info Modal (Admin) -->
+  <div id="editRegModal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3>📝 แก้ไขข้อมูลระเบียบ / ข้อบังคับ</h3>
+        <button class="modal-close-btn" onclick="closeModal('editRegModal')">&times;</button>
+      </div>
+      <form id="editRegForm">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>ชื่อสหกรณ์ / กลุ่มเกษตรกร <span style="color: red;">*</span></label>
+              <input type="text" id="editRegCoopName" name="coopName" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>ประเภทสถาบัน</label>
+              <select id="editRegCoopType" name="coopType" class="form-control">
+                <optgroup label="🏛️ สหกรณ์ (7 ประเภท)">
+                  <option value="สหกรณ์การเกษตร">สหกรณ์การเกษตร</option>
+                  <option value="สหกรณ์ประมง">สหกรณ์ประมง</option>
+                  <option value="สหกรณ์นิคม">สหกรณ์นิคม</option>
+                  <option value="สหกรณ์ร้านค้า">สหกรณ์ร้านค้า</option>
+                  <option value="สหกรณ์บริการ">สหกรณ์บริการ</option>
+                  <option value="สหกรณ์ออมทรัพย์">สหกรณ์ออมทรัพย์</option>
+                  <option value="สหกรณ์เครดิตยูเนี่ยน">สหกรณ์เครดิตยูเนี่ยน</option>
+                </optgroup>
+                <optgroup label="🌾 กลุ่มเกษตรกร (แยกตามประเภทอาชีพ)">
+                  <option value="กลุ่มเกษตรกร">กลุ่มเกษตรกร (ทั่วไป)</option>
+                  <option value="กลุ่มเกษตรกรทำนา">กลุ่มเกษตรกรทำนา</option>
+                  <option value="กลุ่มเกษตรกรทำไร่">กลุ่มเกษตรกรทำไร่</option>
+                  <option value="กลุ่มเกษตรกรทำสวน">กลุ่มเกษตรกรทำสวน</option>
+                  <option value="กลุ่มเกษตรกรเลี้ยงสัตว์">กลุ่มเกษตรกรเลี้ยงสัตว์</option>
+                  <option value="กลุ่มเกษตรกรประมง">กลุ่มเกษตรกรประมง (เพาะเลี้ยงสัตว์น้ำ)</option>
+                  <option value="กลุ่มเกษตรกรอื่นๆ">กลุ่มเกษตรกรอื่นๆ</option>
+                </optgroup>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>ประเภทรายการ</label>
+              <select id="editRegDocType" name="docType" class="form-control">
+                <option value="ข้อบังคับสหกรณ์">ข้อบังคับสหกรณ์ / ข้อบังคับกลุ่มเกษตรกร</option>
+                <option value="ระเบียบสหกรณ์">ระเบียบสหกรณ์ / ระเบียบกลุ่มเกษตรกร</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>ชื่อระเบียบ / ข้อบังคับ <span style="color: red;">*</span></label>
+              <input type="text" id="editRegTitle" name="title" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>เลขที่รับเรื่อง / หนังสือส่ง</label>
+              <input type="text" id="editRegDocNumber" name="docNumber" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>วันที่ยื่นเรื่อง</label>
+              <input type="date" id="editRegSubmitDate" name="submitDate" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>เจ้าหน้าที่กลุ่มจัดตั้งฯผู้รับผิดชอบ</label>
+              <input type="text" id="editRegOfficerName" name="officerName" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>เบอร์ติดต่อ จนท.</label>
+              <input type="text" id="editRegOfficerContact" name="officerContact" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>สถานะภาพรวม</label>
+              <select id="editRegOverallStatus" name="status" class="form-control">
+                <option value="อยู่ระหว่างพิจารณา">อยู่ระหว่างพิจารณา/ตรวจสอบ</option>
+                <option value="รับจดทะเบียน/เห็นชอบ/รับทราบ">รับจดทะเบียน / เห็นชอบ / รับทราบ</option>
+                <option value="ส่งคืนแก้ไข">ส่งคืนแก้ไข / รอเอกสารเพิ่ม</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>หมายเหตุ</label>
+              <input type="text" id="editRegNote" name="note" class="form-control">
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('editRegModal')">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">บันทึกการแก้ไข</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 12. Upload Regulation Document Modal -->
+  <div id="uploadRegDocModal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 550px;">
+      <div class="modal-header">
+        <h3>📎 แนบไฟล์เอกสารระเบียบ / ข้อบังคับ</h3>
+        <button class="modal-close-btn" onclick="closeModal('uploadRegDocModal')">&times;</button>
+      </div>
+      <form id="uploadRegDocForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>ผูกกับขั้นตอน (ถ้ามี)</label>
+            <select name="stepNumber" class="form-control">
+              <option value="">-- เอกสารทั่วไป --</option>
+              <option value="1">ขั้นที่ 1: แบบคำขอและมติที่ประชุม</option>
+              <option value="2">ขั้นที่ 2: เอกสารการตรวจเบื้องต้น</option>
+              <option value="3">ขั้นที่ 3: ร่างระเบียบ/ข้อบังคับที่ตรวจแก้</option>
+              <option value="4">ขั้นที่ 4: หนังสือเสนอนายทะเบียน</option>
+              <option value="5">ขั้นที่ 5: ข้อบังคับที่ประทับตรารับจดทะเบียน/หนังสือแจ้ง</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>ประเภทเอกสาร</label>
+            <select name="docType" class="form-control">
+              <option value="ร่างระเบียบ/ข้อบังคับ">ร่างระเบียบ/ข้อบังคับ</option>
+              <option value="มติที่ประชุม">มติที่ประชุมใหญ่ / คณะกรรมการ</option>
+              <option value="หนังสือแจ้งผล/รับจดทะเบียน">หนังสือแจ้งผล / ประทับตรารับจดทะเบียน</option>
+              <option value="เอกสารประกอบอื่นๆ">เอกสารประกอบอื่นๆ</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>เลือกไฟล์เอกสาร (PDF, รูปภาพ, Word ขนาดไม่เกิน 10MB) <span style="color: red;">*</span></label>
+            <div id="regFileDropzone" class="file-dropzone">
+              <span style="font-size: 2rem;">📤</span>
+              <p style="margin: 6px 0; font-weight: 500;">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">รองรับ .pdf, .jpg, .png, .docx</span>
+              <input type="file" id="regDocFileInput" name="docFile" style="display: none;"
+                accept=".pdf,.jpg,.jpeg,.png,.docx,.doc,.xlsx">
+            </div>
+            <div id="regUploadFilePreview"
+              style="margin-top: 8px; font-size: 0.85rem; color: var(--primary); display: none;"></div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('uploadRegDocModal')">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">อัพโหลดเอกสาร</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 13. Audit Log Modal -->
+  <div id="auditLogModal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 700px;">
+      <div class="modal-header">
+        <h3>📋 ประวัติการทำรายการ (Audit Log)</h3>
+        <button class="modal-close-btn" onclick="closeModal('auditLogModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="auditLogList"
+          style="display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('auditLogModal')">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 14. Login Modal -->
+  <div id="loginModal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3>🔑 เข้าสู่ระบบเจ้าหน้าที่ (Admin)</h3>
+        <button class="modal-close-btn" onclick="closeModal('loginModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align: center; padding: 1.75rem 1.5rem;">
+        <div style="font-size: 3rem; margin-bottom: 0.75rem;">🛡️</div>
+        <h4 style="margin-bottom: 0.5rem; color: var(--primary);">การยืนยันตัวตนเจ้าหน้าที่</h4>
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+          เข้าสู่ระบบเพื่อแก้ไขขั้นตอนการชำระบัญชี บันทึกระเบียบ/ข้อบังคับ แต่งตั้งผู้ชำระบัญชี และอัพโหลดเอกสารราชการ
+        </p>
+
+        <!-- Google One Tap / GIS Button Container -->
+        <div id="googleSignInBtn" style="display: flex; justify-content: center; margin-bottom: 1rem;"></div>
+
+        <!-- Demo Mode Quick Login -->
+        <div style="border-top: 1px dashed var(--border-color); padding-top: 1rem; margin-top: 1rem;">
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">สำหรับทดสอบระบบ (ไม่ต้องใช้
+            Google Account):</p>
+          <button class="btn btn-primary" onclick="handleDemoLogin()" style="width: 100%;">
+            ⚡ เข้าสู่ระบบในฐานะ Admin (Demo)
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: center;">
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('loginModal')">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Application Scripts -->
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
