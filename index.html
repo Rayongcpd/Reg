@@ -654,9 +654,25 @@
               <input type="text" id="createOrderDate" name="orderDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
             </div>
             <div class="form-group">
-              <label>หมายเหตุรวม</label>
-              <input type="text" name="note" class="form-control" placeholder="รายละเอียดหรือบันทึกเพิ่มเติม">
+              <label>ขั้นตอนเริ่มต้น / อยู่ที่ขั้นตอน <span style="color: red;">*</span></label>
+              <select name="initialStep" class="form-control" style="font-weight: 500;">
+                <option value="1" selected>ขั้นที่ 1: ประกาศ/เผยแพร่การเลิกและผู้ชำระบัญชี</option>
+                <option value="2">ขั้นที่ 2: รับมอบทรัพย์สิน บัญชี เอกสาร และทำงบการเงิน ณ วันเลิก</option>
+                <option value="3">ขั้นที่ 3: ส่งงบการเงิน ณ วันเลิก ให้ผู้สอบบัญชี</option>
+                <option value="4">ขั้นที่ 4: ผู้สอบบัญชีตรวจสอบและรับรองงบการเงิน</option>
+                <option value="5">ขั้นที่ 5: เสนอขออนุมัติงบการเงิน ณ วันเลิก</option>
+                <option value="6">ขั้นที่ 6: จัดการทรัพย์สิน หนี้สิน และชำระสะสางหนี้สิน</option>
+                <option value="7">ขั้นที่ 7: จัดทำรายงานผลและงบเสร็จสิ้นการชำระบัญชี</option>
+                <option value="8">ขั้นที่ 8: ผู้สอบบัญชีตรวจสอบและรับรองงบเสร็จสิ้น</option>
+                <option value="9">ขั้นที่ 9: นายทะเบียนสหกรณ์สั่งถอนชื่อสหกรณ์</option>
+                <option value="10">ขั้นที่ 10: ส่งมอบบรรดาสมุด บัญชี และเอกสาร (เสร็จสิ้น)</option>
+              </select>
             </div>
+          </div>
+
+          <div class="form-group">
+            <label>หมายเหตุรวม</label>
+            <input type="text" name="note" class="form-control" placeholder="รายละเอียดหรือบันทึกเพิ่มเติม">
           </div>
 
           <hr style="border: none; border-top: 1px dashed var(--border-color); margin: 1rem 0;">
@@ -1155,10 +1171,22 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label>หมายเหตุ / รายละเอียดการประชุม</label>
-            <input type="text" name="note" class="form-control"
-              placeholder="เช่น มติที่ประชุมใหญ่สามัญประจำปี 2566 เมื่อวันที่ 10 มี.ค. 67">
+          <div class="form-row">
+            <div class="form-group">
+              <label>ขั้นตอนเริ่มต้น / อยู่ที่ขั้นตอน <span style="color: red;">*</span></label>
+              <select name="initialStep" class="form-control" style="font-weight: 500;">
+                <option value="1" selected>🟡 ขั้นที่ 1: ยื่นเรื่องและรับเอกสารคำขอ</option>
+                <option value="2">🟡 ขั้นที่ 2: กลุ่มจัดตั้งฯ ตรวจสอบเบื้องต้น</option>
+                <option value="3">🟡 ขั้นที่ 3: กลุ่มตรวจการสหกรณ์/นิติการตรวจร่าง</option>
+                <option value="4">🟡 ขั้นที่ 4: เสนอนายทะเบียนสหกรณ์พิจารณา</option>
+                <option value="5">🟢 ขั้นที่ 5: แจ้งผลและส่งมอบให้สหกรณ์ถือใช้ (เสร็จสิ้น)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>หมายเหตุ / รายละเอียดการประชุม</label>
+              <input type="text" name="note" class="form-control"
+                placeholder="เช่น มติที่ประชุมใหญ่สามัญประจำปี 2566 เมื่อวันที่ 10 มี.ค. 67">
+            </div>
           </div>
 
           <hr style="border: none; border-top: 1px dashed var(--border-color); margin: 1rem 0;">

@@ -815,6 +815,7 @@ async function handleCreateCaseSubmit(e) {
     dissolutionType: form.dissolutionType ? form.dissolutionType.value : 'คำสั่งเลิก',
     orderNumber: form.orderNumber.value.trim(),
     orderDate: fromThaiDateInput(form.orderDate.value),
+    initialStep: form.initialStep ? parseInt(form.initialStep.value, 10) : 1,
     liquidators: liquidators,
     note: form.note.value.trim()
   };
@@ -1648,6 +1649,7 @@ async function handleCreateRegSubmit(e) {
     submitDate: fromThaiDateInput(form.submitDate.value),
     officerName: form.officerName.value.trim(),
     officerContact: form.officerContact.value.trim(),
+    initialStep: form.initialStep ? parseInt(form.initialStep.value, 10) : 1,
     note: form.note.value.trim(),
     items: items,
     // ponytail: fallback single fields for backward compatibility
