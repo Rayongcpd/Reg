@@ -12,7 +12,7 @@
 // ------------------------------------------------------------------------------
 const AppState = {
   currentView: 'portal', // 'portal' | 'liquidation' | 'regulations'
-  
+
   // Module 1: Liquidation State
   cases: [],
   filteredCases: [],
@@ -35,1023 +35,49 @@ const AppState = {
   regFilterStatus: 'ALL',
 
   // System State
-  auditLogs: [],
   currentUser: null, // { email, name, role, token }
-  isDemoMode: false,
   isLoading: false
 };
 
-// ------------------------------------------------------------------------------
-// 2. Default Initial Mock Data
-// ------------------------------------------------------------------------------
-
-// 2.1 Mock Liquidation Cases (Module 1)
-const INITIAL_MOCK_CASES = [
-  {
-    caseId: 'CASE-001-2566',
-    coopId: 'COOP-001',
-    coopName: 'สหกรณ์การเกษตรเมืองอุดรพัฒนา จำกัด',
-    regNumber: 'ก.0123/2545',
-    coopType: 'สหกรณ์การเกษตร',
-    location: 'อ.เมือง จ.อุดรธานี',
-    dissolutionType: 'คำสั่งเลิก',
-    orderNumber: 'คำสั่ง นทส. ที่ 15/2566',
-    orderDate: '2023-03-15T00:00:00.000Z',
-    currentStep: 6,
-    caseStatus: 'กำลังชำระบัญชี',
-    lastUpdated: '2026-07-20T10:30:00.000Z',
-    note: 'อยู่ระหว่างเร่งรัดติดตามหนี้สินจากสมาชิกลูกหนี้ 45 ราย',
-    liquidators: 'นายสมศักดิ์ รักสหกรณ์',
-    liquidatorsDetail: [
-      {
-        liquidatorId: 'LQ-001',
-        name: 'นายสมศักดิ์ รักสหกรณ์',
-        position: 'นักวิชาการสหกรณ์ชำนาญการ',
-        orderNumber: 'คำสั่งแต่งตั้ง นทส. ที่ 16/2566',
-        startDate: '2023-03-15T00:00:00.000Z',
-        endDate: '',
-        reason: '',
-        status: 'ปัจจุบัน',
-        contact: '081-234-5678'
-      }
-    ],
-    hasIssues: true,
-    issuesCount: 1,
-    issues: [
-      {
-        stepNumber: 6,
-        stepName: 'ดำเนินการจัดการทรัพย์สิน หนี้สิน และชำระสะสางหนี้สิน',
-        issue: 'ลูกหนี้เงินกู้บางส่วนย้ายถิ่นฐาน ติดตามทวงถามได้ยาก อยู่ระหว่างประสานฝ่ายกฎหมาย'
-      }
-    ],
-    steps: [
-      { stepNumber: 1, stepName: 'ประกาศ/เผยแพร่การเลิกและผู้ชำระบัญชี', status: 'เสร็จสิ้น', startDate: '2023-03-15', endDate: '2023-04-01', issue: '', note: 'ประกาศราชกิจจานุเบกษาเรียบร้อย' },
-      { stepNumber: 2, stepName: 'รับมอบทรัพย์สิน บัญชี เอกสาร และทำงบการเงิน ณ วันเลิก', status: 'เสร็จสิ้น', startDate: '2023-04-02', endDate: '2023-06-30', issue: '', note: 'รับมอบเอกสารและสรุปทรัพย์สิน' },
-      { stepNumber: 3, stepName: 'ส่งงบการเงิน ณ วันเลิก ให้ผู้สอบบัญชี', status: 'เสร็จสิ้น', startDate: '2023-07-01', endDate: '2023-07-15', issue: '', note: 'ส่งสำนักงานตรวจบัญชีสหกรณ์' },
-      { stepNumber: 4, stepName: 'ผู้สอบบัญชีตรวจสอบและรับรองงบการเงิน', status: 'เสร็จสิ้น', startDate: '2023-07-16', endDate: '2023-11-20', issue: '', note: 'ผู้สอบบัญชีรับรองแบบไม่มีเงื่อนไข' },
-      { stepNumber: 5, stepName: 'เสนอขออนุมัติงบการเงิน ณ วันเลิก', status: 'เสร็จสิ้น', startDate: '2023-11-25', endDate: '2024-01-10', issue: '', note: 'นายทะเบียนสหกรณ์อนุมัติงบการเงิน' },
-      { stepNumber: 6, stepName: 'จัดการทรัพย์สิน หนี้สิน และชำระสะสางหนี้สิน', status: 'กำลังดำเนินการ', startDate: '2024-01-15', endDate: '', issue: 'ลูกหนี้เงินกู้บางส่วนย้ายถิ่นฐาน ติดตามทวงถามได้ยาก อยู่ระหว่างประสานฝ่ายกฎหมาย', note: 'จำหน่ายทรัพย์สินได้แล้ว 60%' },
-      { stepNumber: 7, stepName: 'จัดทำรายงานผลและงบเสร็จสิ้นการชำระบัญชี', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 8, stepName: 'ผู้สอบบัญชีตรวจสอบและรับรองงบเสร็จสิ้น', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 9, stepName: 'นายทะเบียนสหกรณ์สั่งถอนชื่อสหกรณ์', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 10, stepName: 'ส่งมอบบรรดาสมุด บัญชี และเอกสาร', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' }
-    ],
-    documents: [
-      { docId: 'DOC-01', stepNumber: 1, fileName: 'คำสั่งเลิกสหกรณ์_15_2566.pdf', driveUrl: 'https://drive.google.com', docType: 'คำสั่ง/ประกาศ', fileSize: '1.4 MB', uploadDate: '2023-03-16' },
-      { docId: 'DOC-02', stepNumber: 4, fileName: 'รายงานการสอบบัญชี_งบการเงินวันเลิก.pdf', driveUrl: 'https://drive.google.com', docType: 'งบการเงิน/รายงาน', fileSize: '3.8 MB', uploadDate: '2023-11-22' }
-    ]
-  },
-  {
-    caseId: 'CASE-002-2565',
-    coopId: 'COOP-002',
-    coopName: 'สหกรณ์บริการเดินรถสองแถวขอนแก่น จำกัด',
-    regNumber: 'บ.0456/2539',
-    coopType: 'สหกรณ์บริการ',
-    location: 'อ.เมือง จ.ขอนแก่น',
-    dissolutionType: 'ประกาศเลิก',
-    orderNumber: 'ประกาศ นทส. ที่ 42/2565',
-    orderDate: '2022-08-10T00:00:00.000Z',
-    currentStep: 3,
-    caseStatus: 'กำลังชำระบัญชี',
-    lastUpdated: '2026-06-15T14:20:00.000Z',
-    note: 'เปลี่ยนตัวผู้ชำระบัญชีเนื่องจากท่านเดิมเกษียณอายุราชการ',
-    liquidators: 'นางสาววิไลลักษณ์ มั่นคง',
-    liquidatorsDetail: [
-      {
-        liquidatorId: 'LQ-002-A',
-        name: 'นายบุญเลิศ กองทอง',
-        position: 'ผู้อำนวยการกลุ่มส่งเสริมสหกรณ์',
-        orderNumber: 'คำสั่งแต่งตั้ง นทส. ที่ 43/2565',
-        startDate: '2022-08-10T00:00:00.000Z',
-        endDate: '2024-09-30T00:00:00.000Z',
-        reason: 'เกษียณอายุราชการ',
-        status: 'พ้นหน้าที่แล้ว',
-        contact: '-'
-      },
-      {
-        liquidatorId: 'LQ-002-B',
-        name: 'นางสาววิไลลักษณ์ มั่นคง',
-        position: 'นักวิชาการสหกรณ์ชำนาญการ',
-        orderNumber: 'คำสั่งแต่งตั้ง นทส. ที่ 68/2567',
-        startDate: '2024-10-01T00:00:00.000Z',
-        endDate: '',
-        reason: 'แต่งตั้งแทนผู้เกษียณอายุ',
-        status: 'ปัจจุบัน',
-        contact: '089-987-6543'
-      }
-    ],
-    hasIssues: true,
-    issuesCount: 1,
-    issues: [
-      {
-        stepNumber: 3,
-        stepName: 'ส่งงบการเงิน ณ วันเลิก ให้ผู้สอบบัญชี',
-        issue: 'เอกสารใบสำคัญรับ-จ่ายในอดีตสูญหายบางส่วน อยู่ระหว่างรวบรวมพยานหลักฐานทดแทน'
-      }
-    ],
-    steps: [
-      { stepNumber: 1, stepName: 'ประกาศ/เผยแพร่การเลิกและผู้ชำระบัญชี', status: 'เสร็จสิ้น', startDate: '2022-08-10', endDate: '2022-09-01', issue: '', note: '' },
-      { stepNumber: 2, stepName: 'รับมอบทรัพย์สิน บัญชี เอกสาร และทำงบการเงิน ณ วันเลิก', status: 'เสร็จสิ้น', startDate: '2022-09-02', endDate: '2024-03-30', issue: '', note: '' },
-      { stepNumber: 3, stepName: 'ส่งงบการเงิน ณ วันเลิก ให้ผู้สอบบัญชี', status: 'กำลังดำเนินการ', startDate: '2024-04-01', endDate: '', issue: 'เอกสารใบสำคัญรับ-จ่ายในอดีตสูญหายบางส่วน อยู่ระหว่างรวบรวมพยานหลักฐานทดแทน', note: '' },
-      { stepNumber: 4, stepName: 'ผู้สอบบัญชีตรวจสอบและรับรองงบการเงิน', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 5, stepName: 'เสนอขออนุมัติงบการเงิน ณ วันเลิก', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 6, stepName: 'จัดการทรัพย์สิน หนี้สิน และชำระสะสางหนี้สิน', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 7, stepName: 'จัดทำรายงานผลและงบเสร็จสิ้นการชำระบัญชี', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 8, stepName: 'ผู้สอบบัญชีตรวจสอบและรับรองงบเสร็จสิ้น', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 9, stepName: 'นายทะเบียนสหกรณ์สั่งถอนชื่อสหกรณ์', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 10, stepName: 'ส่งมอบบรรดาสมุด บัญชี และเอกสาร', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' }
-    ],
-    documents: [
-      { docId: 'DOC-03', stepNumber: 1, fileName: 'ประกาศเลิกสหกรณ์_42_2565.pdf', driveUrl: 'https://drive.google.com', docType: 'คำสั่ง/ประกาศ', fileSize: '1.2 MB', uploadDate: '2022-08-12' }
-    ]
-  },
-  {
-    caseId: 'CASE-003-2566',
-    coopId: 'GRP-001',
-    coopName: 'กลุ่มเกษตรกรทำไร่นาดีพัฒนา',
-    regNumber: 'กษ.0118/2548',
-    coopType: 'กลุ่มเกษตรกรทำไร่',
-    location: 'อ.หนองหาน จ.อุดรธานี',
-    dissolutionType: 'คำสั่งเลิก',
-    orderNumber: 'คำสั่ง นทส. ที่ 12/2566',
-    orderDate: '2023-02-20T00:00:00.000Z',
-    currentStep: 4,
-    caseStatus: 'กำลังชำระบัญชี',
-    lastUpdated: '2026-05-18T10:00:00.000Z',
-    note: 'กลุ่มเกษตรกรหยุดดำเนินกิจการ สมาชิกมีมติยุบเลิกกลุ่ม',
-    liquidators: 'นายกิตติชัย ส่งเสริมไทย',
-    liquidatorsDetail: [
-      {
-        liquidatorId: 'LQ-003-GRP',
-        name: 'นายกิตติชัย ส่งเสริมไทย',
-        position: 'นักวิชาการส่งเสริมการเกษตรชำนาญการ',
-        orderNumber: 'คำสั่งแต่งตั้ง นทส. ที่ 13/2566',
-        startDate: '2023-02-20T00:00:00.000Z',
-        endDate: '',
-        reason: '',
-        status: 'ปัจจุบัน',
-        contact: '084-555-1234'
-      }
-    ],
-    hasIssues: false,
-    issuesCount: 0,
-    issues: [],
-    steps: [
-      { stepNumber: 1, stepName: 'ประกาศ/เผยแพร่การเลิกและผู้ชำระบัญชี', status: 'เสร็จสิ้น', startDate: '2023-02-20', endDate: '2023-03-05', issue: '', note: '' },
-      { stepNumber: 2, stepName: 'รับมอบทรัพย์สิน บัญชี เอกสาร และทำงบการเงิน ณ วันเลิก', status: 'เสร็จสิ้น', startDate: '2023-03-06', endDate: '2023-08-30', issue: '', note: '' },
-      { stepNumber: 3, stepName: 'ส่งงบการเงิน ณ วันเลิก ให้ผู้สอบบัญชี', status: 'เสร็จสิ้น', startDate: '2023-09-01', endDate: '2023-11-15', issue: '', note: '' },
-      { stepNumber: 4, stepName: 'ผู้สอบบัญชีตรวจสอบและรับรองงบการเงิน', status: 'กำลังดำเนินการ', startDate: '2023-11-20', endDate: '', issue: '', note: 'รอผู้สอบบัญชีรับรองงบการเงิน' },
-      { stepNumber: 5, stepName: 'เสนอขออนุมัติงบการเงิน ณ วันเลิก', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 6, stepName: 'จัดการทรัพย์สิน หนี้สิน และชำระสะสางหนี้สิน', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 7, stepName: 'จัดทำรายงานผลและงบเสร็จสิ้นการชำระบัญชี', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 8, stepName: 'ผู้สอบบัญชีตรวจสอบและรับรองงบเสร็จสิ้น', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 9, stepName: 'นายทะเบียนสหกรณ์สั่งถอนชื่อสหกรณ์', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 10, stepName: 'ส่งมอบบรรดาสมุด บัญชี และเอกสาร', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' }
-    ],
-    documents: [
-      { docId: 'DOC-GRP-01', stepNumber: 1, fileName: 'คำสั่งเลิกกลุ่มเกษตรกรทำไร่นาดีพัฒนา.pdf', driveUrl: 'https://drive.google.com', docType: 'คำสั่ง/ประกาศ', fileSize: '1.1 MB', uploadDate: '2023-02-22' }
-    ]
-  },
-  {
-    caseId: 'CASE-005-2566',
-    coopId: 'GRP-002',
-    coopName: 'กลุ่มเกษตรกรทำนาบ้านหนองบัวพัฒนา',
-    regNumber: 'กษ.0089/2542',
-    coopType: 'กลุ่มเกษตรกรทำนา',
-    location: 'อ.เมือง จ.ขอนแก่น',
-    dissolutionType: 'คำสั่งเลิก',
-    orderNumber: 'คำสั่ง นทส. ที่ 29/2566',
-    orderDate: '2023-08-15T00:00:00.000Z',
-    currentStep: 2,
-    caseStatus: 'กำลังชำระบัญชี',
-    lastUpdated: '2026-06-01T11:20:00.000Z',
-    note: 'อยู่ระหว่างรวบรวมทรัพย์สินและสมุดบัญชีจากคณะกรรมการชุดเดิม',
-    liquidators: 'นางรัตนา ชัยมงคล',
-    liquidatorsDetail: [
-      {
-        liquidatorId: 'LQ-005-GRP',
-        name: 'นางรัตนา ชัยมงคล',
-        position: 'นักวิชาการสหกรณ์ปฏิบัติการ',
-        orderNumber: 'คำสั่งแต่งตั้ง นทส. ที่ 30/2566',
-        startDate: '2023-08-15T00:00:00.000Z',
-        endDate: '',
-        reason: '',
-        status: 'ปัจจุบัน',
-        contact: '082-123-9988'
-      }
-    ],
-    hasIssues: false,
-    issuesCount: 0,
-    issues: [],
-    steps: [
-      { stepNumber: 1, stepName: 'ประกาศ/เผยแพร่การเลิกและผู้ชำระบัญชี', status: 'เสร็จสิ้น', startDate: '2023-08-15', endDate: '2023-08-30', issue: '', note: '' },
-      { stepNumber: 2, stepName: 'รับมอบทรัพย์สิน บัญชี เอกสาร และทำงบการเงิน ณ วันเลิก', status: 'กำลังดำเนินการ', startDate: '2023-09-01', endDate: '', issue: '', note: 'อยู่ระหว่างสรุปงบทรัพย์สิน' },
-      { stepNumber: 3, stepName: 'ส่งงบการเงิน ณ วันเลิก ให้ผู้สอบบัญชี', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 4, stepName: 'ผู้สอบบัญชีตรวจสอบและรับรองงบการเงิน', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 5, stepName: 'เสนอขออนุมัติงบการเงิน ณ วันเลิก', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 6, stepName: 'จัดการทรัพย์สิน หนี้สิน และชำระสะสางหนี้สิน', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 7, stepName: 'จัดทำรายงานผลและงบเสร็จสิ้นการชำระบัญชี', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 8, stepName: 'ผู้สอบบัญชีตรวจสอบและรับรองงบเสร็จสิ้น', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 9, stepName: 'นายทะเบียนสหกรณ์สั่งถอนชื่อสหกรณ์', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 10, stepName: 'ส่งมอบบรรดาสมุด บัญชี และเอกสาร', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' }
-    ],
-    documents: []
-  },
-  {
-    caseId: 'CASE-004-2564',
-    coopId: 'COOP-003',
-    coopName: 'สหกรณ์ร้านค้าครูนครราชสีมา จำกัด',
-    regNumber: 'ร.0089/2535',
-    coopType: 'สหกรณ์ร้านค้า',
-    location: 'อ.เมือง จ.นครราชสีมา',
-    dissolutionType: 'คำสั่งเลิก',
-    orderNumber: 'คำสั่ง นทส. ที่ 08/2564',
-    orderDate: '2021-05-18T00:00:00.000Z',
-    currentStep: 10,
-    caseStatus: 'เสร็จสิ้น',
-    lastUpdated: '2026-03-10T09:00:00.000Z',
-    note: 'การชำระบัญชีเสร็จสิ้นสมบูรณ์ ส่งมอบบัญชีและถอนชื่อเรียบร้อยแล้ว',
-    liquidators: 'นายประสิทธิ์ กิจเจริญ',
-    liquidatorsDetail: [
-      {
-        liquidatorId: 'LQ-004',
-        name: 'นายประสิทธิ์ กิจเจริญ',
-        position: 'นักวิชาการสหกรณ์ชำนาญการพิเศษ',
-        orderNumber: 'คำสั่งแต่งตั้ง นทส. ที่ 09/2564',
-        startDate: '2021-05-18T00:00:00.000Z',
-        endDate: '2026-03-10T00:00:00.000Z',
-        reason: 'เสร็จสิ้นการชำระบัญชี',
-        status: 'เสร็จสิ้นภารกิจ',
-        contact: '-'
-      }
-    ],
-    hasIssues: false,
-    issuesCount: 0,
-    issues: [],
-    steps: [
-      { stepNumber: 1, stepName: 'ประกาศ/เผยแพร่การเลิกและผู้ชำระบัญชี', status: 'เสร็จสิ้น', startDate: '2021-05-18', endDate: '2021-06-05', issue: '', note: '' },
-      { stepNumber: 2, stepName: 'รับมอบทรัพย์สิน บัญชี เอกสาร และทำงบการเงิน ณ วันเลิก', status: 'เสร็จสิ้น', startDate: '2021-06-06', endDate: '2021-12-15', issue: '', note: '' },
-      { stepNumber: 3, stepName: 'ส่งงบการเงิน ณ วันเลิก ให้ผู้สอบบัญชี', status: 'เสร็จสิ้น', startDate: '2021-12-16', endDate: '2022-01-10', issue: '', note: '' },
-      { stepNumber: 4, stepName: 'ผู้สอบบัญชีตรวจสอบและรับรองงบการเงิน', status: 'เสร็จสิ้น', startDate: '2022-01-11', endDate: '2022-05-20', issue: '', note: '' },
-      { stepNumber: 5, stepName: 'เสนอขออนุมัติงบการเงิน ณ วันเลิก', status: 'เสร็จสิ้น', startDate: '2022-05-25', endDate: '2022-08-10', issue: '', note: '' },
-      { stepNumber: 6, stepName: 'จัดการทรัพย์สิน หนี้สิน และชำระสะสางหนี้สิน', status: 'เสร็จสิ้น', startDate: '2022-08-15', endDate: '2024-11-30', issue: '', note: 'คืนทุนและจ่ายหนี้ครบถ้วน' },
-      { stepNumber: 7, stepName: 'จัดทำรายงานผลและงบเสร็จสิ้นการชำระบัญชี', status: 'เสร็จสิ้น', startDate: '2024-12-01', endDate: '2025-04-15', issue: '', note: '' },
-      { stepNumber: 8, stepName: 'ผู้สอบบัญชีตรวจสอบและรับรองงบเสร็จสิ้น', status: 'เสร็จสิ้น', startDate: '2025-04-16', endDate: '2025-09-30', issue: '', note: '' },
-      { stepNumber: 9, stepName: 'นายทะเบียนสหกรณ์สั่งถอนชื่อสหกรณ์', status: 'เสร็จสิ้น', startDate: '2025-10-01', endDate: '2026-01-15', issue: '', note: 'ประกาศถอนชื่อในราชกิจจานุเบกษา' },
-      { stepNumber: 10, stepName: 'ส่งมอบบรรดาสมุด บัญชี และเอกสาร', status: 'เสร็จสิ้น', startDate: '2026-01-20', endDate: '2026-03-10', issue: '', note: 'ส่งมอบคลังเอกสารเรียบร้อย' }
-    ],
-    documents: [
-      { docId: 'DOC-05', stepNumber: 9, fileName: 'ประกาศถอนชื่อสหกรณ์ออกจากทะเบียน.pdf', driveUrl: 'https://drive.google.com', docType: 'คำสั่ง/ประกาศ', fileSize: '980 KB', uploadDate: '2026-01-18' }
-    ]
-  }
-];
-
-// 2.2 Mock Regulations & Bylaws Data (Module 2)
-const INITIAL_MOCK_REGULATIONS = [
-  {
-    regId: 'REG-001-2567',
-    coopName: 'สหกรณ์การเกษตรเมืองอุดรพัฒนา จำกัด',
-    regNumber: 'ก.0123/2545',
-    coopType: 'สหกรณ์การเกษตร',
-    docType: 'ข้อบังคับสหกรณ์',
-    title: 'ข้อบังคับสหกรณ์การเกษตรเมืองอุดรพัฒนา จำกัด พ.ศ. 2567 (ฉบับแก้ไขเพิ่มเติม ฉบับที่ 3)',
-    docNumber: 'สห.อด 01/2567',
-    submitDate: '2024-02-10T00:00:00.000Z',
-    officerName: 'นายสมเกียรติ สหกรณ์ดี',
-    officerContact: '081-999-8877',
-    currentStep: 4,
-    status: 'อยู่ระหว่างพิจารณา', // 'อยู่ระหว่างพิจารณา' | 'รับจดทะเบียน/เห็นชอบ/รับทราบ' | 'ส่งคืนแก้ไข'
-    lastUpdated: '2026-07-25T11:00:00.000Z',
-    note: 'มติที่ประชุมใหญ่สามัญประจำปี 2566 ขอแก้ไขเรื่องการถือหุ้นและการเลือกตั้งกรรมการ',
-    hasIssues: false,
-    issuesCount: 0,
-    issues: [],
-    steps: [
-      { stepNumber: 1, stepName: 'ยื่นเรื่องและรับเอกสารคำขอ', status: 'เสร็จสิ้น', startDate: '2024-02-10', endDate: '2024-02-12', issue: '', note: 'รับเรื่องผ่านระบบสารบรรณ สห.อด 01/2567' },
-      { stepNumber: 2, stepName: 'กลุ่มจัดตั้งฯ ตรวจสอบเบื้องต้น', status: 'เสร็จสิ้น', startDate: '2024-02-13', endDate: '2024-02-25', issue: '', note: 'มติที่ประชุมถูกต้องครบองค์ประชุมตามกฎหมาย' },
-      { stepNumber: 3, stepName: 'กลุ่มตรวจการสหกรณ์/นิติการตรวจร่าง', status: 'เสร็จสิ้น', startDate: '2024-02-26', endDate: '2024-03-10', issue: '', note: 'ตรวจร่างข้อบังคับไม่ขัดต่อกฎหมายและระเบียบนายทะเบียนฯ' },
-      { stepNumber: 4, stepName: 'เสนอนายทะเบียนสหกรณ์พิจารณา', status: 'กำลังดำเนินการ', startDate: '2024-03-15', endDate: '', issue: '', note: 'อยู่ระหว่างเสนอลงนามสั่งรับจดทะเบียน' },
-      { stepNumber: 5, stepName: 'แจ้งผลและส่งมอบให้สหกรณ์ถือใช้', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' }
-    ],
-    documents: [
-      { docId: 'RDOC-01', stepNumber: 1, fileName: 'คำขอจดทะเบียนและรายงานการประชุมใหญ่.pdf', driveUrl: 'https://drive.google.com', docType: 'มติที่ประชุม', fileSize: '2.4 MB', uploadDate: '2024-02-10' },
-      { docId: 'RDOC-02', stepNumber: 3, fileName: 'ร่างข้อบังคับฉบับแก้ไขเพิ่มเติม_ผ่านการตรวจ.pdf', driveUrl: 'https://drive.google.com', docType: 'ร่างระเบียบ/ข้อบังคับ', fileSize: '1.8 MB', uploadDate: '2024-03-10' }
-    ]
-  },
-  {
-    regId: 'REG-002-2567',
-    coopName: 'สหกรณ์ออมทรัพย์ครูขอนแก่น จำกัด',
-    regNumber: 'อ.0456/2540',
-    coopType: 'สหกรณ์ออมทรัพย์',
-    docType: 'ระเบียบสหกรณ์',
-    title: 'ระเบียบว่าด้วยการให้เงินกู้แก่สมาชิกสหกรณ์ พ.ศ. 2567',
-    docNumber: 'รับที่ 312/67',
-    submitDate: '2024-03-01T00:00:00.000Z',
-    officerName: 'นางสาวพัชรา รักงาน',
-    officerContact: '089-111-2233',
-    currentStep: 3,
-    status: 'ส่งคืนแก้ไข',
-    lastUpdated: '2026-06-20T14:30:00.000Z',
-    note: 'มติคณะกรรมการดำเนินการ ชุดที่ 35 ครั้งที่ 2/2567',
-    hasIssues: true,
-    issuesCount: 1,
-    issues: [
-      {
-        stepNumber: 3,
-        stepName: 'กลุ่มตรวจการสหกรณ์/นิติการตรวจร่าง',
-        issue: 'ข้อ 18 กำหนดอัตราดอกเบี้ยและหลักประกันขัดต่อระเบียบนายทะเบียนสหกรณ์ ต้องปรับแก้ไขวงเงินและส่งร่างฉบับปรับปรุงใหม่'
-      }
-    ],
-    steps: [
-      { stepNumber: 1, stepName: 'ยื่นเรื่องและรับเอกสารคำขอ', status: 'เสร็จสิ้น', startDate: '2024-03-01', endDate: '2024-03-03', issue: '', note: '' },
-      { stepNumber: 2, stepName: 'กลุ่มจัดตั้งฯ ตรวจสอบเบื้องต้น', status: 'เสร็จสิ้น', startDate: '2024-03-04', endDate: '2024-03-15', issue: '', note: 'เอกสารมติ ครบถ้วน' },
-      { stepNumber: 3, stepName: 'กลุ่มตรวจการสหกรณ์/นิติการตรวจร่าง', status: 'กำลังดำเนินการ', startDate: '2024-03-16', endDate: '', issue: 'ข้อ 18 กำหนดอัตราดอกเบี้ยและหลักประกันขัดต่อระเบียบนายทะเบียนสหกรณ์ ต้องปรับแก้ไขวงเงินและส่งร่างฉบับปรับปรุงใหม่', note: 'ออกหนังสือแจ้งสหกรณ์เพื่อปรับปรุงข้อความ' },
-      { stepNumber: 4, stepName: 'เสนอนายทะเบียนสหกรณ์พิจารณา', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 5, stepName: 'แจ้งผลและส่งมอบให้สหกรณ์ถือใช้', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' }
-    ],
-    documents: [
-      { docId: 'RDOC-03', stepNumber: 1, fileName: 'มติคณะกรรมการ_ร่างระเบียบเงินกู้2567.pdf', driveUrl: 'https://drive.google.com', docType: 'มติที่ประชุม', fileSize: '1.5 MB', uploadDate: '2024-03-01' },
-      { docId: 'RDOC-04', stepNumber: 3, fileName: 'หนังสือแจ้งข้อสังเกตและให้แก้ไขร่างระเบียบ.pdf', driveUrl: 'https://drive.google.com', docType: 'หนังสือแจ้งผล/รับจดทะเบียน', fileSize: '850 KB', uploadDate: '2024-03-20' }
-    ]
-  },
-  {
-    regId: 'REG-003-2567',
-    coopName: 'กลุ่มเกษตรกรทำสวนยางพาราหนองสูง',
-    regNumber: 'กษ.0055/2550',
-    coopType: 'กลุ่มเกษตรกรทำสวน',
-    docType: 'ข้อบังคับสหกรณ์',
-    title: 'ข้อบังคับกลุ่มเกษตรกรทำสวนยางพาราหนองสูง พ.ศ. 2567 (ฉบับจัดตั้งและถือใช้ใหม่)',
-    docNumber: 'กษ.มด 05/2567',
-    submitDate: '2024-04-10T00:00:00.000Z',
-    officerName: 'นายวรวุฒิ เกษตรมั่นคง',
-    officerContact: '087-333-9900',
-    currentStep: 2,
-    status: 'อยู่ระหว่างพิจารณา',
-    lastUpdated: '2026-05-12T15:00:00.000Z',
-    note: 'มติที่ประชุมใหญ่จัดตั้งกลุ่มเกษตรกรตามระเบียบนายทะเบียน',
-    hasIssues: false,
-    issuesCount: 0,
-    issues: [],
-    steps: [
-      { stepNumber: 1, stepName: 'ยื่นเรื่องและรับเอกสารคำขอ', status: 'เสร็จสิ้น', startDate: '2024-04-10', endDate: '2024-04-12', issue: '', note: 'รับเรื่องและแบบคำขอจัดตั้ง' },
-      { stepNumber: 2, stepName: 'กลุ่มจัดตั้งฯ ตรวจสอบเบื้องต้น', status: 'กำลังดำเนินการ', startDate: '2024-04-15', endDate: '', issue: '', note: 'อยู่ระหว่างตรวจคุณสมบัติสมาชิกและมติที่ประชุม' },
-      { stepNumber: 3, stepName: 'กลุ่มตรวจการสหกรณ์/นิติการตรวจร่าง', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 4, stepName: 'เสนอนายทะเบียนสหกรณ์พิจารณา', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 5, stepName: 'แจ้งผลและส่งมอบให้สหกรณ์ถือใช้', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' }
-    ],
-    documents: [
-      { docId: 'RDOC-GRP-01', stepNumber: 1, fileName: 'คำขอจัดตั้งและร่างข้อบังคับกลุ่มเกษตรกร.pdf', driveUrl: 'https://drive.google.com', docType: 'มติที่ประชุม', fileSize: '2.1 MB', uploadDate: '2024-04-10' }
-    ]
-  },
-  {
-    regId: 'REG-005-2567',
-    coopName: 'กลุ่มเกษตรกรเลี้ยงสัตว์ท่าบ่อพัฒนา',
-    regNumber: 'กษ.0112/2544',
-    coopType: 'กลุ่มเกษตรกรเลี้ยงสัตว์',
-    docType: 'ระเบียบสหกรณ์',
-    title: 'ระเบียบว่าด้วยการใช้เงินทุนเพื่อส่งเสริมการเลี้ยงโคเนื้อ พ.ศ. 2567',
-    docNumber: 'กษ.นค 14/2567',
-    submitDate: '2024-05-02T00:00:00.000Z',
-    officerName: 'นางสาวจารุวรรณ เลี้ยงชีพ',
-    officerContact: '083-456-7890',
-    currentStep: 3,
-    status: 'อยู่ระหว่างพิจารณา',
-    lastUpdated: '2026-06-10T10:00:00.000Z',
-    note: 'มติคณะกรรมการกลุ่มเกษตรกร ขอความเห็นชอบระเบียบการใช้เงินกองทุน',
-    hasIssues: false,
-    issuesCount: 0,
-    issues: [],
-    steps: [
-      { stepNumber: 1, stepName: 'ยื่นเรื่องและรับเอกสารคำขอ', status: 'เสร็จสิ้น', startDate: '2024-05-02', endDate: '2024-05-04', issue: '', note: '' },
-      { stepNumber: 2, stepName: 'กลุ่มจัดตั้งฯ ตรวจสอบเบื้องต้น', status: 'เสร็จสิ้น', startDate: '2024-05-05', endDate: '2024-05-18', issue: '', note: 'ตรวจสอบคุณสมบัติและวัตถุประสงค์ถูกต้อง' },
-      { stepNumber: 3, stepName: 'กลุ่มตรวจการสหกรณ์/นิติการตรวจร่าง', status: 'กำลังดำเนินการ', startDate: '2024-05-20', endDate: '', issue: '', note: 'อยู่ระหว่างตรวจร่างระเบียบข้อกฎหมาย' },
-      { stepNumber: 4, stepName: 'เสนอนายทะเบียนสหกรณ์พิจารณา', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' },
-      { stepNumber: 5, stepName: 'แจ้งผลและส่งมอบให้สหกรณ์ถือใช้', status: 'ยังไม่เริ่ม', startDate: '', endDate: '', issue: '', note: '' }
-    ],
-    documents: [
-      { docId: 'RDOC-GRP-02', stepNumber: 1, fileName: 'ร่างระเบียบการใช้เงินทุนเลี้ยงสัตว์.pdf', driveUrl: 'https://drive.google.com', docType: 'ร่างระเบียบ/ข้อบังคับ', fileSize: '1.4 MB', uploadDate: '2024-05-02' }
-    ]
-  },
-  {
-    regId: 'REG-004-2566',
-    coopName: 'สหกรณ์บริการเดินรถสองแถวขอนแก่น จำกัด',
-    regNumber: 'บ.0456/2539',
-    coopType: 'สหกรณ์บริการ',
-    docType: 'ระเบียบสหกรณ์',
-    title: 'ระเบียบว่าด้วยการรับฝากเงินออมทรัพย์และเงินฝากประจำ พ.ศ. 2566',
-    docNumber: 'สห.ขก 88/2566',
-    submitDate: '2023-11-15T00:00:00.000Z',
-    officerName: 'นายเอกชัย ส่งเสริม',
-    officerContact: '086-444-5566',
-    currentStep: 5,
-    status: 'รับจดทะเบียน/เห็นชอบ/รับทราบ',
-    lastUpdated: '2026-01-10T09:00:00.000Z',
-    note: 'นายทะเบียนสหกรณ์ให้ความเห็นชอบและออกหนังสือแจ้งเรียบร้อยแล้ว',
-    hasIssues: false,
-    issuesCount: 0,
-    issues: [],
-    steps: [
-      { stepNumber: 1, stepName: 'ยื่นเรื่องและรับเอกสารคำขอ', status: 'เสร็จสิ้น', startDate: '2023-11-15', endDate: '2023-11-16', issue: '', note: '' },
-      { stepNumber: 2, stepName: 'กลุ่มจัดตั้งฯ ตรวจสอบเบื้องต้น', status: 'เสร็จสิ้น', startDate: '2023-11-17', endDate: '2023-11-28', issue: '', note: '' },
-      { stepNumber: 3, stepName: 'กลุ่มตรวจการสหกรณ์/นิติการตรวจร่าง', status: 'เสร็จสิ้น', startDate: '2023-11-29', endDate: '2023-12-15', issue: '', note: 'ตรวจร่างผ่าน' },
-      { stepNumber: 4, stepName: 'เสนอนายทะเบียนสหกรณ์พิจารณา', status: 'เสร็จสิ้น', startDate: '2023-12-16', endDate: '2023-12-28', issue: '', note: 'นายทะเบียนลงนามเห็นชอบ/รับทราบ' },
-      { stepNumber: 5, stepName: 'แจ้งผลและส่งมอบให้สหกรณ์ถือใช้', status: 'เสร็จสิ้น', startDate: '2024-01-05', endDate: '2024-01-10', issue: '', note: 'ส่งมอบหนังสือเห็นชอบระเบียบให้สหกรณ์ประกาศถือใช้' }
-    ],
-    documents: [
-      { docId: 'RDOC-05', stepNumber: 5, fileName: 'หนังสือเห็นชอบระเบียบการรับฝากเงิน_ประทับตรา.pdf', driveUrl: 'https://drive.google.com', docType: 'หนังสือแจ้งผล/รับจดทะเบียน', fileSize: '1.1 MB', uploadDate: '2024-01-10' }
-    ]
-  }
-];
 
 // ------------------------------------------------------------------------------
-// 3. API Transport & Mock Engine
+// 2. API Transport
 // ------------------------------------------------------------------------------
 const ApiClient = {
   async get(action, params = {}) {
-    if (AppState.isDemoMode || !CONFIG.APPS_SCRIPT_URL) {
-      return this.mockGet(action, params);
+    if (!CONFIG.APPS_SCRIPT_URL) {
+      throw new Error('ยังไม่ได้กำหนดค่า APPS_SCRIPT_URL ใน config.js');
     }
-    try {
-      const url = new URL(CONFIG.APPS_SCRIPT_URL);
-      url.searchParams.set('action', action);
-      Object.keys(params).forEach(k => {
-        if (params[k] !== undefined && params[k] !== null) url.searchParams.set(k, params[k]);
-      });
-      const response = await fetch(url.toString(), { method: 'GET', headers: { 'Accept': 'application/json' } });
-      const json = await response.json();
-      if (!json.success) throw new Error(json.error || 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
-      return json.data;
-    } catch (err) {
-      console.warn('Live API Error -> Fallback to Demo Mode:', err);
-      showToast('ไม่สามารถเชื่อมต่อฐานข้อมูลจริงได้ ระบบสลับเป็นโหมดทดสอบ (Demo)', 'warning');
-      AppState.isDemoMode = true;
-      updateModeBadge();
-      return this.mockGet(action, params);
-    }
+    const url = new URL(CONFIG.APPS_SCRIPT_URL);
+    url.searchParams.set('action', action);
+    Object.keys(params).forEach(k => {
+      if (params[k] !== undefined && params[k] !== null) url.searchParams.set(k, params[k]);
+    });
+    const response = await fetch(url.toString(), { method: 'GET', headers: { 'Accept': 'application/json' } });
+    const json = await response.json();
+    if (!json.success) throw new Error(json.error || 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
+    return json.data;
   },
 
   async post(action, data = {}) {
-    if (AppState.isDemoMode || !CONFIG.APPS_SCRIPT_URL) {
-      return this.mockPost(action, data);
+    if (!CONFIG.APPS_SCRIPT_URL) {
+      throw new Error('ยังไม่ได้กำหนดค่า APPS_SCRIPT_URL ใน config.js');
     }
-    try {
-      const payload = {
-        action: action,
-        sessionToken: AppState.currentUser ? AppState.currentUser.token : null,
-        ...data
-      };
-      const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
-      });
-      const json = await response.json();
-      if (!json.success) throw new Error(json.error || 'การบันทึกข้อมูลไม่สำเร็จ');
-      return json.data;
-    } catch (err) {
-      console.error('POST Error:', err);
-      throw err;
-    }
-  },
-
-  mockGet(action, params) {
-    // Liquidation
-    if (action === 'listCases') {
-      return JSON.parse(JSON.stringify(AppState.cases));
-    }
-    if (action === 'getCaseDetail') {
-      const found = AppState.cases.find(c => c.caseId === params.caseId);
-      if (!found) throw new Error('ไม่พบรายการชำระบัญชีที่ระบุ');
-      return JSON.parse(JSON.stringify(found));
-    }
-    if (action === 'getStats') {
-      return {
-        totalCases: AppState.cases.length,
-        activeCases: AppState.cases.filter(c => c.caseStatus !== 'เสร็จสิ้น' && c.currentStep < 10).length,
-        completedCases: AppState.cases.filter(c => c.caseStatus === 'เสร็จสิ้น' || c.currentStep >= 10).length,
-        casesWithIssues: AppState.cases.filter(c => c.hasIssues).length
-      };
-    }
-
-    // Regulations & Bylaws
-    if (action === 'listRegulations') {
-      return JSON.parse(JSON.stringify(AppState.regulations));
-    }
-    if (action === 'getRegDetail') {
-      const found = AppState.regulations.find(r => r.regId === params.regId);
-      if (!found) throw new Error('ไม่พบข้อมูลระเบียบ/ข้อบังคับที่ระบุ');
-      return JSON.parse(JSON.stringify(found));
-    }
-
-    if (action === 'getAuditLogs') {
-      return JSON.parse(JSON.stringify(AppState.auditLogs));
-    }
-    return null;
-  },
-
-  mockPost(action, data) {
-    const userEmail = AppState.currentUser ? AppState.currentUser.email : 'demo-admin@cpd.go.th';
-
-    if (action === 'login') {
-      return {
-        sessionToken: 'demo-token-' + Date.now(),
-        email: data.email || 'admin@cpd.go.th',
-        name: data.name || 'ผู้ดูแลระบบ (Admin Demo)',
-        role: 'Admin',
-        expiresAt: new Date(Date.now() + 86400000).toISOString()
-      };
-    }
-
-    // --- Liquidation Actions ---
-    if (action === 'createCase') {
-      const newCaseId = 'CASE-' + (AppState.cases.length + 1).toString().padStart(3, '0') + '-' + (new Date().getFullYear() + 543);
-      const newCoopId = 'COOP-' + (AppState.cases.length + 1).toString().padStart(3, '0');
-      const nowStr = new Date().toISOString();
-
-      let liquidatorsDetail = [];
-      if (Array.isArray(data.liquidators) && data.liquidators.length > 0) {
-        liquidatorsDetail = data.liquidators
-          .filter(l => l && l.name && l.name.trim() !== '')
-          .map((liq, idx) => ({
-            liquidatorId: 'LQ-' + Date.now() + '-' + (idx + 1),
-            name: liq.name.trim(),
-            position: liq.position ? liq.position.trim() : '',
-            orderNumber: liq.orderNumber ? liq.orderNumber.trim() : (data.liquidatorOrderNumber || '-'),
-            startDate: liq.startDate || data.orderDate || nowStr,
-            endDate: '',
-            reason: '',
-            status: 'ปัจจุบัน',
-            contact: liq.contact ? liq.contact.trim() : ''
-          }));
-      }
-
-      const liquidatorsNames = liquidatorsDetail.map(l => l.name).join(', ') || 'ยังไม่ระบุ';
-
-      const newCase = {
-        caseId: newCaseId,
-        coopId: newCoopId,
-        coopName: data.coopName,
-        regNumber: data.regNumber || '-',
-        coopType: data.coopType || 'สหกรณ์การเกษตร',
-        location: data.location || '-',
-        dissolutionType: data.dissolutionType || 'คำสั่งเลิก',
-        orderNumber: data.orderNumber || '-',
-        orderDate: data.orderDate || nowStr,
-        currentStep: 1,
-        caseStatus: 'กำลังชำระบัญชี',
-        lastUpdated: nowStr,
-        note: data.note || '',
-        liquidators: liquidatorsNames,
-        liquidatorsDetail: liquidatorsDetail,
-        hasIssues: false,
-        issuesCount: 0,
-        issues: [],
-        steps: CONFIG.LIQUIDATION_STEPS.map((s, idx) => ({
-          stepNumber: s.number,
-          stepName: s.title,
-          status: idx === 0 ? 'กำลังดำเนินการ' : 'ยังไม่เริ่ม',
-          startDate: idx === 0 ? (data.orderDate || nowStr) : '',
-          endDate: '',
-          issue: '',
-          note: ''
-        })),
-        documents: []
-      };
-
-      AppState.cases.unshift(newCase);
-      saveCasesToStorage();
-      addAuditLog(userEmail, 'CREATE_CASE', newCaseId, `สร้างรายการชำระบัญชีใหม่: ${data.coopName}`);
-      return { caseId: newCaseId, message: 'สร้างรายการชำระบัญชีใหม่สำเร็จ' };
-    }
-
-    if (action === 'updateStep') {
-      const targetCase = AppState.cases.find(c => c.caseId === data.caseId);
-      if (targetCase && targetCase.steps) {
-        const targetStep = targetCase.steps.find(s => parseInt(s.stepNumber, 10) === parseInt(data.stepNumber, 10));
-        if (targetStep) {
-          if (data.status !== undefined) targetStep.status = data.status;
-          if (data.startDate !== undefined) targetStep.startDate = data.startDate;
-          if (data.endDate !== undefined) targetStep.endDate = data.endDate;
-          if (data.issue !== undefined) targetStep.issue = data.issue ? data.issue.trim() : '';
-          if (data.note !== undefined) targetStep.note = data.note ? data.note.trim() : '';
-        }
-
-        let cur = 1;
-        let allDone = true;
-        for (let i = 1; i <= 10; i++) {
-          const st = targetCase.steps.find(s => parseInt(s.stepNumber, 10) === i);
-          if (!st || st.status !== 'เสร็จสิ้น') {
-            cur = i;
-            allDone = false;
-            break;
-          }
-        }
-        targetCase.currentStep = allDone ? 10 : cur;
-        if (allDone) targetCase.caseStatus = 'เสร็จสิ้น';
-        
-        targetCase.issues = targetCase.steps
-          .filter(s => s.status !== 'เสร็จสิ้น' && s.issue && s.issue.trim() !== '')
-          .map(s => ({
-            stepNumber: parseInt(s.stepNumber, 10),
-            stepName: s.stepName,
-            issue: s.issue.trim()
-          }));
-
-        targetCase.hasIssues = targetCase.issues.length > 0;
-        targetCase.issuesCount = targetCase.issues.length;
-        targetCase.lastUpdated = new Date().toISOString();
-
-        saveCasesToStorage();
-        addAuditLog(userEmail, 'UPDATE_STEP', data.caseId, `อัพเดตขั้นตอนชำระบัญชีที่ ${data.stepNumber} เป็น: ${data.status}`);
-      }
-      return { message: 'อัพเดตขั้นตอนสำเร็จ' };
-    }
-
-    if (action === 'addLiquidator') {
-      const targetCase = AppState.cases.find(c => c.caseId === data.caseId);
-      if (targetCase) {
-        if (!targetCase.liquidatorsDetail) targetCase.liquidatorsDetail = [];
-
-        if (data.setPreviousToInactive) {
-          targetCase.liquidatorsDetail.forEach(l => {
-            if (l.status === 'ปัจจุบัน') {
-              l.status = 'พ้นหน้าที่แล้ว';
-              l.endDate = data.startDate || new Date().toISOString();
-              l.reason = data.previousReason || 'เปลี่ยนตัวผู้ชำระบัญชี';
-            }
-          });
-        }
-
-        targetCase.liquidatorsDetail.push({
-          liquidatorId: 'LQ-' + Date.now(),
-          name: data.name,
-          position: data.position || '',
-          orderNumber: data.orderNumber || '-',
-          startDate: data.startDate || new Date().toISOString(),
-          endDate: '',
-          reason: '',
-          status: 'ปัจจุบัน',
-          contact: data.contact || ''
-        });
-
-        targetCase.liquidators = targetCase.liquidatorsDetail.filter(l => l.status === 'ปัจจุบัน').map(l => l.name).join(', ');
-        targetCase.lastUpdated = new Date().toISOString();
-        saveCasesToStorage();
-        addAuditLog(userEmail, 'ADD_LIQUIDATOR', data.caseId, `แต่งตั้งผู้ชำระบัญชี: ${data.name}`);
-      }
-      return { message: 'แต่งตั้งผู้ชำระบัญชีเรียบร้อย' };
-    }
-
-    if (action === 'updateLiquidator') {
-      const targetCase = AppState.cases.find(c => c.caseId === data.caseId);
-      if (targetCase && targetCase.liquidatorsDetail) {
-        const lq = targetCase.liquidatorsDetail.find(l => l.liquidatorId === data.liquidatorId);
-        if (lq) {
-          if (data.name !== undefined) lq.name = data.name;
-          if (data.position !== undefined) lq.position = data.position;
-          if (data.orderNumber !== undefined) lq.orderNumber = data.orderNumber;
-          if (data.status !== undefined) lq.status = data.status;
-          if (data.startDate !== undefined) lq.startDate = data.startDate;
-          if (data.endDate !== undefined) lq.endDate = data.endDate;
-          if (data.reason !== undefined) lq.reason = data.reason;
-          if (data.contact !== undefined) lq.contact = data.contact;
-
-          targetCase.liquidators = targetCase.liquidatorsDetail.filter(l => l.status === 'ปัจจุบัน').map(l => l.name).join(', ') || 'ยังไม่ระบุ';
-          saveCasesToStorage();
-          addAuditLog(userEmail, 'UPDATE_LIQUIDATOR', data.caseId, `แก้ไขข้อมูลผู้ชำระบัญชี: ${lq.name}`);
-        }
-      }
-      return { message: 'แก้ไขข้อมูลผู้ชำระบัญชีเรียบร้อย' };
-    }
-
-    if (action === 'updateCaseInfo') {
-      const targetCase = AppState.cases.find(c => c.caseId === data.caseId);
-      if (targetCase) {
-        if (data.coopName !== undefined) targetCase.coopName = data.coopName;
-        if (data.regNumber !== undefined) targetCase.regNumber = data.regNumber;
-        if (data.coopType !== undefined) targetCase.coopType = data.coopType;
-        if (data.location !== undefined) targetCase.location = data.location;
-        if (data.dissolutionType !== undefined) targetCase.dissolutionType = data.dissolutionType;
-        if (data.orderNumber !== undefined) targetCase.orderNumber = data.orderNumber;
-        if (data.orderDate !== undefined) targetCase.orderDate = data.orderDate;
-        if (data.caseStatus !== undefined) targetCase.caseStatus = data.caseStatus;
-        if (data.note !== undefined) targetCase.note = data.note;
-        targetCase.lastUpdated = new Date().toISOString();
-        saveCasesToStorage();
-        addAuditLog(userEmail, 'UPDATE_CASE_INFO', data.caseId, `แก้ไขข้อมูลการชำระบัญชี: ${data.coopName || targetCase.coopName}`);
-      }
-      return { message: 'แก้ไขข้อมูลการชำระบัญชีสำเร็จ' };
-    }
-
-    if (action === 'uploadDocument') {
-      const targetCase = AppState.cases.find(c => c.caseId === data.caseId);
-      if (targetCase) {
-        if (!targetCase.documents) targetCase.documents = [];
-
-        let downloadUrl = 'https://drive.google.com';
-        if (data.fileBase64 && data.mimeType) {
-          downloadUrl = `data:${data.mimeType};base64,${data.fileBase64}`;
-        }
-
-        const newDoc = {
-          docId: 'DOC-' + Date.now(),
-          stepNumber: data.stepNumber ? parseInt(data.stepNumber, 10) : null,
-          fileName: data.fileName,
-          driveUrl: downloadUrl,
-          docType: data.docType || 'เอกสารประกอบ',
-          fileSize: data.fileSize || '1.2 MB',
-          uploadDate: new Date().toISOString()
-        };
-
-        targetCase.documents.push(newDoc);
-        saveCasesToStorage();
-        addAuditLog(userEmail, 'UPLOAD_DOC', data.caseId, `อัพโหลดเอกสาร: ${data.fileName}`);
-      }
-      return { message: 'อัพโหลดเอกสารสำเร็จ' };
-    }
-
-    if (action === 'deleteDocument') {
-      const targetCase = AppState.cases.find(c => c.caseId === data.caseId || (c.documents && c.documents.some(d => d.docId === data.docId)));
-      if (targetCase && targetCase.documents) {
-        const docIdx = targetCase.documents.findIndex(d => d.docId === data.docId);
-        if (docIdx !== -1) {
-          const docName = targetCase.documents[docIdx].fileName;
-          targetCase.documents.splice(docIdx, 1);
-          saveCasesToStorage();
-          addAuditLog(userEmail, 'DELETE_DOC', targetCase.caseId, `ลบเอกสาร: ${docName}`);
-        }
-      }
-      return { message: 'ลบเอกสารเรียบร้อย' };
-    }
-
-    if (action === 'deleteCase') {
-      const idx = AppState.cases.findIndex(c => c.caseId === data.caseId);
-      if (idx !== -1) {
-        const name = AppState.cases[idx].coopName;
-        AppState.cases.splice(idx, 1);
-        saveCasesToStorage();
-        addAuditLog(userEmail, 'DELETE_CASE', data.caseId, `ลบรายการชำระบัญชี: ${name}`);
-      }
-      return { message: 'ลบรายการชำระบัญชีสำเร็จ' };
-    }
-
-    // --- Regulations & Bylaws Actions (Module 2) ---
-    if (action === 'createRegulation') {
-      const newRegId = 'REG-' + (AppState.regulations.length + 1).toString().padStart(3, '0') + '-' + (new Date().getFullYear() + 543);
-      const nowStr = new Date().toISOString();
-
-      const newReg = {
-        regId: newRegId,
-        coopName: data.coopName,
-        regNumber: data.regNumber || '-',
-        coopType: data.coopType || 'สหกรณ์การเกษตร',
-        docType: data.docType || 'ข้อบังคับสหกรณ์',
-        title: data.title,
-        docNumber: data.docNumber || '-',
-        submitDate: data.submitDate || nowStr,
-        officerName: data.officerName || 'ยังไม่ระบุ',
-        officerContact: data.officerContact || '-',
-        currentStep: 1,
-        status: 'อยู่ระหว่างพิจารณา',
-        lastUpdated: nowStr,
-        note: data.note || '',
-        hasIssues: false,
-        issuesCount: 0,
-        issues: [],
-        steps: CONFIG.REGULATION_STEPS.map((s, idx) => ({
-          stepNumber: s.number,
-          stepName: s.title,
-          status: idx === 0 ? 'กำลังดำเนินการ' : 'ยังไม่เริ่ม',
-          startDate: idx === 0 ? (data.submitDate || nowStr) : '',
-          endDate: '',
-          issue: '',
-          note: ''
-        })),
-        documents: []
-      };
-
-      AppState.regulations.unshift(newReg);
-      saveRegulationsToStorage();
-      addAuditLog(userEmail, 'CREATE_REGULATION', newRegId, `ยื่นเรื่องระเบียบ/ข้อบังคับใหม่: ${data.title} (${data.coopName})`);
-      return { regId: newRegId, message: 'ยื่นเรื่องใหม่สำเร็จ' };
-    }
-
-    if (action === 'updateRegStep') {
-      const target = AppState.regulations.find(r => r.regId === data.regId);
-      if (target && target.steps) {
-        const targetStep = target.steps.find(s => parseInt(s.stepNumber, 10) === parseInt(data.stepNumber, 10));
-        if (targetStep) {
-          if (data.status !== undefined) targetStep.status = data.status;
-          if (data.startDate !== undefined) targetStep.startDate = data.startDate;
-          if (data.endDate !== undefined) targetStep.endDate = data.endDate;
-          if (data.issue !== undefined) targetStep.issue = data.issue ? data.issue.trim() : '';
-          if (data.note !== undefined) targetStep.note = data.note ? data.note.trim() : '';
-        }
-
-        let cur = 1;
-        let allDone = true;
-        for (let i = 1; i <= 5; i++) {
-          const st = target.steps.find(s => parseInt(s.stepNumber, 10) === i);
-          if (!st || st.status !== 'เสร็จสิ้น') {
-            cur = i;
-            allDone = false;
-            break;
-          }
-        }
-        target.currentStep = allDone ? 5 : cur;
-        
-        target.issues = target.steps
-          .filter(s => s.status !== 'เสร็จสิ้น' && s.issue && s.issue.trim() !== '')
-          .map(s => ({
-            stepNumber: parseInt(s.stepNumber, 10),
-            stepName: s.stepName,
-            issue: s.issue.trim()
-          }));
-
-        target.hasIssues = target.issues.length > 0;
-        target.issuesCount = target.issues.length;
-
-        if (allDone) {
-          target.status = 'รับจดทะเบียน/เห็นชอบ/รับทราบ';
-        } else if (target.hasIssues) {
-          target.status = 'ส่งคืนแก้ไข';
-        } else {
-          target.status = 'อยู่ระหว่างพิจารณา';
-        }
-
-        target.lastUpdated = new Date().toISOString();
-        saveRegulationsToStorage();
-        addAuditLog(userEmail, 'UPDATE_REG_STEP', data.regId, `อัพเดตขั้นตอนระเบียบที่ ${data.stepNumber} เป็น: ${data.status}`);
-      }
-      return { message: 'อัพเดตขั้นตอนการพิจารณาเรียบร้อย' };
-    }
-
-    if (action === 'updateRegulationInfo') {
-      const target = AppState.regulations.find(r => r.regId === data.regId);
-      if (target) {
-        if (data.coopName !== undefined) target.coopName = data.coopName;
-        if (data.coopType !== undefined) target.coopType = data.coopType;
-        if (data.docType !== undefined) target.docType = data.docType;
-        if (data.title !== undefined) target.title = data.title;
-        if (data.docNumber !== undefined) target.docNumber = data.docNumber;
-        if (data.submitDate !== undefined) target.submitDate = data.submitDate;
-        if (data.officerName !== undefined) target.officerName = data.officerName;
-        if (data.officerContact !== undefined) target.officerContact = data.officerContact;
-        if (data.status !== undefined) target.status = data.status;
-        if (data.note !== undefined) target.note = data.note;
-        target.lastUpdated = new Date().toISOString();
-        saveRegulationsToStorage();
-        addAuditLog(userEmail, 'UPDATE_REG_INFO', data.regId, `แก้ไขข้อมูลระเบียบ/ข้อบังคับ: ${data.title || target.title}`);
-      }
-      return { message: 'แก้ไขข้อมูลระเบียบ/ข้อบังคับสำเร็จ' };
-    }
-
-    if (action === 'uploadRegDocument') {
-      const target = AppState.regulations.find(r => r.regId === data.regId);
-      if (target) {
-        if (!target.documents) target.documents = [];
-
-        let downloadUrl = 'https://drive.google.com';
-        if (data.fileBase64 && data.mimeType) {
-          downloadUrl = `data:${data.mimeType};base64,${data.fileBase64}`;
-        }
-
-        const newDoc = {
-          docId: 'RDOC-' + Date.now(),
-          stepNumber: data.stepNumber ? parseInt(data.stepNumber, 10) : null,
-          fileName: data.fileName,
-          driveUrl: downloadUrl,
-          docType: data.docType || 'เอกสารประกอบ',
-          fileSize: data.fileSize || '1.2 MB',
-          uploadDate: new Date().toISOString()
-        };
-
-        target.documents.push(newDoc);
-        saveRegulationsToStorage();
-        addAuditLog(userEmail, 'UPLOAD_REG_DOC', data.regId, `อัพโหลดเอกสารระเบียบ: ${data.fileName}`);
-      }
-      return { message: 'อัพโหลดเอกสารระเบียบสำเร็จ' };
-    }
-
-    if (action === 'deleteRegDocument') {
-      const target = AppState.regulations.find(r => r.regId === data.regId || (r.documents && r.documents.some(d => d.docId === data.docId)));
-      if (target && target.documents) {
-        const docIdx = target.documents.findIndex(d => d.docId === data.docId);
-        if (docIdx !== -1) {
-          const docName = target.documents[docIdx].fileName;
-          target.documents.splice(docIdx, 1);
-          saveRegulationsToStorage();
-          addAuditLog(userEmail, 'DELETE_REG_DOC', target.regId, `ลบเอกสารระเบียบ: ${docName}`);
-        }
-      }
-      return { message: 'ลบเอกสารเรียบร้อย' };
-    }
-
-    if (action === 'deleteRegulation') {
-      const idx = AppState.regulations.findIndex(r => r.regId === data.regId);
-      if (idx !== -1) {
-        const name = AppState.regulations[idx].title;
-        AppState.regulations.splice(idx, 1);
-        saveRegulationsToStorage();
-        addAuditLog(userEmail, 'DELETE_REGULATION', data.regId, `ลบเรื่องระเบียบ/ข้อบังคับ: ${name}`);
-      }
-      return { message: 'ลบเรื่องสำเร็จ' };
-    }
-
-    return { message: 'ดำเนินการสำเร็จ' };
+    const payload = {
+      action: action,
+      sessionToken: AppState.currentUser ? (AppState.currentUser.token || AppState.currentUser.sessionToken) : null,
+      ...data
+    };
+    const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    const json = await response.json();
+    if (!json.success) throw new Error(json.error || 'การบันทึกข้อมูลไม่สำเร็จ');
+    return json.data;
   }
 };
-
-// ------------------------------------------------------------------------------
-// 4. LocalStorage Persistence
-// ------------------------------------------------------------------------------
-function loadCasesFromStorage() {
-  try {
-    const saved = localStorage.getItem('liquidation_demo_cases');
-    if (saved) return JSON.parse(saved);
-  } catch (e) {}
-  return JSON.parse(JSON.stringify(INITIAL_MOCK_CASES));
-}
-
-function saveCasesToStorage() {
-  if (AppState.isDemoMode) {
-    try {
-      localStorage.setItem('liquidation_demo_cases', JSON.stringify(AppState.cases));
-    } catch (e) {}
-  }
-}
-
-function loadRegulationsFromStorage() {
-  try {
-    const saved = localStorage.getItem('regulations_demo_data');
-    if (saved) {
-      const data = JSON.parse(saved);
-      // Auto-migrate step names and statuses if needed
-      data.forEach(item => {
-        if (item.status === 'รับจดทะเบียน/เห็นชอบแล้ว') item.status = 'รับจดทะเบียน/เห็นชอบ/รับทราบ';
-        if (item.steps) {
-          item.steps.forEach(s => {
-            if (s.stepNumber === 2 && s.stepName && s.stepName.includes('กลุ่มส่งเสริมสหกรณ์')) {
-              s.stepName = 'กลุ่มจัดตั้งฯ ตรวจสอบเบื้องต้น';
-            }
-          });
-        }
-      });
-      return data;
-    }
-  } catch (e) {}
-  return JSON.parse(JSON.stringify(INITIAL_MOCK_REGULATIONS));
-}
-
-function saveRegulationsToStorage() {
-  if (AppState.isDemoMode) {
-    try {
-      localStorage.setItem('regulations_demo_data', JSON.stringify(AppState.regulations));
-    } catch (e) {}
-  }
-}
-
-function loadAuditLogsFromStorage() {
-  try {
-    const saved = localStorage.getItem('liquidation_demo_audit');
-    if (saved) return JSON.parse(saved);
-  } catch (e) {}
-  return [
-    { timestamp: new Date(Date.now() - 3600000).toISOString(), email: 'admin@cpd.go.th', action: 'INIT', caseId: '-', detail: 'เริ่มต้นระบบศูนย์บริการงานนายทะเบียนสหกรณ์' }
-  ];
-}
-
-function addAuditLog(email, action, caseId, detail) {
-  const logItem = {
-    timestamp: new Date().toISOString(),
-    email: email || 'admin@cpd.go.th',
-    action: action,
-    caseId: caseId || '-',
-    detail: detail
-  };
-  AppState.auditLogs.unshift(logItem);
-  try {
-    localStorage.setItem('liquidation_demo_audit', JSON.stringify(AppState.auditLogs));
-  } catch (e) {}
-}
-
-function resetDemoData() {
-  if (!confirm('ต้องการรีเซ็ตข้อมูลตัวอย่างทั้งหมด (ทั้งงานชำระบัญชี และระเบียบ/ข้อบังคับ) กลับเป็นค่าเริ่มต้นหรือไม่?')) return;
-  localStorage.removeItem('liquidation_demo_cases');
-  localStorage.removeItem('regulations_demo_data');
-  localStorage.removeItem('liquidation_demo_audit');
-  AppState.cases = JSON.parse(JSON.stringify(INITIAL_MOCK_CASES));
-  AppState.regulations = JSON.parse(JSON.stringify(INITIAL_MOCK_REGULATIONS));
-  AppState.auditLogs = loadAuditLogsFromStorage();
-  
-  applyFilters();
-  updateStatsDisplay();
-  applyRegFilters();
-  updateRegStatsDisplay();
-  updateHubStatsDisplay();
-  
-  showToast('รีเซ็ตข้อมูลตัวอย่างทั้งหมดกลับเป็นค่าเริ่มต้นเรียบร้อย', 'success');
-}
 
 // ------------------------------------------------------------------------------
 // 5. View Switcher & Global Hub
@@ -1122,12 +148,12 @@ function handleHubGlobalSearch() {
   }
 
   const q = query.toLowerCase();
-  const liqMatches = AppState.cases.filter(c => 
+  const liqMatches = AppState.cases.filter(c =>
     (c.coopName && c.coopName.toLowerCase().includes(q)) ||
     (c.regNumber && c.regNumber.toLowerCase().includes(q))
   );
 
-  const regMatches = AppState.regulations.filter(r => 
+  const regMatches = AppState.regulations.filter(r =>
     (r.coopName && r.coopName.toLowerCase().includes(q)) ||
     (r.title && r.title.toLowerCase().includes(q))
   );
@@ -1146,21 +172,21 @@ function handleHubGlobalSearch() {
 }
 
 // ------------------------------------------------------------------------------
-// 6. App Initialization
+// 4. App Initialization
 // ------------------------------------------------------------------------------
 async function initializeApp() {
-  AppState.isDemoMode = CONFIG.FORCE_MOCK_DATA || !CONFIG.APPS_SCRIPT_URL;
-  updateModeBadge();
-
-  AppState.cases = loadCasesFromStorage();
-  AppState.regulations = loadRegulationsFromStorage();
-  AppState.auditLogs = loadAuditLogsFromStorage();
-
   loadSavedSession();
-  await loadCasesData();
-  await loadRegulationsData();
   setupEventListeners();
   setupGoogleAuth();
+
+  setLoading(true);
+  try {
+    await Promise.all([loadCasesData(), loadRegulationsData()]);
+  } catch (err) {
+    console.error('Initial data load error:', err);
+  } finally {
+    setLoading(false);
+  }
 
   updateHubStatsDisplay();
 }
@@ -1168,26 +194,24 @@ async function initializeApp() {
 async function loadCasesData() {
   try {
     const cases = await ApiClient.get('listCases');
-    if (cases && cases.length > 0) {
-      AppState.cases = cases;
-    }
+    AppState.cases = Array.isArray(cases) ? cases : [];
     applyFilters();
     updateStatsDisplay();
   } catch (err) {
     console.warn('Load cases error:', err);
+    showToast('ไม่สามารถโหลดข้อมูลชำระบัญชีได้: ' + (err.message || err), 'danger');
   }
 }
 
 async function loadRegulationsData() {
   try {
     const regs = await ApiClient.get('listRegulations');
-    if (regs && regs.length > 0) {
-      AppState.regulations = regs;
-    }
+    AppState.regulations = Array.isArray(regs) ? regs : [];
     applyRegFilters();
     updateRegStatsDisplay();
   } catch (err) {
     console.warn('Load regulations error:', err);
+    showToast('ไม่สามารถโหลดข้อมูลระเบียบ/ข้อบังคับได้: ' + (err.message || err), 'danger');
   }
 }
 
@@ -1199,7 +223,7 @@ function applyFilters() {
 
   if (AppState.searchTerm.trim() !== '') {
     const q = AppState.searchTerm.toLowerCase().trim();
-    list = list.filter(c => 
+    list = list.filter(c =>
       (c.coopName && c.coopName.toLowerCase().includes(q)) ||
       (c.regNumber && c.regNumber.toLowerCase().includes(q)) ||
       (c.orderNumber && c.orderNumber.toLowerCase().includes(q)) ||
@@ -1296,14 +320,14 @@ function renderCardIssuesHtml(item) {
       </div>
       <div style="font-size: 0.82rem; line-height: 1.4; width: 100%; display: flex; flex-direction: column; gap: 4px;">
         ${sortedIssues.map(iss => {
-          const isCur = parseInt(iss.stepNumber, 10) === parseInt(item.currentStep, 10);
-          return `
+    const isCur = parseInt(iss.stepNumber, 10) === parseInt(item.currentStep, 10);
+    return `
             <div style="background: rgba(255,255,255,0.7); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(220, 38, 38, 0.2);">
               <strong style="color: #b91c1c;">ขั้นที่ ${iss.stepNumber}${isCur ? ' (กำลังดำเนินการ)' : ''}:</strong>
               <span style="color: #450a0a;">${escapeHtml(iss.issue)}</span>
             </div>
           `;
-        }).join('')}
+  }).join('')}
       </div>
     </div>
   `;
@@ -1424,7 +448,7 @@ async function openCaseDetail(caseId) {
   try {
     const caseData = await ApiClient.get('getCaseDetail', { caseId: caseId });
     AppState.selectedCase = caseData;
-    
+
     document.getElementById('detailCoopName').innerText = caseData.coopName;
     document.getElementById('detailRegNumber').innerText = caseData.regNumber || '-';
     document.getElementById('detailCoopType').innerText = caseData.coopType || '-';
@@ -1433,10 +457,10 @@ async function openCaseDetail(caseId) {
     const dissolutionType = caseData.dissolutionType || (caseData.orderNumber && caseData.orderNumber.includes('ประกาศ') ? 'ประกาศเลิก' : 'คำสั่งเลิก');
     const dissolutionLabelEl = document.getElementById('detailDissolutionLabel');
     if (dissolutionLabelEl) dissolutionLabelEl.innerText = `${dissolutionType}เลขที่`;
-    
+
     document.getElementById('detailOrderNumber').innerText = caseData.orderNumber || '-';
     document.getElementById('detailOrderDate').innerText = formatThaiDate(caseData.orderDate);
-    
+
     const isDone = caseData.caseStatus === 'เสร็จสิ้น' || caseData.currentStep >= 10;
     const statusBadge = document.getElementById('detailStatusBadge');
     statusBadge.className = `status-badge ${isDone ? 'completed' : 'active'}`;
@@ -1763,7 +787,7 @@ function openCreateCaseModal() {
 async function handleCreateCaseSubmit(e) {
   e.preventDefault();
   const form = e.target;
-  
+
   const liqRows = document.querySelectorAll('#createCaseLiquidatorsList .liquidator-input-row');
   const liquidators = [];
   liqRows.forEach(row => {
@@ -2097,7 +1121,7 @@ function applyRegFilters() {
 
   if (AppState.regSearchTerm.trim() !== '') {
     const q = AppState.regSearchTerm.toLowerCase().trim();
-    list = list.filter(r => 
+    list = list.filter(r =>
       (r.coopName && r.coopName.toLowerCase().includes(q)) ||
       (r.title && r.title.toLowerCase().includes(q)) ||
       (r.docNumber && r.docNumber.toLowerCase().includes(q)) ||
@@ -2331,7 +1355,7 @@ async function openRegDetail(regId) {
 
     document.getElementById('detailRegTitle').innerText = regData.title;
     document.getElementById('detailRegCoopName').innerText = `🏛️ ${regData.coopName} (${regData.regNumber || '-'}) [${regData.coopType || 'สหกรณ์'}]`;
-    
+
     const docTypeBadge = document.getElementById('detailRegDocType');
     docTypeBadge.innerText = regData.docType;
     docTypeBadge.className = `case-type-badge ${regData.docType === 'ข้อบังคับสหกรณ์' ? 'reg-type-bylaw' : 'reg-type-rule'}`;
@@ -2778,18 +1802,24 @@ async function handleGoogleSignInCallback(response) {
   }
 }
 
-async function handleDemoLogin() {
+async function handleAdminLoginSubmit(e) {
+  if (e) e.preventDefault();
+  const email = (document.getElementById('loginEmail')?.value || document.getElementById('adminEmailInput')?.value || '').trim();
+  const name = (document.getElementById('loginName')?.value || document.getElementById('adminNameInput')?.value || '').trim();
+
+  if (!email) {
+    showToast('กรุณากรอกอีเมลเจ้าหน้าที่', 'warning');
+    return;
+  }
+
   setLoading(true);
   try {
-    const authData = await ApiClient.post('login', {
-      email: 'admin@cpd.go.th',
-      name: 'ผู้ดูแลระบบ (Admin Demo)'
-    });
+    const authData = await ApiClient.post('login', { email, name: name || 'ผู้ดูแลระบบ' });
     setLoggedInUser(authData);
     closeModal('loginModal');
-    showToast(`เข้าสู่ระบบในฐานะ ${authData.name}`, 'success');
+    showToast(`ยินดีต้อนรับ ${authData.name || email}`, 'success');
   } catch (err) {
-    showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+    showToast('เข้าสู่ระบบไม่สำเร็จ: ' + (err.message || err), 'error');
   } finally {
     setLoading(false);
   }
@@ -2812,7 +1842,7 @@ function loadSavedSession() {
         localStorage.removeItem('liquidation_auth');
       }
     }
-  } catch (e) {}
+  } catch (e) { }
   updateAuthUI();
 }
 
@@ -2940,6 +1970,7 @@ function setupEventListeners() {
   }
 
   // Forms
+  document.getElementById('adminLoginForm')?.addEventListener('submit', handleAdminLoginSubmit);
   document.getElementById('createCaseForm')?.addEventListener('submit', handleCreateCaseSubmit);
   document.getElementById('updateStepForm')?.addEventListener('submit', handleUpdateStepSubmit);
   document.getElementById('addLiquidatorForm')?.addEventListener('submit', handleAddLiquidatorSubmit);
@@ -3039,13 +2070,6 @@ function setLoading(isLoading) {
   AppState.isLoading = isLoading;
   const loader = document.getElementById('globalLoader');
   if (loader) loader.style.display = isLoading ? 'flex' : 'none';
-}
-
-function updateModeBadge() {
-  const badge = document.getElementById('appModeBadge');
-  if (!badge) return;
-  badge.className = AppState.isDemoMode ? 'badge-mode demo' : 'badge-mode live';
-  badge.innerHTML = AppState.isDemoMode ? '🧪 โหมดทดสอบ (Demo)' : '🟢 เชื่อมต่อสด (Live)';
 }
 
 function fileToBase64(file) {

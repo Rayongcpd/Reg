@@ -8,13 +8,8 @@ const CONFIG = {
   // URL ที่ได้จากการ Deploy Apps Script (Web App URL)
   APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwvlRLjCX30PNHS0rx92fwjg6uVa2RHum30M1rgRRV34pwvoQlTWxgQayHGVS31L7g/exec',
 
-  // Google OAuth 2.0 Client ID (สำหรับปุ่ม Google Sign-In)
-  // หากยังไม่มี สามารถเว้นว่างไว้เพื่อใช้งานระบบ Demo / Local Authentication ได้
+  // Google OAuth 2.0 Client ID (สำหรับปุ่ม Google Sign-In หากต้องการใช้งาน)
   GOOGLE_CLIENT_ID: '',
-
-  // ตั้งเป็น true หากต้องการบังคับใช้ข้อมูลตัวอย่าง (Mock Data) เสมอ แม้มี URL
-  // หากเป็น false และ APPS_SCRIPT_URL ว่าง ระบบจะสลับเป็น Mock Data ให้อัตโนมัติ
-  FORCE_MOCK_DATA: false,
 
   // ข้อมูลหน่วยงานและระบบ
   APP_INFO: {
