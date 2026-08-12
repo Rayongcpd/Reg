@@ -23,6 +23,7 @@ const AppState = {
   searchTerm: '',
   filterType: 'ALL',
   filterStatus: 'ALL',
+  filterStep: 'ALL',
 
   // Module 2: Regulations & Bylaws State
   regulations: [],
@@ -35,6 +36,7 @@ const AppState = {
   regFilterCoopType: 'ALL',
   regFilterDocType: 'ALL',
   regFilterStatus: 'ALL',
+  regFilterStep: 'ALL',
 
   // System State
   currentUser: null, // { email, name, role, token }
@@ -234,6 +236,25 @@ function applyFilters() {
     );
   }
 
+  // Filter by Step / Progress
+  if (AppState.filterStep && AppState.filterStep !== 'ALL') {
+    if (AppState.filterStep === '1-3') {
+      list = list.filter(c => c.currentStep >= 1 && c.currentStep <= 3);
+    } else if (AppState.filterStep === '4-6') {
+      list = list.filter(c => c.currentStep >= 4 && c.currentStep <= 6);
+    } else if (AppState.filterStep === '7-9') {
+      list = list.filter(c => c.currentStep >= 7 && c.currentStep <= 9);
+    } else if (AppState.filterStep === '10') {
+      list = list.filter(c => c.currentStep >= 10 || c.caseStatus === 'เสร็จสิ้น');
+    } else {
+      const stepNum = parseInt(AppState.filterStep, 10);
+      if (!isNaN(stepNum)) {
+        list = list.filter(c => c.currentStep === stepNum);
+      }
+    }
+  }
+
+  // Filter by Type
   if (AppState.filterType !== 'ALL') {
     if (AppState.filterType === 'กลุ่มเกษตรกร') {
       list = list.filter(c => c.coopType && c.coopType.includes('กลุ่มเกษตรกร'));
@@ -242,6 +263,7 @@ function applyFilters() {
     }
   }
 
+  // Filter by Status
   if (AppState.filterStatus === 'ACTIVE') {
     list = list.filter(c => c.caseStatus !== 'เสร็จสิ้น' && c.currentStep < 10);
   } else if (AppState.filterStatus === 'COMPLETED') {
@@ -254,6 +276,52 @@ function applyFilters() {
   AppState.casePage = 1;
   renderCasesList();
   updateHubStatsDisplay();
+  updateCaseFilterChipUI();
+}
+
+function setCaseFilter(filterKey, value) {
+  if (filterKey === 'step') AppState.filterStep = value;
+  if (filterKey === 'status') AppState.filterStatus = value;
+  if (filterKey === 'type') AppState.filterType = value;
+  applyFilters();
+}
+
+function resetCaseFilters() {
+  AppState.filterStep = 'ALL';
+  AppState.filterStatus = 'ALL';
+  AppState.filterType = 'ALL';
+  AppState.searchTerm = '';
+  const searchInput = document.getElementById('heroSearchInput');
+  if (searchInput) searchInput.value = '';
+  applyFilters();
+}
+
+function updateCaseFilterChipUI() {
+  document.querySelectorAll('[data-case-step]').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.caseStep === AppState.filterStep);
+  });
+  document.querySelectorAll('[data-case-status]').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.caseStatus === AppState.filterStatus);
+  });
+  document.querySelectorAll('[data-case-type]').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.caseType === AppState.filterType);
+  });
+
+  let activeCount = 0;
+  if (AppState.filterStep !== 'ALL') activeCount++;
+  if (AppState.filterStatus !== 'ALL') activeCount++;
+  if (AppState.filterType !== 'ALL') activeCount++;
+  if (AppState.searchTerm.trim() !== '') activeCount++;
+
+  const countEl = document.getElementById('caseFilterCount');
+  if (countEl) {
+    countEl.innerText = activeCount > 0 ? `เลือกแล้ว ${activeCount} ตัวกรอง` : 'ทั้งหมด';
+  }
+
+  const resultCountEl = document.getElementById('caseFilterResultCount');
+  if (resultCountEl) {
+    resultCountEl.innerText = `พบ ${AppState.filteredCases.length} จาก ${AppState.cases.length} สหกรณ์`;
+  }
 }
 
 function updateStatsDisplay() {
@@ -1152,6 +1220,14 @@ function applyRegFilters() {
     );
   }
 
+  // Filter by Step / Progress
+  if (AppState.regFilterStep && AppState.regFilterStep !== 'ALL') {
+    const stepNum = parseInt(AppState.regFilterStep, 10);
+    if (!isNaN(stepNum)) {
+      list = list.filter(r => r.currentStep === stepNum);
+    }
+  }
+
   if (AppState.regFilterCoopType && AppState.regFilterCoopType !== 'ALL') {
     if (AppState.regFilterCoopType === 'กลุ่มเกษตรกร') {
       list = list.filter(r => r.coopType && r.coopType.includes('กลุ่มเกษตรกร'));
@@ -1176,6 +1252,58 @@ function applyRegFilters() {
   AppState.regPage = 1;
   renderRegulationsList();
   updateHubStatsDisplay();
+  updateRegFilterChipUI();
+}
+
+function setRegFilter(filterKey, value) {
+  if (filterKey === 'step') AppState.regFilterStep = value;
+  if (filterKey === 'docType') AppState.regFilterDocType = value;
+  if (filterKey === 'status') AppState.regFilterStatus = value;
+  if (filterKey === 'type') AppState.regFilterCoopType = value;
+  applyRegFilters();
+}
+
+function resetRegFilters() {
+  AppState.regFilterStep = 'ALL';
+  AppState.regFilterDocType = 'ALL';
+  AppState.regFilterStatus = 'ALL';
+  AppState.regFilterCoopType = 'ALL';
+  AppState.regSearchTerm = '';
+  const searchInput = document.getElementById('regSearchInput');
+  if (searchInput) searchInput.value = '';
+  applyRegFilters();
+}
+
+function updateRegFilterChipUI() {
+  document.querySelectorAll('[data-reg-step]').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.regStep === AppState.regFilterStep);
+  });
+  document.querySelectorAll('[data-reg-doc]').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.regDoc === AppState.regFilterDocType);
+  });
+  document.querySelectorAll('[data-reg-status]').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.regStatus === AppState.regFilterStatus);
+  });
+  document.querySelectorAll('[data-reg-type]').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.regType === AppState.regFilterCoopType);
+  });
+
+  let activeCount = 0;
+  if (AppState.regFilterStep !== 'ALL') activeCount++;
+  if (AppState.regFilterDocType !== 'ALL') activeCount++;
+  if (AppState.regFilterStatus !== 'ALL') activeCount++;
+  if (AppState.regFilterCoopType !== 'ALL') activeCount++;
+  if (AppState.regSearchTerm.trim() !== '') activeCount++;
+
+  const countEl = document.getElementById('regFilterCount');
+  if (countEl) {
+    countEl.innerText = activeCount > 0 ? `เลือกแล้ว ${activeCount} ตัวกรอง` : 'ทั้งหมด';
+  }
+
+  const resultCountEl = document.getElementById('regFilterResultCount');
+  if (resultCountEl) {
+    resultCountEl.innerText = `พบ ${AppState.filteredRegulations.length} จาก ${AppState.regulations.length} รายการ`;
+  }
 }
 
 function updateRegStatsDisplay() {

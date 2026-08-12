@@ -332,7 +332,7 @@ button {
   line-height: 1.1;
 }
 
-/* --- Control Bar (Filters & Actions) --- */
+/* --- Control Bar & Filter Chip Panel --- */
 .control-bar {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
@@ -345,6 +345,166 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.filter-panel {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem 1.4rem;
+  margin-bottom: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  transition: var(--transition);
+}
+
+.filter-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.filter-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+  font-family: var(--font-heading);
+}
+
+.filter-active-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid rgba(13, 148, 136, 0.2);
+}
+
+.filter-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: var(--font-heading);
+}
+
+.filter-reset-btn:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #f87171;
+  transform: translateY(-1px);
+}
+
+.filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.filter-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filter-section-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-heading);
+}
+
+.filter-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #475569;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.16s cubic-bezier(0.4, 0, 0.2, 1);
+  line-height: 1.35;
+  font-family: var(--font-heading);
+  outline: none;
+}
+
+.filter-chip:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.filter-chip.active {
+  background: #eff6ff;
+  border-color: #0284c7;
+  color: #0369a1;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(2, 132, 199, 0.12);
+}
+
+.filter-chip .chip-check {
+  display: none;
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #0284c7;
+}
+
+.filter-chip.active .chip-check {
+  display: inline-block;
+}
+
+/* Step/Progress Filter Chips */
+.filter-chip.step-chip.active {
+  background: #f0fdf4;
+  border-color: #059669;
+  color: #047857;
+  box-shadow: 0 1px 3px rgba(5, 150, 105, 0.12);
+}
+
+.filter-chip.step-chip.active .chip-check {
+  color: #059669;
 }
 
 .filter-group {
@@ -1547,6 +1707,27 @@ body {
     align-items: stretch;
     gap: 12px;
     padding: 1rem;
+  }
+
+  .filter-panel {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .filter-panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .filter-panel-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .filter-chip {
+    padding: 4px 10px;
+    font-size: 0.78rem;
   }
 
   .filter-group {
