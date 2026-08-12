@@ -397,6 +397,28 @@ button {
   flex-wrap: wrap;
 }
 
+.filter-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--primary-light);
+  border: 1px solid rgba(13, 148, 136, 0.25);
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: var(--font-heading);
+}
+
+.filter-toggle-btn:hover {
+  background: #ccfbf1;
+  color: #0f766e;
+  transform: translateY(-1px);
+}
+
 .filter-reset-btn {
   display: inline-flex;
   align-items: center;
@@ -418,6 +440,17 @@ button {
   color: #b91c1c;
   border-color: #f87171;
   transform: translateY(-1px);
+}
+
+.filter-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.filter-panel-body.collapsed {
+  display: none;
 }
 
 .filter-section {

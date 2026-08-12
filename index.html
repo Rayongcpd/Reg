@@ -279,6 +279,9 @@
           </div>
 
           <div class="filter-panel-actions">
+            <button id="btnToggleCaseFilter" class="filter-toggle-btn" onclick="toggleFilterPanel('caseFilter')" title="เปิด/ปิด แผงตัวกรอง">
+              <span class="toggle-icon">▲</span> <span class="toggle-text">ซ่อนตัวกรอง</span>
+            </button>
             <div class="view-switch-group">
               <button id="btnGridView" class="view-btn active" title="แสดงแบบการ์ด">
                 🔲 การ์ด
@@ -293,84 +296,113 @@
           </div>
         </div>
 
-        <!-- Section 1: Progress / Steps (ความคืบหน้า 10 ขั้นตอน) -->
-        <div class="filter-section">
-          <div class="filter-section-header">
-            <span class="filter-section-label">🚀 ความคืบหน้า / ขั้นตอนการชำระบัญชี (Progress)</span>
+        <div id="caseFilterBody" class="filter-panel-body">
+          <!-- Section 1: Progress / Steps (ความคืบหน้า 10 ขั้นตอน) -->
+          <div class="filter-section">
+            <div class="filter-section-header">
+              <span class="filter-section-label">🚀 ความคืบหน้า / ขั้นตอนการชำระบัญชี (Progress)</span>
+            </div>
+            <div class="filter-chip-group">
+              <button class="filter-chip step-chip active" data-case-step="ALL" onclick="setCaseFilter('step', 'ALL')">
+                <span class="chip-check">✓</span> ทั้งหมด
+              </button>
+              <button class="filter-chip step-chip" data-case-step="1-3" onclick="setCaseFilter('step', '1-3')">
+                <span class="chip-check">✓</span> 🌱 ขั้น 1-3: ตั้งต้น/แจ้งเจ้าหนี้ (10-30%)
+              </button>
+              <button class="filter-chip step-chip" data-case-step="4-6" onclick="setCaseFilter('step', '4-6')">
+                <span class="chip-check">✓</span> ⚖️ ขั้น 4-6: รวบรวม/ชำระหนี้ (40-60%)
+              </button>
+              <button class="filter-chip step-chip" data-case-step="7-9" onclick="setCaseFilter('step', '7-9')">
+                <span class="chip-check">✓</span> 📑 ขั้น 7-9: สรุปรายงาน/ถอนชื่อ (70-90%)
+              </button>
+              <button class="filter-chip step-chip" data-case-step="10" onclick="setCaseFilter('step', '10')">
+                <span class="chip-check">✓</span> 🏁 ขั้น 10: เสร็จสิ้นแล้ว (100%)
+              </button>
+            </div>
           </div>
-          <div class="filter-chip-group">
-            <button class="filter-chip step-chip active" data-case-step="ALL" onclick="setCaseFilter('step', 'ALL')">
-              <span class="chip-check">✓</span> ทั้งหมด
-            </button>
-            <button class="filter-chip step-chip" data-case-step="1-3" onclick="setCaseFilter('step', '1-3')">
-              <span class="chip-check">✓</span> 🌱 ขั้น 1-3: ตั้งต้น/แจ้งเจ้าหนี้ (10-30%)
-            </button>
-            <button class="filter-chip step-chip" data-case-step="4-6" onclick="setCaseFilter('step', '4-6')">
-              <span class="chip-check">✓</span> ⚖️ ขั้น 4-6: รวบรวม/ชำระหนี้ (40-60%)
-            </button>
-            <button class="filter-chip step-chip" data-case-step="7-9" onclick="setCaseFilter('step', '7-9')">
-              <span class="chip-check">✓</span> 📑 ขั้น 7-9: สรุปรายงาน/ถอนชื่อ (70-90%)
-            </button>
-            <button class="filter-chip step-chip" data-case-step="10" onclick="setCaseFilter('step', '10')">
-              <span class="chip-check">✓</span> 🏁 ขั้น 10: เสร็จสิ้นแล้ว (100%)
-            </button>
-          </div>
-        </div>
 
-        <!-- Section 2: Status (สถานะการดำเนินงาน) -->
-        <div class="filter-section">
-          <div class="filter-section-header">
-            <span class="filter-section-label">📌 สถานะการดำเนินงาน (Status)</span>
+          <!-- Section 2: Status (สถานะการดำเนินงาน) -->
+          <div class="filter-section">
+            <div class="filter-section-header">
+              <span class="filter-section-label">📌 สถานะการดำเนินงาน (Status)</span>
+            </div>
+            <div class="filter-chip-group">
+              <button class="filter-chip active" data-case-status="ALL" onclick="setCaseFilter('status', 'ALL')">
+                <span class="chip-check">✓</span> ทั้งหมด
+              </button>
+              <button class="filter-chip" data-case-status="ACTIVE" onclick="setCaseFilter('status', 'ACTIVE')">
+                <span class="chip-check">✓</span> ⏳ กำลังชำระบัญชี
+              </button>
+              <button class="filter-chip" data-case-status="COMPLETED" onclick="setCaseFilter('status', 'COMPLETED')">
+                <span class="chip-check">✓</span> ✅ ชำระบัญชีเสร็จสิ้น
+              </button>
+              <button class="filter-chip" data-case-status="ISSUES" onclick="setCaseFilter('status', 'ISSUES')">
+                <span class="chip-check">✓</span> ⚠️ มีปัญหาอุปสรรค
+              </button>
+            </div>
           </div>
-          <div class="filter-chip-group">
-            <button class="filter-chip active" data-case-status="ALL" onclick="setCaseFilter('status', 'ALL')">
-              <span class="chip-check">✓</span> ทั้งหมด
-            </button>
-            <button class="filter-chip" data-case-status="ACTIVE" onclick="setCaseFilter('status', 'ACTIVE')">
-              <span class="chip-check">✓</span> ⏳ กำลังชำระบัญชี
-            </button>
-            <button class="filter-chip" data-case-status="COMPLETED" onclick="setCaseFilter('status', 'COMPLETED')">
-              <span class="chip-check">✓</span> ✅ ชำระบัญชีเสร็จสิ้น
-            </button>
-            <button class="filter-chip" data-case-status="ISSUES" onclick="setCaseFilter('status', 'ISSUES')">
-              <span class="chip-check">✓</span> ⚠️ มีปัญหาอุปสรรค
-            </button>
-          </div>
-        </div>
 
-        <!-- Section 3: Institution / Coop Type (ประเภทสถาบัน) -->
-        <div class="filter-section">
-          <div class="filter-section-header">
-            <span class="filter-section-label">🏛️ ประเภทสถาบัน (Institution)</span>
+          <!-- Section 3: Cooperatives (สหกรณ์ 7 ประเภท) -->
+          <div class="filter-section">
+            <div class="filter-section-header">
+              <span class="filter-section-label">🏛️ ประเภทสหกรณ์ (Cooperatives - 7 ประเภท)</span>
+            </div>
+            <div class="filter-chip-group">
+              <button class="filter-chip active" data-case-type="ALL" onclick="setCaseFilter('type', 'ALL')">
+                <span class="chip-check">✓</span> ทั้งหมด
+              </button>
+              <button class="filter-chip" data-case-type="สหกรณ์การเกษตร" onclick="setCaseFilter('type', 'สหกรณ์การเกษตร')">
+                <span class="chip-check">✓</span> สหกรณ์การเกษตร
+              </button>
+              <button class="filter-chip" data-case-type="สหกรณ์ออมทรัพย์" onclick="setCaseFilter('type', 'สหกรณ์ออมทรัพย์')">
+                <span class="chip-check">✓</span> สหกรณ์ออมทรัพย์
+              </button>
+              <button class="filter-chip" data-case-type="สหกรณ์บริการ" onclick="setCaseFilter('type', 'สหกรณ์บริการ')">
+                <span class="chip-check">✓</span> สหกรณ์บริการ
+              </button>
+              <button class="filter-chip" data-case-type="สหกรณ์นิคม" onclick="setCaseFilter('type', 'สหกรณ์นิคม')">
+                <span class="chip-check">✓</span> สหกรณ์นิคม
+              </button>
+              <button class="filter-chip" data-case-type="สหกรณ์ร้านค้า" onclick="setCaseFilter('type', 'สหกรณ์ร้านค้า')">
+                <span class="chip-check">✓</span> สหกรณ์ร้านค้า
+              </button>
+              <button class="filter-chip" data-case-type="สหกรณ์ประมง" onclick="setCaseFilter('type', 'สหกรณ์ประมง')">
+                <span class="chip-check">✓</span> สหกรณ์ประมง
+              </button>
+              <button class="filter-chip" data-case-type="สหกรณ์เครดิตยูเนี่ยน" onclick="setCaseFilter('type', 'สหกรณ์เครดิตยูเนี่ยน')">
+                <span class="chip-check">✓</span> สหกรณ์เครดิตยูเนี่ยน
+              </button>
+            </div>
           </div>
-          <div class="filter-chip-group">
-            <button class="filter-chip active" data-case-type="ALL" onclick="setCaseFilter('type', 'ALL')">
-              <span class="chip-check">✓</span> ทั้งหมด
-            </button>
-            <button class="filter-chip" data-case-type="สหกรณ์การเกษตร" onclick="setCaseFilter('type', 'สหกรณ์การเกษตร')">
-              <span class="chip-check">✓</span> สหกรณ์การเกษตร
-            </button>
-            <button class="filter-chip" data-case-type="สหกรณ์ออมทรัพย์" onclick="setCaseFilter('type', 'สหกรณ์ออมทรัพย์')">
-              <span class="chip-check">✓</span> สหกรณ์ออมทรัพย์
-            </button>
-            <button class="filter-chip" data-case-type="สหกรณ์บริการ" onclick="setCaseFilter('type', 'สหกรณ์บริการ')">
-              <span class="chip-check">✓</span> สหกรณ์บริการ
-            </button>
-            <button class="filter-chip" data-case-type="สหกรณ์นิคม" onclick="setCaseFilter('type', 'สหกรณ์นิคม')">
-              <span class="chip-check">✓</span> สหกรณ์นิคม
-            </button>
-            <button class="filter-chip" data-case-type="สหกรณ์ร้านค้า" onclick="setCaseFilter('type', 'สหกรณ์ร้านค้า')">
-              <span class="chip-check">✓</span> สหกรณ์ร้านค้า
-            </button>
-            <button class="filter-chip" data-case-type="สหกรณ์ประมง" onclick="setCaseFilter('type', 'สหกรณ์ประมง')">
-              <span class="chip-check">✓</span> สหกรณ์ประมง
-            </button>
-            <button class="filter-chip" data-case-type="สหกรณ์เครดิตยูเนี่ยน" onclick="setCaseFilter('type', 'สหกรณ์เครดิตยูเนี่ยน')">
-              <span class="chip-check">✓</span> สหกรณ์เครดิตยูเนี่ยน
-            </button>
-            <button class="filter-chip" data-case-type="กลุ่มเกษตรกร" onclick="setCaseFilter('type', 'กลุ่มเกษตรกร')">
-              <span class="chip-check">✓</span> 🌾 กลุ่มเกษตรกร (ทุกประเภท)
-            </button>
+
+          <!-- Section 4: Farmer Groups (กลุ่มเกษตรกร - แยกตามประเภทอาชีพ) -->
+          <div class="filter-section">
+            <div class="filter-section-header">
+              <span class="filter-section-label">🌾 ประเภทกลุ่มเกษตรกร (Farmer Groups - แยกตามอาชีพ)</span>
+            </div>
+            <div class="filter-chip-group">
+              <button class="filter-chip" data-case-type="กลุ่มเกษตรกร" onclick="setCaseFilter('type', 'กลุ่มเกษตรกร')">
+                <span class="chip-check">✓</span> 🌾 กลุ่มเกษตรกร (ทุกประเภท)
+              </button>
+              <button class="filter-chip" data-case-type="กลุ่มเกษตรกรทำนา" onclick="setCaseFilter('type', 'กลุ่มเกษตรกรทำนา')">
+                <span class="chip-check">✓</span> กลุ่มเกษตรกรทำนา
+              </button>
+              <button class="filter-chip" data-case-type="กลุ่มเกษตรกรทำไร่" onclick="setCaseFilter('type', 'กลุ่มเกษตรกรทำไร่')">
+                <span class="chip-check">✓</span> กลุ่มเกษตรกรทำไร่
+              </button>
+              <button class="filter-chip" data-case-type="กลุ่มเกษตรกรทำสวน" onclick="setCaseFilter('type', 'กลุ่มเกษตรกรทำสวน')">
+                <span class="chip-check">✓</span> กลุ่มเกษตรกรทำสวน
+              </button>
+              <button class="filter-chip" data-case-type="กลุ่มเกษตรกรเลี้ยงสัตว์" onclick="setCaseFilter('type', 'กลุ่มเกษตรกรเลี้ยงสัตว์')">
+                <span class="chip-check">✓</span> กลุ่มเกษตรกรเลี้ยงสัตว์
+              </button>
+              <button class="filter-chip" data-case-type="กลุ่มเกษตรกรประมง" onclick="setCaseFilter('type', 'กลุ่มเกษตรกรประมง')">
+                <span class="chip-check">✓</span> กลุ่มเกษตรกรประมง
+              </button>
+              <button class="filter-chip" data-case-type="กลุ่มเกษตรกรอื่นๆ" onclick="setCaseFilter('type', 'กลุ่มเกษตรกรอื่นๆ')">
+                <span class="chip-check">✓</span> กลุ่มเกษตรกรอื่นๆ
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -485,6 +517,9 @@
           </div>
 
           <div class="filter-panel-actions">
+            <button id="btnToggleRegFilter" class="filter-toggle-btn" onclick="toggleFilterPanel('regFilter')" title="เปิด/ปิด แผงตัวกรอง">
+              <span class="toggle-icon">▲</span> <span class="toggle-text">ซ่อนตัวกรอง</span>
+            </button>
             <div class="view-switch-group">
               <button id="btnRegGridView" class="view-btn active" title="แสดงแบบการ์ด">
                 🔲 การ์ด
@@ -499,105 +534,134 @@
           </div>
         </div>
 
-        <!-- Section 1: Progress / Steps (ความคืบหน้า 5 ขั้นตอน) -->
-        <div class="filter-section">
-          <div class="filter-section-header">
-            <span class="filter-section-label">🚀 ความคืบหน้า / ขั้นตอนการพิจารณา (Progress)</span>
+        <div id="regFilterBody" class="filter-panel-body">
+          <!-- Section 1: Progress / Steps (ความคืบหน้า 5 ขั้นตอน) -->
+          <div class="filter-section">
+            <div class="filter-section-header">
+              <span class="filter-section-label">🚀 ความคืบหน้า / ขั้นตอนการพิจารณา (Progress)</span>
+            </div>
+            <div class="filter-chip-group">
+              <button class="filter-chip step-chip active" data-reg-step="ALL" onclick="setRegFilter('step', 'ALL')">
+                <span class="chip-check">✓</span> ทั้งหมด
+              </button>
+              <button class="filter-chip step-chip" data-reg-step="1" onclick="setRegFilter('step', '1')">
+                <span class="chip-check">✓</span> ขั้น 1: ยื่นคำขอ (20%)
+              </button>
+              <button class="filter-chip step-chip" data-reg-step="2" onclick="setRegFilter('step', '2')">
+                <span class="chip-check">✓</span> ขั้น 2: ตรวจสอบเบื้องต้น (40%)
+              </button>
+              <button class="filter-chip step-chip" data-reg-step="3" onclick="setRegFilter('step', '3')">
+                <span class="chip-check">✓</span> ขั้น 3: ตรวจข้อกฎหมาย (60%)
+              </button>
+              <button class="filter-chip step-chip" data-reg-step="4" onclick="setRegFilter('step', '4')">
+                <span class="chip-check">✓</span> ขั้น 4: เสนอนายทะเบียน (80%)
+              </button>
+              <button class="filter-chip step-chip" data-reg-step="5" onclick="setRegFilter('step', '5')">
+                <span class="chip-check">✓</span> ขั้น 5: แจ้งผล/ถือใช้ (100%)
+              </button>
+            </div>
           </div>
-          <div class="filter-chip-group">
-            <button class="filter-chip step-chip active" data-reg-step="ALL" onclick="setRegFilter('step', 'ALL')">
-              <span class="chip-check">✓</span> ทั้งหมด
-            </button>
-            <button class="filter-chip step-chip" data-reg-step="1" onclick="setRegFilter('step', '1')">
-              <span class="chip-check">✓</span> ขั้น 1: ยื่นคำขอ (20%)
-            </button>
-            <button class="filter-chip step-chip" data-reg-step="2" onclick="setRegFilter('step', '2')">
-              <span class="chip-check">✓</span> ขั้น 2: ตรวจสอบเบื้องต้น (40%)
-            </button>
-            <button class="filter-chip step-chip" data-reg-step="3" onclick="setRegFilter('step', '3')">
-              <span class="chip-check">✓</span> ขั้น 3: ตรวจข้อกฎหมาย (60%)
-            </button>
-            <button class="filter-chip step-chip" data-reg-step="4" onclick="setRegFilter('step', '4')">
-              <span class="chip-check">✓</span> ขั้น 4: เสนอนายทะเบียน (80%)
-            </button>
-            <button class="filter-chip step-chip" data-reg-step="5" onclick="setRegFilter('step', '5')">
-              <span class="chip-check">✓</span> ขั้น 5: แจ้งผล/ถือใช้ (100%)
-            </button>
-          </div>
-        </div>
 
-        <!-- Section 2: Document Type (ประเภทเอกสาร) -->
-        <div class="filter-section">
-          <div class="filter-section-header">
-            <span class="filter-section-label">📄 ประเภทเอกสาร (Document Type)</span>
+          <!-- Section 2: Document Type (ประเภทเอกสาร) -->
+          <div class="filter-section">
+            <div class="filter-section-header">
+              <span class="filter-section-label">📄 ประเภทเอกสาร (Document Type)</span>
+            </div>
+            <div class="filter-chip-group">
+              <button class="filter-chip active" data-reg-doc="ALL" onclick="setRegFilter('docType', 'ALL')">
+                <span class="chip-check">✓</span> ทั้งหมด
+              </button>
+              <button class="filter-chip" data-reg-doc="ข้อบังคับสหกรณ์" onclick="setRegFilter('docType', 'ข้อบังคับสหกรณ์')">
+                <span class="chip-check">✓</span> 📘 ข้อบังคับสหกรณ์ / กลุ่มเกษตรกร
+              </button>
+              <button class="filter-chip" data-reg-doc="ระเบียบสหกรณ์" onclick="setRegFilter('docType', 'ระเบียบสหกรณ์')">
+                <span class="chip-check">✓</span> 📙 ระเบียบสหกรณ์ / กลุ่มเกษตรกร
+              </button>
+            </div>
           </div>
-          <div class="filter-chip-group">
-            <button class="filter-chip active" data-reg-doc="ALL" onclick="setRegFilter('docType', 'ALL')">
-              <span class="chip-check">✓</span> ทั้งหมด
-            </button>
-            <button class="filter-chip" data-reg-doc="ข้อบังคับสหกรณ์" onclick="setRegFilter('docType', 'ข้อบังคับสหกรณ์')">
-              <span class="chip-check">✓</span> 📘 ข้อบังคับสหกรณ์ / กลุ่มเกษตรกร
-            </button>
-            <button class="filter-chip" data-reg-doc="ระเบียบสหกรณ์" onclick="setRegFilter('docType', 'ระเบียบสหกรณ์')">
-              <span class="chip-check">✓</span> 📙 ระเบียบสหกรณ์ / กลุ่มเกษตรกร
-            </button>
-          </div>
-        </div>
 
-        <!-- Section 3: Status (สถานะการดำเนินงาน) -->
-        <div class="filter-section">
-          <div class="filter-section-header">
-            <span class="filter-section-label">📌 สถานะการดำเนินงาน (Status)</span>
+          <!-- Section 3: Status (สถานะการดำเนินงาน) -->
+          <div class="filter-section">
+            <div class="filter-section-header">
+              <span class="filter-section-label">📌 สถานะการดำเนินงาน (Status)</span>
+            </div>
+            <div class="filter-chip-group">
+              <button class="filter-chip active" data-reg-status="ALL" onclick="setRegFilter('status', 'ALL')">
+                <span class="chip-check">✓</span> ทั้งหมด
+              </button>
+              <button class="filter-chip" data-reg-status="IN_REVIEW" onclick="setRegFilter('status', 'IN_REVIEW')">
+                <span class="chip-check">✓</span> 🔍 อยู่ระหว่างพิจารณา/ตรวจ
+              </button>
+              <button class="filter-chip" data-reg-status="APPROVED" onclick="setRegFilter('status', 'APPROVED')">
+                <span class="chip-check">✓</span> ✅ รับจดทะเบียนแล้ว
+              </button>
+              <button class="filter-chip" data-reg-status="NEED_FIX" onclick="setRegFilter('status', 'NEED_FIX')">
+                <span class="chip-check">✓</span> ✏️ รอแก้ไข/ส่งคืน
+              </button>
+            </div>
           </div>
-          <div class="filter-chip-group">
-            <button class="filter-chip active" data-reg-status="ALL" onclick="setRegFilter('status', 'ALL')">
-              <span class="chip-check">✓</span> ทั้งหมด
-            </button>
-            <button class="filter-chip" data-reg-status="IN_REVIEW" onclick="setRegFilter('status', 'IN_REVIEW')">
-              <span class="chip-check">✓</span> 🔍 อยู่ระหว่างพิจารณา/ตรวจ
-            </button>
-            <button class="filter-chip" data-reg-status="APPROVED" onclick="setRegFilter('status', 'APPROVED')">
-              <span class="chip-check">✓</span> ✅ รับจดทะเบียนแล้ว
-            </button>
-            <button class="filter-chip" data-reg-status="NEED_FIX" onclick="setRegFilter('status', 'NEED_FIX')">
-              <span class="chip-check">✓</span> ✏️ รอแก้ไข/ส่งคืน
-            </button>
-          </div>
-        </div>
 
-        <!-- Section 4: Institution / Coop Type (ประเภทสถาบัน) -->
-        <div class="filter-section">
-          <div class="filter-section-header">
-            <span class="filter-section-label">🏛️ ประเภทสถาบัน (Institution)</span>
+          <!-- Section 4: Cooperatives (สหกรณ์ 7 ประเภท) -->
+          <div class="filter-section">
+            <div class="filter-section-header">
+              <span class="filter-section-label">🏛️ ประเภทสหกรณ์ (Cooperatives - 7 ประเภท)</span>
+            </div>
+            <div class="filter-chip-group">
+              <button class="filter-chip active" data-reg-type="ALL" onclick="setRegFilter('type', 'ALL')">
+                <span class="chip-check">✓</span> ทั้งหมด
+              </button>
+              <button class="filter-chip" data-reg-type="สหกรณ์การเกษตร" onclick="setRegFilter('type', 'สหกรณ์การเกษตร')">
+                <span class="chip-check">✓</span> สหกรณ์การเกษตร
+              </button>
+              <button class="filter-chip" data-reg-type="สหกรณ์ออมทรัพย์" onclick="setRegFilter('type', 'สหกรณ์ออมทรัพย์')">
+                <span class="chip-check">✓</span> สหกรณ์ออมทรัพย์
+              </button>
+              <button class="filter-chip" data-reg-type="สหกรณ์บริการ" onclick="setRegFilter('type', 'สหกรณ์บริการ')">
+                <span class="chip-check">✓</span> สหกรณ์บริการ
+              </button>
+              <button class="filter-chip" data-reg-type="สหกรณ์นิคม" onclick="setRegFilter('type', 'สหกรณ์นิคม')">
+                <span class="chip-check">✓</span> สหกรณ์นิคม
+              </button>
+              <button class="filter-chip" data-reg-type="สหกรณ์ร้านค้า" onclick="setRegFilter('type', 'สหกรณ์ร้านค้า')">
+                <span class="chip-check">✓</span> สหกรณ์ร้านค้า
+              </button>
+              <button class="filter-chip" data-reg-type="สหกรณ์ประมง" onclick="setRegFilter('type', 'สหกรณ์ประมง')">
+                <span class="chip-check">✓</span> สหกรณ์ประมง
+              </button>
+              <button class="filter-chip" data-reg-type="สหกรณ์เครดิตยูเนี่ยน" onclick="setRegFilter('type', 'สหกรณ์เครดิตยูเนี่ยน')">
+                <span class="chip-check">✓</span> สหกรณ์เครดิตยูเนี่ยน
+              </button>
+            </div>
           </div>
-          <div class="filter-chip-group">
-            <button class="filter-chip active" data-reg-type="ALL" onclick="setRegFilter('type', 'ALL')">
-              <span class="chip-check">✓</span> ทั้งหมด
-            </button>
-            <button class="filter-chip" data-reg-type="สหกรณ์การเกษตร" onclick="setRegFilter('type', 'สหกรณ์การเกษตร')">
-              <span class="chip-check">✓</span> สหกรณ์การเกษตร
-            </button>
-            <button class="filter-chip" data-reg-type="สหกรณ์ออมทรัพย์" onclick="setRegFilter('type', 'สหกรณ์ออมทรัพย์')">
-              <span class="chip-check">✓</span> สหกรณ์ออมทรัพย์
-            </button>
-            <button class="filter-chip" data-reg-type="สหกรณ์บริการ" onclick="setRegFilter('type', 'สหกรณ์บริการ')">
-              <span class="chip-check">✓</span> สหกรณ์บริการ
-            </button>
-            <button class="filter-chip" data-reg-type="สหกรณ์นิคม" onclick="setRegFilter('type', 'สหกรณ์นิคม')">
-              <span class="chip-check">✓</span> สหกรณ์นิคม
-            </button>
-            <button class="filter-chip" data-reg-type="สหกรณ์ร้านค้า" onclick="setRegFilter('type', 'สหกรณ์ร้านค้า')">
-              <span class="chip-check">✓</span> สหกรณ์ร้านค้า
-            </button>
-            <button class="filter-chip" data-reg-type="สหกรณ์ประมง" onclick="setRegFilter('type', 'สหกรณ์ประมง')">
-              <span class="chip-check">✓</span> สหกรณ์ประมง
-            </button>
-            <button class="filter-chip" data-reg-type="สหกรณ์เครดิตยูเนี่ยน" onclick="setRegFilter('type', 'สหกรณ์เครดิตยูเนี่ยน')">
-              <span class="chip-check">✓</span> สหกรณ์เครดิตยูเนี่ยน
-            </button>
-            <button class="filter-chip" data-reg-type="กลุ่มเกษตรกร" onclick="setRegFilter('type', 'กลุ่มเกษตรกร')">
-              <span class="chip-check">✓</span> 🌾 กลุ่มเกษตรกร (ทุกประเภท)
-            </button>
+
+          <!-- Section 5: Farmer Groups (กลุ่มเกษตรกร - แยกตามประเภทอาชีพ) -->
+          <div class="filter-section">
+            <div class="filter-section-header">
+              <span class="filter-section-label">🌾 ประเภทกลุ่มเกษตรกร (Farmer Groups - แยกตามอาชีพ)</span>
+            </div>
+            <div class="filter-chip-group">
+              <button class="filter-chip" data-reg-type="กลุ่มเกษตรกร" onclick="setRegFilter('type', 'กลุ่มเกษตรกร')">
+                <span class="chip-check">✓</span> 🌾 กลุ่มเกษตรกร (ทุกประเภท)
+              </button>
+              <button class="filter-chip" data-reg-type="กลุ่มเกษตรกรทำนา" onclick="setRegFilter('type', 'กลุ่มเกษตรกรทำนา')">
+                <span class="chip-check">✓</span> กลุ่มเกษตรกรทำนา
+              </button>
+              <button class="filter-chip" data-reg-type="กลุ่มเกษตรกรทำไร่" onclick="setRegFilter('type', 'กลุ่มเกษตรกรทำไร่')">
+                <span class="chip-check">✓</span> กลุ่มเกษตรกรทำไร่
+              </button>
+              <button class="filter-chip" data-reg-type="กลุ่มเกษตรกรทำสวน" onclick="setRegFilter('type', 'กลุ่มเกษตรกรทำสวน')">
+                <span class="chip-check">✓</span> กลุ่มเกษตรกรทำสวน
+              </button>
+              <button class="filter-chip" data-reg-type="กลุ่มเกษตรกรเลี้ยงสัตว์" onclick="setRegFilter('type', 'กลุ่มเกษตรกรเลี้ยงสัตว์')">
+                <span class="chip-check">✓</span> กลุ่มเกษตรกรเลี้ยงสัตว์
+              </button>
+              <button class="filter-chip" data-reg-type="กลุ่มเกษตรกรประมง" onclick="setRegFilter('type', 'กลุ่มเกษตรกรประมง')">
+                <span class="chip-check">✓</span> กลุ่มเกษตรกรประมง
+              </button>
+              <button class="filter-chip" data-reg-type="กลุ่มเกษตรกรอื่นๆ" onclick="setRegFilter('type', 'กลุ่มเกษตรกรอื่นๆ')">
+                <span class="chip-check">✓</span> กลุ่มเกษตรกรอื่นๆ
+              </button>
+            </div>
           </div>
         </div>
       </section>

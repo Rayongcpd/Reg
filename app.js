@@ -259,7 +259,7 @@ function applyFilters() {
     if (AppState.filterType === 'กลุ่มเกษตรกร') {
       list = list.filter(c => c.coopType && c.coopType.includes('กลุ่มเกษตรกร'));
     } else {
-      list = list.filter(c => c.coopType === AppState.filterType);
+      list = list.filter(c => c.coopType === AppState.filterType || (c.coopType && c.coopType.includes(AppState.filterType)));
     }
   }
 
@@ -322,6 +322,18 @@ function updateCaseFilterChipUI() {
   if (resultCountEl) {
     resultCountEl.innerText = `พบ ${AppState.filteredCases.length} จาก ${AppState.cases.length} สหกรณ์`;
   }
+}
+
+function toggleFilterPanel(panelId) {
+  const body = document.getElementById(panelId + 'Body');
+  const btn = document.getElementById('btnToggle' + panelId.charAt(0).toUpperCase() + panelId.slice(1));
+  if (!body || !btn) return;
+
+  const isCollapsed = body.classList.toggle('collapsed');
+  const icon = btn.querySelector('.toggle-icon');
+  const text = btn.querySelector('.toggle-text');
+  if (icon) icon.innerText = isCollapsed ? '▼' : '▲';
+  if (text) text.innerText = isCollapsed ? 'แสดงตัวกรอง' : 'ซ่อนตัวกรอง';
 }
 
 function updateStatsDisplay() {
@@ -1232,7 +1244,7 @@ function applyRegFilters() {
     if (AppState.regFilterCoopType === 'กลุ่มเกษตรกร') {
       list = list.filter(r => r.coopType && r.coopType.includes('กลุ่มเกษตรกร'));
     } else {
-      list = list.filter(r => r.coopType === AppState.regFilterCoopType);
+      list = list.filter(r => r.coopType === AppState.regFilterCoopType || (r.coopType && r.coopType.includes(AppState.regFilterCoopType)));
     }
   }
 
