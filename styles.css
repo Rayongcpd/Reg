@@ -463,7 +463,7 @@ button {
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
-  padding: 1.5rem;
+  padding: 1.35rem;
   transition: var(--transition);
   display: flex;
   flex-direction: column;
@@ -480,24 +480,46 @@ button {
 .case-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 0.75rem;
-  gap: 8px;
+  gap: 6px;
+  min-height: 24px;
+}
+
+.case-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .case-type-badge {
-  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
   font-weight: 600;
-  padding: 3px 8px;
-  border-radius: var(--radius-sm);
+  padding: 2px 7.5px;
+  border-radius: 6px;
   background: var(--primary-light);
   color: var(--primary);
   font-family: var(--font-heading);
+  white-space: nowrap;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  border: 1px solid transparent;
+}
+
+.case-type-badge.coop-type-badge {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
 }
 
 .case-type-badge.farmer-group {
   background: #fef3c7;
-  color: #b45309;
+  color: #92400e;
   border: 1px solid #fde68a;
 }
 
@@ -609,32 +631,40 @@ button {
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
+  gap: 4px;
+  padding: 2px 8.5px;
   border-radius: var(--radius-full);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 600;
   font-family: var(--font-heading);
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.35;
+  border: 1px solid transparent;
 }
 
 .status-badge.active {
   background: var(--secondary-light);
   color: #0369a1;
+  border-color: #bae6fd;
 }
 
 .status-badge.completed {
   background: var(--accent-emerald-light);
   color: #047857;
+  border-color: #a7f3d0;
 }
 
 .status-badge.pending {
   background: #f1f5f9;
   color: var(--text-muted);
+  border-color: #e2e8f0;
 }
 
 .status-badge.issue {
   background: var(--accent-rose-light);
   color: var(--accent-rose);
+  border-color: #fecdd3;
 }
 
 /* --- Table View --- */

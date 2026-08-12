@@ -363,7 +363,9 @@ function renderGrid(container, items = AppState.filteredCases) {
     return `
       <div class="case-card">
         <div class="case-card-header">
-          <span class="case-type-badge ${isFarmerGroup ? 'farmer-group' : ''}">${escapeHtml(item.coopType)}</span>
+          <div class="case-badge-group">
+            <span class="case-type-badge ${isFarmerGroup ? 'farmer-group' : 'coop-type-badge'}">${escapeHtml(item.coopType)}</span>
+          </div>
           <span class="status-badge ${isDone ? 'completed' : 'active'}">
             ${isDone ? '✓ เสร็จสิ้นแล้ว' : '● กำลังชำระบัญชี'}
           </span>
@@ -434,7 +436,7 @@ function renderTable(container, items = AppState.filteredCases, startIndex = 0) 
           <strong style="color: var(--primary);">${escapeHtml(item.coopName)}</strong>
           <div style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(item.regNumber)} | ${escapeHtml(item.location)}</div>
         </td>
-        <td><span class="case-type-badge ${isFarmerGroup ? 'farmer-group' : ''}">${escapeHtml(item.coopType)}</span></td>
+        <td><span class="case-type-badge ${isFarmerGroup ? 'farmer-group' : 'coop-type-badge'}">${escapeHtml(item.coopType)}</span></td>
         <td>
           <div><strong>${escapeHtml(item.orderNumber)}</strong></div>
           <span style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(dissolutionType)} (${formatThaiDate(item.orderDate)})</span>
@@ -1263,7 +1265,7 @@ function renderRegGrid(container, items = AppState.filteredRegulations) {
     let statusText = '● อยู่ระหว่างพิจารณา';
     if (isApproved) {
       statusBadgeClass = 'completed';
-      statusText = '✓ รับจดทะเบียน/เห็นชอบ/รับทราบ';
+      statusText = '✓ รับจดทะเบียนแล้ว';
     } else if (isNeedFix) {
       statusBadgeClass = 'issue';
       statusText = '⚠️ ส่งคืนแก้ไข';
@@ -1274,9 +1276,9 @@ function renderRegGrid(container, items = AppState.filteredRegulations) {
     return `
       <div class="case-card">
         <div class="case-card-header">
-          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <div class="case-badge-group">
             <span class="case-type-badge ${typeBadgeClass}">${escapeHtml(item.docType)}</span>
-            <span class="case-type-badge ${isFarmerGroup ? 'farmer-group' : ''}">${escapeHtml(item.coopType || 'สหกรณ์')}</span>
+            <span class="case-type-badge ${isFarmerGroup ? 'farmer-group' : 'coop-type-badge'}">${escapeHtml(item.coopType || 'สหกรณ์')}</span>
           </div>
           <span class="status-badge ${statusBadgeClass}">${statusText}</span>
         </div>
@@ -1352,7 +1354,7 @@ function renderRegTable(container, items = AppState.filteredRegulations, startIn
         <td style="text-align: center; color: var(--text-muted);">${startIndex + idx + 1}</td>
         <td>
           <strong style="color: var(--primary);">${escapeHtml(item.coopName)}</strong>
-          <div style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(item.regNumber)} | <span class="case-type-badge ${isFarmerGroup ? 'farmer-group' : ''}" style="font-size: 0.7rem;">${escapeHtml(item.coopType || 'สหกรณ์')}</span></div>
+          <div style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(item.regNumber)} | <span class="case-type-badge ${isFarmerGroup ? 'farmer-group' : 'coop-type-badge'}" style="font-size: 0.7rem;">${escapeHtml(item.coopType || 'สหกรณ์')}</span></div>
         </td>
         <td><span class="case-type-badge ${typeBadgeClass}">${escapeHtml(item.docType)}</span></td>
         <td>
