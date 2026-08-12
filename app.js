@@ -1580,7 +1580,7 @@ function resetCreateRegItems() {
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
         <span class="reg-row-title" style="font-weight: 600; font-size: 0.85rem; color: var(--primary);">📜 รายการระเบียบ / ข้อบังคับที่ 1</span>
       </div>
-      <div class="form-row">
+      <div class="form-row" style="margin-bottom: 8px;">
         <div class="form-group" style="margin-bottom: 0;">
           <label style="font-size: 0.82rem;">ประเภทรายการ <span style="color: red;">*</span></label>
           <select name="itemDocType" class="form-control" required>
@@ -1589,9 +1589,19 @@ function resetCreateRegItems() {
           </select>
         </div>
         <div class="form-group" style="margin-bottom: 0;">
-          <label style="font-size: 0.82rem;">ชื่อระเบียบ / ข้อบังคับ <span style="color: red;">*</span></label>
-          <input type="text" name="itemTitle" class="form-control" placeholder="เช่น ระเบียบว่าด้วยการให้เงินกู้แก่สมาชิก พ.ศ. 2567" required>
+          <label style="font-size: 0.82rem;">ขั้นตอนเริ่มต้น / อยู่ที่ขั้นตอน <span style="color: red;">*</span></label>
+          <select name="itemStep" class="form-control" style="font-weight: 500;" required>
+            <option value="1" selected>🟡 ขั้นที่ 1: ยื่นเรื่องและรับเอกสารคำขอ</option>
+            <option value="2">🟡 ขั้นที่ 2: กลุ่มจัดตั้งฯ ตรวจสอบเบื้องต้น</option>
+            <option value="3">🟡 ขั้นที่ 3: กลุ่มตรวจการฯ/นิติการตรวจร่าง</option>
+            <option value="4">🟡 ขั้นที่ 4: เสนอนายทะเบียนสหกรณ์พิจารณา</option>
+            <option value="5">🟢 ขั้นที่ 5: แจ้งผลและส่งมอบให้ถือใช้ (เสร็จสิ้น)</option>
+          </select>
         </div>
+      </div>
+      <div class="form-group" style="margin-bottom: 0;">
+        <label style="font-size: 0.82rem;">ชื่อระเบียบ / ข้อบังคับ <span style="color: red;">*</span></label>
+        <input type="text" name="itemTitle" class="form-control" placeholder="เช่น ระเบียบว่าด้วยการให้เงินกู้แก่สมาชิก พ.ศ. 2567" required>
       </div>
     </div>
   `;
@@ -1613,7 +1623,7 @@ function addRegulationRowToCreateForm() {
         ✕ ลบออก
       </button>
     </div>
-    <div class="form-row">
+    <div class="form-row" style="margin-bottom: 8px;">
       <div class="form-group" style="margin-bottom: 0;">
         <label style="font-size: 0.82rem;">ประเภทรายการ <span style="color: red;">*</span></label>
         <select name="itemDocType" class="form-control" required>
@@ -1622,9 +1632,19 @@ function addRegulationRowToCreateForm() {
         </select>
       </div>
       <div class="form-group" style="margin-bottom: 0;">
-        <label style="font-size: 0.82rem;">ชื่อระเบียบ / ข้อบังคับ <span style="color: red;">*</span></label>
-        <input type="text" name="itemTitle" class="form-control" placeholder="เช่น ระเบียบว่าด้วยการรับฝากเงิน พ.ศ. 2567" required>
+        <label style="font-size: 0.82rem;">ขั้นตอนเริ่มต้น / อยู่ที่ขั้นตอน <span style="color: red;">*</span></label>
+        <select name="itemStep" class="form-control" style="font-weight: 500;" required>
+          <option value="1" selected>🟡 ขั้นที่ 1: ยื่นเรื่องและรับเอกสารคำขอ</option>
+          <option value="2">🟡 ขั้นที่ 2: กลุ่มจัดตั้งฯ ตรวจสอบเบื้องต้น</option>
+          <option value="3">🟡 ขั้นที่ 3: กลุ่มตรวจการฯ/นิติการตรวจร่าง</option>
+          <option value="4">🟡 ขั้นที่ 4: เสนอนายทะเบียนสหกรณ์พิจารณา</option>
+          <option value="5">🟢 ขั้นที่ 5: แจ้งผลและส่งมอบให้ถือใช้ (เสร็จสิ้น)</option>
+        </select>
       </div>
+    </div>
+    <div class="form-group" style="margin-bottom: 0;">
+      <label style="font-size: 0.82rem;">ชื่อระเบียบ / ข้อบังคับ <span style="color: red;">*</span></label>
+      <input type="text" name="itemTitle" class="form-control" placeholder="เช่น ระเบียบว่าด้วยการรับฝากเงิน พ.ศ. 2567" required>
     </div>
   `;
   container.appendChild(newRow);
@@ -1662,11 +1682,13 @@ async function handleCreateRegSubmit(e) {
   const items = [];
   itemRows.forEach(row => {
     const docTypeSelect = row.querySelector('select[name="itemDocType"]');
+    const stepSelect = row.querySelector('select[name="itemStep"]');
     const titleInput = row.querySelector('input[name="itemTitle"]');
     if (titleInput && titleInput.value.trim() !== '') {
       items.push({
         docType: docTypeSelect ? docTypeSelect.value : 'ระเบียบสหกรณ์',
-        title: titleInput.value.trim()
+        title: titleInput.value.trim(),
+        initialStep: stepSelect ? parseInt(stepSelect.value, 10) : 1
       });
     }
   });
@@ -1685,12 +1707,12 @@ async function handleCreateRegSubmit(e) {
     submitDate: fromThaiDateInput(form.submitDate.value),
     officerName: form.officerName.value.trim(),
     officerContact: form.officerContact.value.trim(),
-    initialStep: form.initialStep ? parseInt(form.initialStep.value, 10) : 1,
     note: form.note.value.trim(),
     items: items,
     // ponytail: fallback single fields for backward compatibility
     docType: items[0].docType,
-    title: items[0].title
+    title: items[0].title,
+    initialStep: items[0].initialStep || 1
   };
 
   setLoading(true);
