@@ -453,6 +453,16 @@ button {
   display: none;
 }
 
+.filter-panel:has(.filter-panel-body.collapsed) {
+  gap: 0;
+  padding: 0.95rem 1.4rem;
+}
+
+.filter-panel:has(.filter-panel-body.collapsed) .filter-panel-header {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
 .filter-section {
   display: flex;
   flex-direction: column;
