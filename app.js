@@ -318,6 +318,11 @@ function updateCaseFilterChipUI() {
     countEl.innerText = activeCount > 0 ? `เลือกแล้ว ${activeCount} ตัวกรอง` : 'ทั้งหมด';
   }
 
+  const resetBtn = document.getElementById('btnResetCaseFilter');
+  if (resetBtn) {
+    resetBtn.style.display = activeCount > 0 ? 'inline-flex' : 'none';
+  }
+
   const resultCountEl = document.getElementById('caseFilterResultCount');
   if (resultCountEl) {
     resultCountEl.innerText = `พบ ${AppState.filteredCases.length} จาก ${AppState.cases.length} สหกรณ์`;
@@ -1310,6 +1315,11 @@ function updateRegFilterChipUI() {
   const countEl = document.getElementById('regFilterCount');
   if (countEl) {
     countEl.innerText = activeCount > 0 ? `เลือกแล้ว ${activeCount} ตัวกรอง` : 'ทั้งหมด';
+  }
+
+  const resetBtn = document.getElementById('btnResetRegFilter');
+  if (resetBtn) {
+    resetBtn.style.display = activeCount > 0 ? 'inline-flex' : 'none';
   }
 
   const resultCountEl = document.getElementById('regFilterResultCount');
