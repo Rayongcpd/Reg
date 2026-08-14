@@ -203,7 +203,7 @@ async function loadCasesData() {
     updateStatsDisplay();
   } catch (err) {
     console.warn('Load cases error:', err);
-    showToast('ไม่สามารถโหลดข้อมูลชำระบัญชีได้: ' + (err.message || err), 'danger');
+    showToast('ไม่สามารถโหลดข้อมูลชำระบัญชีได้: ' + (err.message || err), 'error');
   }
 }
 
@@ -215,7 +215,7 @@ async function loadRegulationsData() {
     updateRegStatsDisplay();
   } catch (err) {
     console.warn('Load regulations error:', err);
-    showToast('ไม่สามารถโหลดข้อมูลระเบียบ/ข้อบังคับได้: ' + (err.message || err), 'danger');
+    showToast('ไม่สามารถโหลดข้อมูลระเบียบ/ข้อบังคับได้: ' + (err.message || err), 'error');
   }
 }
 
@@ -2071,14 +2071,15 @@ async function deleteCurrentReg() {
 // 9. Auth & Session Management
 // ------------------------------------------------------------------------------
 function setupGoogleAuth() {
+  const googleBtnContainer = document.getElementById('googleSignInBtn');
   if (window.google && google.accounts && google.accounts.id && CONFIG.GOOGLE_CLIENT_ID) {
     google.accounts.id.initialize({
       client_id: CONFIG.GOOGLE_CLIENT_ID,
       callback: handleGoogleSignInCallback
     });
 
-    const googleBtnContainer = document.getElementById('googleSignInBtn');
     if (googleBtnContainer) {
+      googleBtnContainer.style.display = 'flex';
       google.accounts.id.renderButton(googleBtnContainer, {
         theme: 'outline',
         size: 'large',
@@ -2086,10 +2087,16 @@ function setupGoogleAuth() {
         shape: 'rectangular'
       });
     }
+  } else if (googleBtnContainer) {
+    googleBtnContainer.style.display = 'none';
   }
 }
 
+let isLoggingIn = false;
+
 async function handleGoogleSignInCallback(response) {
+  if (isLoggingIn) return;
+  isLoggingIn = true;
   setLoading(true);
   try {
     const authData = await ApiClient.post('login', { idToken: response.credential });
@@ -2099,12 +2106,15 @@ async function handleGoogleSignInCallback(response) {
   } catch (err) {
     showToast('เข้าสู่ระบบไม่สำเร็จ: ' + err.message, 'error');
   } finally {
+    isLoggingIn = false;
     setLoading(false);
   }
 }
 
 async function handleAdminLoginSubmit(e) {
   if (e) e.preventDefault();
+  if (isLoggingIn) return;
+
   const email = (document.getElementById('loginEmail')?.value || document.getElementById('adminEmailInput')?.value || '').trim();
   const name = (document.getElementById('loginName')?.value || document.getElementById('adminNameInput')?.value || '').trim();
 
@@ -2113,6 +2123,7 @@ async function handleAdminLoginSubmit(e) {
     return;
   }
 
+  isLoggingIn = true;
   setLoading(true);
   try {
     const authData = await ApiClient.post('login', { email, name: name || 'ผู้ดูแลระบบ' });
@@ -2122,6 +2133,7 @@ async function handleAdminLoginSubmit(e) {
   } catch (err) {
     showToast('เข้าสู่ระบบไม่สำเร็จ: ' + (err.message || err), 'error');
   } finally {
+    isLoggingIn = false;
     setLoading(false);
   }
 }
@@ -2203,16 +2215,6 @@ function setupEventListeners() {
   }
   if (searchBtn) searchBtn.addEventListener('click', () => applyFilters());
 
-  document.getElementById('filterCoopType')?.addEventListener('change', (e) => {
-    AppState.filterType = e.target.value;
-    applyFilters();
-  });
-
-  document.getElementById('filterCaseStatus')?.addEventListener('change', (e) => {
-    AppState.filterStatus = e.target.value;
-    applyFilters();
-  });
-
   // Liquidation View Toggle
   const btnGridView = document.getElementById('btnGridView');
   const btnTableView = document.getElementById('btnTableView');
@@ -2241,21 +2243,6 @@ function setupEventListeners() {
       applyRegFilters();
     });
   }
-
-  document.getElementById('filterRegCoopType')?.addEventListener('change', (e) => {
-    AppState.regFilterCoopType = e.target.value;
-    applyRegFilters();
-  });
-
-  document.getElementById('filterRegDocType')?.addEventListener('change', (e) => {
-    AppState.regFilterDocType = e.target.value;
-    applyRegFilters();
-  });
-
-  document.getElementById('filterRegStatus')?.addEventListener('change', (e) => {
-    AppState.regFilterStatus = e.target.value;
-    applyRegFilters();
-  });
 
   // Regulations View Toggle
   const btnRegGridView = document.getElementById('btnRegGridView');
@@ -2357,6 +2344,7 @@ function closeModal(id) {
 }
 
 function showToast(message, type = 'info') {
+  if (type === 'danger') type = 'error';
   const container = document.getElementById('toastContainer');
   if (!container) return;
 
@@ -2398,7 +2386,9 @@ function formatThaiDate(dateStr) {
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return dateStr;
     const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-    return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear() + 543}`;
+    let year = date.getFullYear();
+    if (year < 2400) year += 543;
+    return `${date.getDate()} ${months[date.getMonth()]} ${year}`;
   } catch (e) {
     return dateStr;
   }
@@ -2453,7 +2443,11 @@ function initThaiDateInputs() {
 }
 
 // Call once on page load
-document.addEventListener('DOMContentLoaded', initThaiDateInputs);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initThaiDateInputs);
+} else {
+  initThaiDateInputs();
+}
 
 function escapeHtml(str) {
   if (!str) return '';
@@ -2544,7 +2538,7 @@ async function openAuditLogModal() {
   }
   setLoading(true);
   try {
-    const logs = await ApiClient.get('getAuditLogs');
+    const logs = await ApiClient.post('getAuditLogs', {});
     const container = document.getElementById('auditLogList');
     if (!logs || logs.length === 0) {
       container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 2rem;">ยังไม่มีประวัติการทำรายการ</p>';
@@ -2569,4 +2563,8 @@ async function openAuditLogModal() {
 }
 
 // Startup
-document.addEventListener('DOMContentLoaded', initializeApp);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+  initializeApp();
+}
