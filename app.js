@@ -2141,6 +2141,29 @@ function setLoggedInUser(user) {
   AppState.currentUser = user;
   localStorage.setItem('liquidation_auth', JSON.stringify(user));
   updateAuthUI();
+
+  // If a detail modal is already open, re-render its content to show admin buttons
+  const isCaseDetailOpen = document.getElementById('caseDetailModal')?.classList.contains('show');
+  if (isCaseDetailOpen && AppState.selectedCase) {
+    const adminActions = document.getElementById('detailAdminActions');
+    const adminAddLiqBtn = document.getElementById('adminAddLiqBtn');
+    if (adminActions) adminActions.style.display = 'flex';
+    if (adminAddLiqBtn) adminAddLiqBtn.style.display = 'inline-flex';
+    renderDetailTimeline();
+    renderDetailLiquidators();
+    renderDetailDocuments();
+  }
+
+  const isRegDetailOpen = document.getElementById('regDetailModal')?.classList.contains('show');
+  if (isRegDetailOpen && AppState.selectedReg) {
+    const adminActions = document.getElementById('detailRegAdminActions');
+    if (adminActions) adminActions.style.display = 'flex';
+    renderRegDetailTimeline();
+    renderRegDetailDocuments();
+  }
+
+  renderCasesList();
+  renderRegulationsList();
 }
 
 function loadSavedSession() {
@@ -2163,8 +2186,37 @@ function logout() {
   localStorage.removeItem('liquidation_auth');
   updateAuthUI();
   showToast('ออกจากระบบเรียบร้อย', 'info');
-  if (AppState.selectedCase) openCaseDetail(AppState.selectedCase.caseId);
-  if (AppState.selectedReg) openRegDetail(AppState.selectedReg.regId);
+
+  // Close any admin-only modals that may be open
+  const adminModals = [
+    'createCaseModal', 'updateStepModal', 'addLiquidatorModal', 'editLiquidatorModal',
+    'editCaseModal', 'uploadDocModal', 'createRegModal', 'updateRegStepModal',
+    'editRegModal', 'uploadRegDocModal', 'auditLogModal', 'loginModal'
+  ];
+  adminModals.forEach(modalId => closeModal(modalId));
+
+  // If a detail modal is currently open, re-render its content to hide admin buttons without re-opening
+  const isCaseDetailOpen = document.getElementById('caseDetailModal')?.classList.contains('show');
+  if (isCaseDetailOpen && AppState.selectedCase) {
+    const adminActions = document.getElementById('detailAdminActions');
+    const adminAddLiqBtn = document.getElementById('adminAddLiqBtn');
+    if (adminActions) adminActions.style.display = 'none';
+    if (adminAddLiqBtn) adminAddLiqBtn.style.display = 'none';
+    renderDetailTimeline();
+    renderDetailLiquidators();
+    renderDetailDocuments();
+  }
+
+  const isRegDetailOpen = document.getElementById('regDetailModal')?.classList.contains('show');
+  if (isRegDetailOpen && AppState.selectedReg) {
+    const adminActions = document.getElementById('detailRegAdminActions');
+    if (adminActions) adminActions.style.display = 'none';
+    renderRegDetailTimeline();
+    renderRegDetailDocuments();
+  }
+
+  renderCasesList();
+  renderRegulationsList();
 }
 
 function updateAuthUI() {
