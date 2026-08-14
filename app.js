@@ -565,7 +565,8 @@ async function openCaseDetail(caseId) {
     if (dissolutionLabelEl) dissolutionLabelEl.innerText = `${dissolutionType}เลขที่`;
 
     document.getElementById('detailOrderNumber').innerText = caseData.orderNumber || '-';
-    document.getElementById('detailOrderDate').innerText = formatThaiDate(caseData.orderDate);
+    const ordDur = WorkingDaysUtil.calculate(caseData.orderDate, (caseData.caseStatus === 'เสร็จสิ้น' || caseData.currentStep >= 10) ? caseData.lastUpdated : null, caseData.caseStatus);
+    document.getElementById('detailOrderDate').innerHTML = formatThaiDate(caseData.orderDate) + (ordDur.hasData ? ` <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);" title="${escapeHtml(ordDur.tooltip)}">(${ordDur.workingDays} วันทำการ)</span>` : '');
 
     const isDone = caseData.caseStatus === 'เสร็จสิ้น' || caseData.currentStep >= 10;
     const statusBadge = document.getElementById('detailStatusBadge');
@@ -595,7 +596,56 @@ function renderDetailTimeline() {
   const caseData = AppState.selectedCase;
   if (!caseData || !caseData.steps || !container) return;
 
-  container.innerHTML = caseData.steps.map(step => {
+  // คำนวณวันทำการรวมทุกขั้นตอน (ไม่รวมวันเสาร์-อาทิตย์ และวันหยุดราชการ)
+  let totalWorkingDays = 0;
+  const stepDurations = caseData.steps.map(step => {
+    const dur = WorkingDaysUtil.calculate(step.startDate, step.endDate, step.status);
+    if (dur.hasData && (step.status === 'เสร็จสิ้น' || step.status === 'กำลังดำเนินการ')) {
+      totalWorkingDays += dur.workingDays;
+    }
+    return dur;
+  });
+
+  const completedCount = caseData.steps.filter(s => s.status === 'เสร็จสิ้น').length;
+  const totalCount = caseData.steps.length;
+  const progressPercent = Math.round((completedCount / totalCount) * 100);
+  const currentStepObj = caseData.steps.find(s => parseInt(s.stepNumber, 10) === parseInt(caseData.currentStep, 10)) || {};
+
+  const summaryHtml = `
+    <div class="timeline-summary-card">
+      <div class="timeline-summary-header">
+        <div class="summary-title-wrap">
+          <span class="summary-icon">⏱️</span>
+          <div>
+            <div class="summary-title">สรุปภาพรวมระยะเวลาชำระบัญชี</div>
+            <div class="summary-subtitle">คำนวณเฉพาะวันทำการ (ไม่นับวันเสาร์-อาทิตย์ และวันหยุดราชการ)</div>
+          </div>
+        </div>
+        <div class="summary-total-badge">
+          <span class="total-label">รวมระยะเวลาที่ใช้ไป:</span>
+          <span class="total-number">${totalWorkingDays}</span>
+          <span class="total-unit">วันทำการ</span>
+        </div>
+      </div>
+      <div class="timeline-summary-grid">
+        <div class="summary-grid-item">
+          <span class="item-label">📊 ขั้นตอนที่เสร็จสิ้น</span>
+          <strong class="item-val">${completedCount} จาก ${totalCount} ขั้นตอน (${progressPercent}%)</strong>
+        </div>
+        <div class="summary-grid-item">
+          <span class="item-label">🚀 ขั้นตอนปัจจุบัน</span>
+          <strong class="item-val">ขั้นที่ ${caseData.currentStep}: ${escapeHtml(currentStepObj.stepName || '-')}</strong>
+        </div>
+        <div class="summary-grid-item">
+          <span class="item-label">📅 วันที่คำสั่ง/ประกาศเลิก</span>
+          <strong class="item-val">${formatThaiDate(caseData.orderDate)}</strong>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const stepsHtml = caseData.steps.map((step, idx) => {
+    const dur = stepDurations[idx];
     const isCompleted = step.status === 'เสร็จสิ้น';
     const isActive = step.status === 'กำลังดำเนินการ';
     const hasIssue = step.issue && step.issue.trim() !== '';
@@ -630,9 +680,20 @@ function renderDetailTimeline() {
           </div>
 
           <div class="stepper-dates">
-            <span>📅 เริ่ม: ${formatThaiDate(step.startDate)}</span>
-            <span style="margin: 0 6px;">|</span>
-            <span>🏁 เสร็จ: ${formatThaiDate(step.endDate)}</span>
+            <span class="date-item">📅 เริ่ม: <strong>${formatThaiDate(step.startDate)}</strong></span>
+            <span class="date-sep">|</span>
+            <span class="date-item">🏁 เสร็จ: <strong>${formatThaiDate(step.endDate)}</strong></span>
+            ${dur.hasData ? `
+              <span class="date-sep">|</span>
+              <span class="stepper-duration-tag ${dur.isOngoing ? 'ongoing' : isCompleted ? 'done' : ''}" title="${escapeHtml(dur.tooltip)}">
+                ⏱️ ระยะเวลา: <strong>${dur.workingDays} วันทำการ</strong>${dur.isOngoing ? ' <span class="badge-subtext">(กำลังดำเนินการ)</span>' : ''}
+              </span>
+            ` : `
+              <span class="date-sep">|</span>
+              <span class="stepper-duration-tag pending" title="ยังไม่มีข้อมูลวันที่">
+                ⏱️ ระยะเวลา: -
+              </span>
+            `}
           </div>
 
           ${hasIssue ? `
@@ -660,6 +721,8 @@ function renderDetailTimeline() {
       </div>
     `;
   }).join('');
+
+  container.innerHTML = summaryHtml + `<div class="stepper-list-wrap">` + stepsHtml + `</div>`;
 }
 
 function renderDetailLiquidators() {
@@ -1550,11 +1613,11 @@ async function openRegDetail(regId) {
     docTypeBadge.className = `case-type-badge ${regData.docType === 'ข้อบังคับสหกรณ์' ? 'reg-type-bylaw' : 'reg-type-rule'}`;
 
     document.getElementById('detailRegDocNumber').innerText = regData.docNumber || '-';
-    document.getElementById('detailRegSubmitDate').innerText = formatThaiDate(regData.submitDate);
+    const isApproved = regData.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || regData.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || regData.currentStep >= 5;
+    const subDur = WorkingDaysUtil.calculate(regData.submitDate, isApproved ? regData.lastUpdated : null, regData.status);
+    document.getElementById('detailRegSubmitDate').innerHTML = formatThaiDate(regData.submitDate) + (subDur.hasData ? ` <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);" title="${escapeHtml(subDur.tooltip)}">(${subDur.workingDays} วันทำการ)</span>` : '');
     document.getElementById('detailRegOfficer').innerText = regData.officerName || '-';
     document.getElementById('detailRegContact').innerText = regData.officerContact || '-';
-
-    const isApproved = regData.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || regData.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || regData.currentStep >= 5;
     const statusBadge = document.getElementById('detailRegStatusBadge');
     if (isApproved) {
       statusBadge.className = 'status-badge completed';
@@ -1587,7 +1650,56 @@ function renderRegDetailTimeline() {
   const regData = AppState.selectedReg;
   if (!regData || !regData.steps || !container) return;
 
-  container.innerHTML = regData.steps.map(step => {
+  // คำนวณวันทำการรวมทุกขั้นตอน (ไม่รวมวันเสาร์-อาทิตย์ และวันหยุดราชการ)
+  let totalWorkingDays = 0;
+  const stepDurations = regData.steps.map(step => {
+    const dur = WorkingDaysUtil.calculate(step.startDate, step.endDate, step.status);
+    if (dur.hasData && (step.status === 'เสร็จสิ้น' || step.status === 'กำลังดำเนินการ')) {
+      totalWorkingDays += dur.workingDays;
+    }
+    return dur;
+  });
+
+  const completedCount = regData.steps.filter(s => s.status === 'เสร็จสิ้น').length;
+  const totalCount = regData.steps.length;
+  const progressPercent = Math.round((completedCount / totalCount) * 100);
+  const currentStepObj = regData.steps.find(s => parseInt(s.stepNumber, 10) === parseInt(regData.currentStep, 10)) || {};
+
+  const summaryHtml = `
+    <div class="timeline-summary-card reg-theme">
+      <div class="timeline-summary-header">
+        <div class="summary-title-wrap">
+          <span class="summary-icon">⏱️</span>
+          <div>
+            <div class="summary-title">สรุปภาพรวมระยะเวลาพิจารณา</div>
+            <div class="summary-subtitle">คำนวณเฉพาะวันทำการ (ไม่นับวันเสาร์-อาทิตย์ และวันหยุดราชการ)</div>
+          </div>
+        </div>
+        <div class="summary-total-badge reg-badge">
+          <span class="total-label">รวมระยะเวลาที่ใช้ไป:</span>
+          <span class="total-number">${totalWorkingDays}</span>
+          <span class="total-unit">วันทำการ</span>
+        </div>
+      </div>
+      <div class="timeline-summary-grid">
+        <div class="summary-grid-item">
+          <span class="item-label">📊 ขั้นตอนที่เสร็จสิ้น</span>
+          <strong class="item-val">${completedCount} จาก ${totalCount} ขั้นตอน (${progressPercent}%)</strong>
+        </div>
+        <div class="summary-grid-item">
+          <span class="item-label">🚀 ขั้นตอนปัจจุบัน</span>
+          <strong class="item-val">ขั้นที่ ${regData.currentStep}: ${escapeHtml(currentStepObj.stepName || '-')}</strong>
+        </div>
+        <div class="summary-grid-item">
+          <span class="item-label">📅 วันที่ยื่นเรื่องคำขอ</span>
+          <strong class="item-val">${formatThaiDate(regData.submitDate)}</strong>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const stepsHtml = regData.steps.map((step, idx) => {
+    const dur = stepDurations[idx];
     const isCompleted = step.status === 'เสร็จสิ้น';
     const isActive = step.status === 'กำลังดำเนินการ';
     const hasIssue = step.issue && step.issue.trim() !== '';
@@ -1622,9 +1734,20 @@ function renderRegDetailTimeline() {
           </div>
 
           <div class="stepper-dates">
-            <span>📅 เริ่ม: ${formatThaiDate(step.startDate)}</span>
-            <span style="margin: 0 6px;">|</span>
-            <span>🏁 เสร็จ: ${formatThaiDate(step.endDate)}</span>
+            <span class="date-item">📅 เริ่ม: <strong>${formatThaiDate(step.startDate)}</strong></span>
+            <span class="date-sep">|</span>
+            <span class="date-item">🏁 เสร็จ: <strong>${formatThaiDate(step.endDate)}</strong></span>
+            ${dur.hasData ? `
+              <span class="date-sep">|</span>
+              <span class="stepper-duration-tag ${dur.isOngoing ? 'ongoing' : isCompleted ? 'done' : ''}" title="${escapeHtml(dur.tooltip)}">
+                ⏱️ ระยะเวลา: <strong>${dur.workingDays} วันทำการ</strong>${dur.isOngoing ? ' <span class="badge-subtext">(กำลังดำเนินการ)</span>' : ''}
+              </span>
+            ` : `
+              <span class="date-sep">|</span>
+              <span class="stepper-duration-tag pending" title="ยังไม่มีข้อมูลวันที่">
+                ⏱️ ระยะเวลา: -
+              </span>
+            `}
           </div>
 
           ${hasIssue ? `
@@ -1652,6 +1775,8 @@ function renderRegDetailTimeline() {
       </div>
     `;
   }).join('');
+
+  container.innerHTML = summaryHtml + `<div class="stepper-list-wrap">` + stepsHtml + `</div>`;
 }
 
 function renderRegDetailDocuments() {
