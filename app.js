@@ -2115,8 +2115,7 @@ async function handleAdminLoginSubmit(e) {
   if (e) e.preventDefault();
   if (isLoggingIn) return;
 
-  const email = (document.getElementById('loginEmail')?.value || document.getElementById('adminEmailInput')?.value || '').trim();
-  const name = (document.getElementById('loginName')?.value || document.getElementById('adminNameInput')?.value || '').trim();
+  const email = (document.getElementById('loginEmail')?.value || '').trim();
 
   if (!email) {
     showToast('กรุณากรอกอีเมลเจ้าหน้าที่', 'warning');
@@ -2126,7 +2125,7 @@ async function handleAdminLoginSubmit(e) {
   isLoggingIn = true;
   setLoading(true);
   try {
-    const authData = await ApiClient.post('login', { email, name: name || 'ผู้ดูแลระบบ' });
+    const authData = await ApiClient.post('login', { email });
     setLoggedInUser(authData);
     closeModal('loginModal');
     showToast(`ยินดีต้อนรับ ${authData.name || email}`, 'success');
