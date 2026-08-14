@@ -539,7 +539,10 @@ function renderTable(container, items = AppState.filteredCases, startIndex = 0) 
           </span>
           ${item.hasIssues ? `<span class="status-badge issue" style="margin-left: 4px;" title="${escapeHtml(issuesTooltip)}">⚠️ มีปัญหา (${item.issuesCount})</span>` : ''}
         </td>
-        <td style="text-align: right;">
+        <td style="text-align: right; white-space: nowrap;">
+          <button class="btn btn-outline-primary btn-sm" onclick="quickExportCasePdf('${item.caseId}')" title="ส่งออกข้อมูลสหกรณ์นี้เป็น PDF" style="padding: 4px 8px; margin-right: 4px;">
+            📄 PDF
+          </button>
           <button class="btn btn-secondary btn-sm" onclick="openCaseDetail('${item.caseId}')">
             รายละเอียด
           </button>
@@ -1589,7 +1592,10 @@ function renderRegTable(container, items = AppState.filteredRegulations, startIn
             ${statusText}
           </span>
         </td>
-        <td style="text-align: right;">
+        <td style="text-align: right; white-space: nowrap;">
+          <button class="btn btn-outline-primary btn-sm" onclick="quickExportRegPdf('${item.regId}')" title="ส่งออกข้อมูลระเบียบ/ข้อบังคับนี้เป็น PDF" style="padding: 4px 8px; margin-right: 4px;">
+            📄 PDF
+          </button>
           <button class="btn btn-secondary btn-sm" onclick="openRegDetail('${item.regId}')">
             รายละเอียด
           </button>
@@ -2738,9 +2744,930 @@ async function openAuditLogModal() {
   }
 }
 
+/**
+ * ==============================================================================
+ * PDF Export & Official Report Engine
+ * ==============================================================================
+ */
+
+// Format full Thai date and time for official report headers
+function formatThaiDateTime(dateVal) {
+  const date = dateVal ? new Date(dateVal) : new Date();
+  if (isNaN(date.getTime())) return '-';
+  const months = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+  let year = date.getFullYear();
+  if (year < 2400) year += 543;
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${date.getDate()} ${months[date.getMonth()]} พ.ศ. ${year} เวลา ${hours}:${minutes} น.`;
+}
+
+// 1. Export Individual Liquidation Case PDF
+function exportCurrentCasePdf() {
+  const caseData = AppState.selectedCase;
+  if (!caseData) {
+    showToast('ไม่พบข้อมูลสหกรณ์ที่เลือกสำหรับการส่งออก PDF', 'warning');
+    return;
+  }
+
+  const isDone = caseData.caseStatus === 'เสร็จสิ้น' || caseData.currentStep >= 10;
+  const printDateStr = formatThaiDateTime(new Date());
+  const dissolutionType = caseData.dissolutionType || (caseData.orderNumber && caseData.orderNumber.includes('ประกาศ') ? 'ประกาศเลิก' : 'คำสั่งเลิก');
+
+  // Calculate working days summary
+  let totalWorkingDays = 0;
+  if (Array.isArray(caseData.steps)) {
+    caseData.steps.forEach(step => {
+      const dur = WorkingDaysUtil.calculate(step.startDate, step.endDate, step.status);
+      if (dur.hasData && (step.status === 'เสร็จสิ้น' || step.status === 'กำลังดำเนินการ')) {
+        totalWorkingDays += dur.workingDays;
+      }
+    });
+  }
+
+  // Steps rows
+  const stepsRows = (caseData.steps || []).map((step, idx) => {
+    const dur = WorkingDaysUtil.calculate(step.startDate, step.endDate, step.status);
+    let badgeClass = 'report-badge-pending';
+    let badgeText = 'รอดำเนินการ';
+    if (step.status === 'เสร็จสิ้น') {
+      badgeClass = 'report-badge-done';
+      badgeText = '✓ เสร็จสิ้น';
+    } else if (step.status === 'กำลังดำเนินการ') {
+      badgeClass = 'report-badge-active';
+      badgeText = '● กำลังดำเนินการ';
+    }
+
+    const issuesHtml = step.issues ? `<div style="color: #dc2626; font-size: 0.76rem; margin-top: 3px;"><strong>⚠️ ปัญหา:</strong> ${escapeHtml(step.issues)}</div>` : '';
+    const notesHtml = step.notes ? `<div style="color: #475569; font-size: 0.76rem; margin-top: 2px;">${escapeHtml(step.notes)}</div>` : '';
+
+    return `
+      <tr>
+        <td style="text-align: center; font-weight: 600;">${idx + 1}</td>
+        <td>
+          <div style="font-weight: 600; color: #0e3760;">${escapeHtml(step.stepTitle || CONFIG.LIQUIDATION_STEPS[idx]?.title || 'ขั้นตอนที่ ' + (idx + 1))}</div>
+          <div style="font-size: 0.75rem; color: #64748b;">${escapeHtml(CONFIG.LIQUIDATION_STEPS[idx]?.desc || '')}</div>
+        </td>
+        <td style="text-align: center;">
+          <span class="report-badge ${badgeClass}">${badgeText}</span>
+        </td>
+        <td style="font-size: 0.78rem;">
+          <div><strong>เริ่ม:</strong> ${formatThaiDate(step.startDate)}</div>
+          <div><strong>เสร็จ:</strong> ${formatThaiDate(step.endDate)}</div>
+          ${dur.hasData ? `<div style="color: #0369a1; font-weight: 500;">(${dur.workingDays} วันทำการ)</div>` : ''}
+        </td>
+        <td style="font-size: 0.78rem;">
+          <div>${escapeHtml(step.documentNumber || '-')}</div>
+          ${notesHtml}
+          ${issuesHtml}
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  // Liquidators rows
+  const liqRows = (caseData.liquidators && caseData.liquidators.length > 0) ? caseData.liquidators.map((liq, idx) => `
+    <tr>
+      <td style="text-align: center;">${idx + 1}</td>
+      <td style="font-weight: 600;">${escapeHtml(liq.name)}</td>
+      <td>${escapeHtml(liq.position || 'ผู้ชำระบัญชี')}</td>
+      <td>${formatThaiDate(liq.appointmentDate)}</td>
+      <td>${formatThaiDate(liq.vacateDate)}</td>
+      <td>${escapeHtml(liq.phone || '-')}</td>
+      <td style="text-align: center;">
+        <span class="report-badge ${liq.status === 'พ้นตำแหน่ง' ? 'report-badge-pending' : 'report-badge-done'}">
+          ${escapeHtml(liq.status || 'ปฏิบัติหน้าที่')}
+        </span>
+      </td>
+    </tr>
+  `).join('') : `
+    <tr>
+      <td colspan="7" style="text-align: center; color: #94a3b8; padding: 12px;">ยังไม่มีข้อมูลการแต่งตั้งผู้ชำระบัญชี</td>
+    </tr>
+  `;
+
+  // Documents list
+  const docRows = (caseData.documents && caseData.documents.length > 0) ? caseData.documents.map((doc, idx) => `
+    <tr>
+      <td style="text-align: center;">${idx + 1}</td>
+      <td style="font-weight: 500;">${escapeHtml(doc.fileName || 'เอกสารแนบ')}</td>
+      <td style="text-align: center;">${doc.stepNumber ? 'ขั้นตอนที่ ' + doc.stepNumber : 'เอกสารทั่วไป'}</td>
+      <td style="text-align: center;">${formatThaiDate(doc.uploadedDate)}</td>
+    </tr>
+  `).join('') : `
+    <tr>
+      <td colspan="4" style="text-align: center; color: #94a3b8; padding: 10px;">ไม่มีไฟล์เอกสารแนบในระบบ</td>
+    </tr>
+  `;
+
+  const html = `
+    <div class="report-header">
+      <div class="report-brand-wrap">
+        <div class="report-emblem">🏛️</div>
+        <div class="report-header-text">
+          <h2>กรมส่งเสริมสหกรณ์ กระทรวงเกษตรและสหกรณ์</h2>
+          <p>ระบบติดตามการชำระบัญชีสหกรณ์ (Cooperative Liquidation Tracking System)</p>
+        </div>
+      </div>
+      <div class="report-meta-box">
+        <div><strong>วันที่พิมพ์รายงาน:</strong></div>
+        <div>${printDateStr}</div>
+      </div>
+    </div>
+
+    <div class="report-title-banner">
+      <h3>รายงานข้อมูลและความคืบหน้าการชำระบัญชีสหกรณ์</h3>
+      <div class="report-subtitle">${escapeHtml(caseData.coopName)} (${escapeHtml(caseData.coopType || '-')})</div>
+    </div>
+
+    <!-- Section 1: Basic Info -->
+    <div class="report-section">
+      <div class="report-section-header">
+        <h4 class="report-section-title">1. ข้อมูลทั่วไปของสหกรณ์ / สถาบันเกษตรกร</h4>
+      </div>
+      <div class="report-info-grid">
+        <div class="report-info-item">
+          <span class="report-info-label">ชื่อสหกรณ์ / สถาบัน</span>
+          <span class="report-info-value" style="color: #0e3760; font-size: 1rem;">${escapeHtml(caseData.coopName)}</span>
+        </div>
+        <div class="report-info-item">
+          <span class="report-info-label">ประเภทสหกรณ์</span>
+          <span class="report-info-value">${escapeHtml(caseData.coopType || '-')}</span>
+        </div>
+        <div class="report-info-item">
+          <span class="report-info-label">เลขทะเบียนสหกรณ์</span>
+          <span class="report-info-value">${escapeHtml(caseData.regNumber || '-')}</span>
+        </div>
+        <div class="report-info-item">
+          <span class="report-info-label">ที่ตั้งสำนักงาน / อำเภอ / จังหวัด</span>
+          <span class="report-info-value">${escapeHtml(caseData.location || '-')}</span>
+        </div>
+        <div class="report-info-item">
+          <span class="report-info-label">${escapeHtml(dissolutionType)}เลขที่</span>
+          <span class="report-info-value">${escapeHtml(caseData.orderNumber || '-')}</span>
+        </div>
+        <div class="report-info-item">
+          <span class="report-info-label">วันที่ออก${escapeHtml(dissolutionType)}</span>
+          <span class="report-info-value">${formatThaiDate(caseData.orderDate)}</span>
+        </div>
+        <div class="report-info-item">
+          <span class="report-info-label">สถานะปัจจุบัน</span>
+          <span class="report-info-value">
+            <span class="report-badge ${isDone ? 'report-badge-done' : 'report-badge-active'}">
+              ${isDone ? '✓ เสร็จสิ้นกระบวนการชำระบัญชี' : `● กำลังชำระบัญชี (ขั้นที่ ${caseData.currentStep || 1}/10)`}
+            </span>
+          </span>
+        </div>
+        <div class="report-info-item">
+          <span class="report-info-label">ระยะเวลาดำเนินการรวม (วันทำการ)</span>
+          <span class="report-info-value" style="color: #0e3760; font-weight: 700;">${totalWorkingDays} วันทำการ (ไม่รวมวันหยุดราชการ)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Liquidators -->
+    <div class="report-section">
+      <div class="report-section-header">
+        <h4 class="report-section-title">2. รายนามผู้ชำระบัญชีและประวัติการแต่งตั้ง</h4>
+      </div>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">ลำดับ</th>
+            <th>ชื่อ - นามสกุล</th>
+            <th>ตำแหน่ง</th>
+            <th>วันที่แต่งตั้ง</th>
+            <th>วันที่พ้นตำแหน่ง</th>
+            <th>เบอร์ติดต่อ</th>
+            <th style="width: 90px;">สถานะ</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${liqRows}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Section 3: 10 Steps Progress -->
+    <div class="report-section">
+      <div class="report-section-header">
+        <h4 class="report-section-title">3. ผลการดำเนินงาน 10 ขั้นตอนการชำระบัญชีตามกฎหมาย</h4>
+      </div>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">ขั้น</th>
+            <th style="width: 32%;">ขั้นตอนการดำเนินงาน</th>
+            <th style="width: 95px;">สถานะ</th>
+            <th style="width: 140px;">ระยะเวลาดำเนินงาน</th>
+            <th>เลขที่เอกสาร / รายละเอียดผลการดำเนินงาน</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${stepsRows}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Section 4: Attached Documents -->
+    <div class="report-section">
+      <div class="report-section-header">
+        <h4 class="report-section-title">4. รายการเอกสารหลักฐานแนบในระบบ</h4>
+      </div>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">ลำดับ</th>
+            <th>ชื่อไฟล์เอกสาร</th>
+            <th style="width: 120px;">ขั้นตอนที่เกี่ยวข้อง</th>
+            <th style="width: 120px;">วันที่บันทึกเข้าระบบ</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${docRows}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Signatures -->
+    <div class="report-signature-section">
+      <div class="report-sig-box">
+        <div>ลงชื่อ...................................................................ผู้รายงาน</div>
+        <div class="report-sig-line"></div>
+        <div>(...................................................................)</div>
+        <div>ตำแหน่ง.............................................................</div>
+        <div>วันที่.......เดือน.......................พ.ศ............</div>
+      </div>
+      <div class="report-sig-box">
+        <div>ลงชื่อ...................................................................ผู้รับรอง</div>
+        <div class="report-sig-line"></div>
+        <div>(...................................................................)</div>
+        <div>ตำแหน่ง นายทะเบียนสหกรณ์ / ผู้ตรวจการสหกรณ์</div>
+        <div>วันที่.......เดือน.......................พ.ศ............</div>
+      </div>
+    </div>
+
+    <div class="report-footer">
+      <div>ระบบศูนย์บริการงานนายทะเบียนและส่งเสริมสหกรณ์ กรมส่งเสริมสหกรณ์</div>
+      <div>พิมพ์เมื่อ ${printDateStr}</div>
+    </div>
+  `;
+
+  const safeName = (caseData.coopName || 'สหกรณ์').replace(/[/\\?%*:|"<>]/g, '_');
+  const filename = `รายงานชำระบัญชี_${safeName}.pdf`;
+
+  openPdfPreview(html, filename, 'รายงานสรุปข้อมูลการชำระบัญชีสหกรณ์', caseData.coopName, 'portrait');
+}
+
+// 2. Export Individual Regulation / By-law PDF
+function exportCurrentRegPdf() {
+  const regData = AppState.selectedReg;
+  if (!regData) {
+    showToast('ไม่พบข้อมูลระเบียบ/ข้อบังคับสำหรับการส่งออก PDF', 'warning');
+    return;
+  }
+
+  const isApproved = regData.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || regData.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || regData.currentStep >= 5;
+  const printDateStr = formatThaiDateTime(new Date());
+
+  // Calculate working days
+  let totalWorkingDays = 0;
+  if (Array.isArray(regData.steps)) {
+    regData.steps.forEach(step => {
+      const dur = WorkingDaysUtil.calculate(step.startDate, step.endDate, step.status);
+      if (dur.hasData && (step.status === 'เสร็จสิ้น' || step.status === 'กำลังดำเนินการ')) {
+        totalWorkingDays += dur.workingDays;
+      }
+    });
+  }
+
+  // Steps rows
+  const stepsRows = (regData.steps || []).map((step, idx) => {
+    const dur = WorkingDaysUtil.calculate(step.startDate, step.endDate, step.status);
+    let badgeClass = 'report-badge-pending';
+    let badgeText = 'รอดำเนินการ';
+    if (step.status === 'เสร็จสิ้น') {
+      badgeClass = 'report-badge-done';
+      badgeText = '✓ เสร็จสิ้น';
+    } else if (step.status === 'กำลังดำเนินการ') {
+      badgeClass = 'report-badge-active';
+      badgeText = '● กำลังดำเนินการ';
+    } else if (step.status === 'ส่งคืนแก้ไข') {
+      badgeClass = 'report-badge-issue';
+      badgeText = '⚠️ ส่งคืนแก้ไข';
+    }
+
+    const notesHtml = step.notes ? `<div style="color: #475569; font-size: 0.76rem; margin-top: 2px;">${escapeHtml(step.notes)}</div>` : '';
+
+    return `
+      <tr>
+        <td style="text-align: center; font-weight: 600;">${idx + 1}</td>
+        <td>
+          <div style="font-weight: 600; color: #0e3760;">${escapeHtml(step.stepTitle || CONFIG.REGULATION_STEPS[idx]?.title || 'ขั้นตอนที่ ' + (idx + 1))}</div>
+          <div style="font-size: 0.75rem; color: #64748b;">${escapeHtml(CONFIG.REGULATION_STEPS[idx]?.desc || '')}</div>
+        </td>
+        <td style="text-align: center;">
+          <span class="report-badge ${badgeClass}">${badgeText}</span>
+        </td>
+        <td style="font-size: 0.78rem;">
+          <div><strong>เริ่ม:</strong> ${formatThaiDate(step.startDate)}</div>
+          <div><strong>เสร็จ:</strong> ${formatThaiDate(step.endDate)}</div>
+          ${dur.hasData ? `<div style="color: #0369a1; font-weight: 500;">(${dur.workingDays} วันทำการ)</div>` : ''}
+        </td>
+        <td style="font-size: 0.78rem;">
+          <div>${escapeHtml(step.documentNumber || '-')}</div>
+          ${notesHtml}
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  // Documents list
+  const docRows = (regData.documents && regData.documents.length > 0) ? regData.documents.map((doc, idx) => `
+    <tr>
+      <td style="text-align: center;">${idx + 1}</td>
+      <td style="font-weight: 500;">${escapeHtml(doc.fileName || 'เอกสารร่าง/มติ')}</td>
+      <td style="text-align: center;">${doc.stepNumber ? 'ขั้นตอนที่ ' + doc.stepNumber : 'เอกสารทั่วไป'}</td>
+      <td style="text-align: center;">${formatThaiDate(doc.uploadedDate)}</td>
+    </tr>
+  `).join('') : `
+    <tr>
+      <td colspan="4" style="text-align: center; color: #94a3b8; padding: 10px;">ไม่มีไฟล์เอกสารแนบในระบบ</td>
+    </tr>
+  `;
+
+  const html = `
+    <div class="report-header">
+      <div class="report-brand-wrap">
+        <div class="report-emblem">📜</div>
+        <div class="report-header-text">
+          <h2>กรมส่งเสริมสหกรณ์ กระทรวงเกษตรและสหกรณ์</h2>
+          <p>ระบบติดตามการพิจารณาระเบียบและข้อบังคับสหกรณ์</p>
+        </div>
+      </div>
+      <div class="report-meta-box">
+        <div><strong>วันที่พิมพ์รายงาน:</strong></div>
+        <div>${printDateStr}</div>
+      </div>
+    </div>
+
+    <div class="report-title-banner">
+      <h3>รายงานผลการพิจารณาระเบียบและข้อบังคับสหกรณ์</h3>
+      <div class="report-subtitle">${escapeHtml(regData.title)} - ${escapeHtml(regData.coopName)}</div>
+    </div>
+
+    <!-- Section 1: Basic Info -->
+    <div class="report-section">
+      <div class="report-section-header">
+        <h4 class="report-section-title">1. ข้อมูลระเบียบ / ข้อบังคับ และสหกรณ์ที่ยื่นคำขอ</h4>
+      </div>
+      <div class="report-info-grid">
+        <div class="report-info-item">
+          <span class="report-info-label">ชื่อเรื่อง ระเบียบ / ข้อบังคับ</span>
+          <span class="report-info-value" style="color: #0e3760; font-size: 1rem;">${escapeHtml(regData.title)}</span>
+        </div>
+        <div class="report-info-item">
+          <span class="report-info-label">ประเภทเอกสาร</span>
+          <span class="report-info-value">${escapeHtml(regData.docType || 'ข้อบังคับสหกรณ์')}</span>
+        </div>
+        <div class="report-info-item">
+          <span class="report-info-label">สหกรณ์ / สถาบันเกษตรกร</span>
+          <span class="report-info-value">${escapeHtml(regData.coopName)} (${escapeHtml(regData.regNumber || '-')})</span>
+        </div>
+        <div class="report-info-item">
+          <span class="report-info-label">ประเภทสหกรณ์</span>
+          <span class="report-info-value">${escapeHtml(regData.coopType || '-')}</span>
+        </div>
+        <div class="report-info-item">
+          <span class="report-info-label">เลขที่รับเรื่องคำขอ</span>
+          <span class="report-info-value">${escapeHtml(regData.docNumber || '-')}</span>
+        </div>
+        <div class="report-info-item">
+          <span class="report-info-label">วันที่ยื่นเรื่อง</span>
+          <span class="report-info-value">${formatThaiDate(regData.submitDate)}</span>
+        </div>
+        <div class="report-info-item">
+          <span class="report-info-label">เจ้าหน้าที่ผู้รับผิดชอบ</span>
+          <span class="report-info-value">${escapeHtml(regData.officerName || '-')} ${regData.officerContact ? '(' + escapeHtml(regData.officerContact) + ')' : ''}</span>
+        </div>
+        <div class="report-info-item">
+          <span class="report-info-label">สถานะการพิจารณา</span>
+          <span class="report-info-value">
+            <span class="report-badge ${isApproved ? 'report-badge-done' : (regData.status === 'ส่งคืนแก้ไข' ? 'report-badge-issue' : 'report-badge-active')}">
+              ${escapeHtml(regData.status || 'อยู่ระหว่างพิจารณา')}
+            </span>
+          </span>
+        </div>
+        <div class="report-info-item">
+          <span class="report-info-label">ระยะเวลาดำเนินการรวม (วันทำการ)</span>
+          <span class="report-info-value" style="color: #0e3760; font-weight: 700;">${totalWorkingDays} วันทำการ (ไม่รวมวันหยุดราชการ)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: 5 Steps Progress -->
+    <div class="report-section">
+      <div class="report-section-header">
+        <h4 class="report-section-title">2. ผลการดำเนินงาน 5 ขั้นตอนการพิจารณา</h4>
+      </div>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">ขั้น</th>
+            <th style="width: 35%;">ขั้นตอนการพิจารณา</th>
+            <th style="width: 105px;">สถานะ</th>
+            <th style="width: 140px;">ระยะเวลาดำเนินงาน</th>
+            <th>เลขที่หนังสือ / บันทึกผลการพิจารณา</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${stepsRows}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Section 3: Attached Documents -->
+    <div class="report-section">
+      <div class="report-section-header">
+        <h4 class="report-section-title">3. รายการเอกสารร่าง มติที่ประชุม และเอกสารแนบ</h4>
+      </div>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">ลำดับ</th>
+            <th>ชื่อไฟล์เอกสาร</th>
+            <th style="width: 120px;">ขั้นตอนที่เกี่ยวข้อง</th>
+            <th style="width: 120px;">วันที่บันทึกเข้าระบบ</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${docRows}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Signatures -->
+    <div class="report-signature-section">
+      <div class="report-sig-box">
+        <div>ลงชื่อ...................................................................เจ้าหน้าที่ผู้รับผิดชอบ</div>
+        <div class="report-sig-line"></div>
+        <div>(${escapeHtml(regData.officerName || '...................................................................')})</div>
+        <div>ตำแหน่ง นักวิชาการสหกรณ์ / นิติกร</div>
+        <div>วันที่.......เดือน.......................พ.ศ............</div>
+      </div>
+      <div class="report-sig-box">
+        <div>ลงชื่อ...................................................................ผู้อนุมัติ/นายทะเบียน</div>
+        <div class="report-sig-line"></div>
+        <div>(...................................................................)</div>
+        <div>ตำแหน่ง นายทะเบียนสหกรณ์ / ผู้ได้รับมอบอำนาจ</div>
+        <div>วันที่.......เดือน.......................พ.ศ............</div>
+      </div>
+    </div>
+
+    <div class="report-footer">
+      <div>ระบบศูนย์บริการงานนายทะเบียนและส่งเสริมสหกรณ์ กรมส่งเสริมสหกรณ์</div>
+      <div>พิมพ์เมื่อ ${printDateStr}</div>
+    </div>
+  `;
+
+  const safeTitle = (regData.title || 'ระเบียบข้อบังคับ').replace(/[/\\?%*:|"<>]/g, '_').substring(0, 30);
+  const filename = `รายงานระเบียบข้อบังคับ_${safeTitle}.pdf`;
+
+  openPdfPreview(html, filename, 'รายงานผลการพิจารณาระเบียบและข้อบังคับ', regData.title, 'portrait');
+}
+
+// 3. Export Summary Table of Liquidation Cases List PDF (Landscape)
+function exportCasesListPdf() {
+  const items = AppState.filteredCases || [];
+  if (items.length === 0) {
+    showToast('ไม่มีรายการข้อมูลตามตัวกรองที่เลือกสำหรับการส่งออก PDF', 'warning');
+    return;
+  }
+
+  const printDateStr = formatThaiDateTime(new Date());
+
+  // Statistics
+  const totalCount = items.length;
+  const activeCount = items.filter(c => c.caseStatus !== 'เสร็จสิ้น' && c.currentStep < 10).length;
+  const doneCount = items.filter(c => c.caseStatus === 'เสร็จสิ้น' || c.currentStep >= 10).length;
+  const issuesCount = items.filter(c => c.caseStatus === 'มีปัญหา' || (c.issues && c.issues.trim().length > 0)).length;
+
+  // Filter summary text
+  const filterDesc = `ตัวกรอง: ขั้นตอน [${AppState.filterStep}] | สถานะ [${AppState.filterStatus}] | ประเภท [${AppState.filterType}] ${AppState.searchTerm ? '| ค้นหา: "' + AppState.searchTerm + '"' : ''}`;
+
+  const rows = items.map((item, idx) => {
+    const isDone = item.caseStatus === 'เสร็จสิ้น' || item.currentStep >= 10;
+    const dissolutionType = item.dissolutionType || (item.orderNumber && item.orderNumber.includes('ประกาศ') ? 'ประกาศ' : 'คำสั่ง');
+    const liqName = (item.liquidators && item.liquidators.length > 0) ? item.liquidators.map(l => l.name).join(', ') : (item.liquidatorName || '-');
+
+    return `
+      <tr>
+        <td style="text-align: center;">${idx + 1}</td>
+        <td>
+          <div style="font-weight: 600; color: #0e3760;">${escapeHtml(item.coopName)}</div>
+          <div style="font-size: 0.74rem; color: #64748b;">ทะเบียน: ${escapeHtml(item.regNumber || '-')} | ที่ตั้ง: ${escapeHtml(item.location || '-')}</div>
+        </td>
+        <td>${escapeHtml(item.coopType || '-')}</td>
+        <td style="font-size: 0.76rem;">
+          <div>${escapeHtml(dissolutionType)}: ${escapeHtml(item.orderNumber || '-')}</div>
+          <div style="color: #64748b;">วันที่: ${formatThaiDate(item.orderDate)}</div>
+        </td>
+        <td style="text-align: center; font-size: 0.76rem;">
+          <div style="font-weight: 600;">ขั้นที่ ${item.currentStep || 1}/10</div>
+          <div style="color: #64748b;">(${Math.round(((item.currentStep || 1) / 10) * 100)}%)</div>
+        </td>
+        <td style="font-size: 0.76rem;">${escapeHtml(liqName)}</td>
+        <td style="text-align: center;">
+          <span class="report-badge ${isDone ? 'report-badge-done' : 'report-badge-active'}">
+            ${isDone ? 'เสร็จสิ้น' : 'กำลังชำระ'}
+          </span>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  const html = `
+    <div class="report-header">
+      <div class="report-brand-wrap">
+        <div class="report-emblem">🏛️</div>
+        <div class="report-header-text">
+          <h2>กรมส่งเสริมสหกรณ์ กระทรวงเกษตรและสหกรณ์</h2>
+          <p>ระบบติดตามการชำระบัญชีสหกรณ์ (Cooperative Liquidation Tracking System)</p>
+        </div>
+      </div>
+      <div class="report-meta-box">
+        <div><strong>วันที่พิมพ์รายงาน:</strong></div>
+        <div>${printDateStr}</div>
+      </div>
+    </div>
+
+    <div class="report-title-banner">
+      <h3>รายงานสรุปรายการสหกรณ์ที่อยู่ระหว่างการชำระบัญชี</h3>
+      <div class="report-subtitle">${escapeHtml(filterDesc)}</div>
+    </div>
+
+    <!-- KPI Summary Cards -->
+    <div class="report-kpi-row">
+      <div class="report-kpi-card">
+        <div class="report-kpi-val">${totalCount}</div>
+        <div class="report-kpi-lbl">รายการทั้งหมด</div>
+      </div>
+      <div class="report-kpi-card">
+        <div class="report-kpi-val" style="color: #0284c7;">${activeCount}</div>
+        <div class="report-kpi-lbl">กำลังชำระบัญชี</div>
+      </div>
+      <div class="report-kpi-card">
+        <div class="report-kpi-val" style="color: #059669;">${doneCount}</div>
+        <div class="report-kpi-lbl">ชำระบัญชีเสร็จสิ้น</div>
+      </div>
+      <div class="report-kpi-card">
+        <div class="report-kpi-val" style="color: #dc2626;">${issuesCount}</div>
+        <div class="report-kpi-lbl">มีปัญหาอุปสรรค</div>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th style="width: 35px;">ลำดับ</th>
+          <th>สหกรณ์ / เลขทะเบียน / ที่ตั้ง</th>
+          <th style="width: 120px;">ประเภท</th>
+          <th style="width: 140px;">คำสั่ง/ประกาศเลิก</th>
+          <th style="width: 90px;">ความคืบหน้า</th>
+          <th style="width: 140px;">ผู้ชำระบัญชี</th>
+          <th style="width: 80px;">สถานะ</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows}
+      </tbody>
+    </table>
+
+    <div class="report-footer">
+      <div>พิมพ์จากระบบศูนย์บริการงานนายทะเบียนและส่งเสริมสหกรณ์ (พบ ${totalCount} รายการ)</div>
+      <div>พิมพ์เมื่อ ${printDateStr}</div>
+    </div>
+  `;
+
+  const filename = `รายงานสรุปรายการชำระบัญชี_${todayThaiDate().replace(/\//g, '-')}.pdf`;
+  openPdfPreview(html, filename, 'รายงานสรุปรายการชำระบัญชีสหกรณ์', `จำนวนทั้งสิ้น ${totalCount} รายการ`, 'landscape');
+}
+
+// 4. Export Summary Table of Regulations List PDF (Landscape)
+function exportRegulationsListPdf() {
+  const items = AppState.filteredRegulations || [];
+  if (items.length === 0) {
+    showToast('ไม่มีรายการข้อมูลระเบียบ/ข้อบังคับสำหรับการส่งออก PDF', 'warning');
+    return;
+  }
+
+  const printDateStr = formatThaiDateTime(new Date());
+
+  // Statistics
+  const totalCount = items.length;
+  const bylawCount = items.filter(r => r.docType === 'ข้อบังคับสหกรณ์').length;
+  const ruleCount = items.filter(r => r.docType === 'ระเบียบสหกรณ์').length;
+  const doneCount = items.filter(r => r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= 5).length;
+  const pendingCount = items.filter(r => r.status !== 'รับจดทะเบียน/เห็นชอบ/รับทราบ' && r.status !== 'รับจดทะเบียน/เห็นชอบแล้ว' && r.currentStep < 5).length;
+
+  const filterDesc = `ตัวกรอง: ประเภทเอกสาร [${AppState.regFilterDocType}] | ขั้นตอน [${AppState.regFilterStep}] | สถานะ [${AppState.regFilterStatus}] ${AppState.regSearchTerm ? '| ค้นหา: "' + AppState.regSearchTerm + '"' : ''}`;
+
+  const rows = items.map((item, idx) => {
+    const isDone = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || item.currentStep >= 5;
+
+    return `
+      <tr>
+        <td style="text-align: center;">${idx + 1}</td>
+        <td>
+          <div style="font-weight: 600; color: #0e3760;">${escapeHtml(item.title)}</div>
+          <div style="font-size: 0.74rem; color: #64748b;">${escapeHtml(item.coopName)} (${escapeHtml(item.regNumber || '-')})</div>
+        </td>
+        <td style="text-align: center; font-size: 0.76rem;">
+          <span class="report-badge ${item.docType === 'ข้อบังคับสหกรณ์' ? 'report-badge-active' : 'report-badge-pending'}">
+            ${escapeHtml(item.docType || 'ข้อบังคับ')}
+          </span>
+        </td>
+        <td style="font-size: 0.76rem;">${escapeHtml(item.docNumber || '-')}</td>
+        <td style="font-size: 0.76rem; text-align: center;">${formatThaiDate(item.submitDate)}</td>
+        <td style="text-align: center; font-size: 0.76rem;">
+          <div style="font-weight: 600;">ขั้นที่ ${item.currentStep || 1}/5</div>
+        </td>
+        <td style="font-size: 0.76rem;">${escapeHtml(item.officerName || '-')}</td>
+        <td style="text-align: center;">
+          <span class="report-badge ${isDone ? 'report-badge-done' : (item.status === 'ส่งคืนแก้ไข' ? 'report-badge-issue' : 'report-badge-active')}">
+            ${escapeHtml(item.status || 'อยู่ระหว่างพิจารณา')}
+          </span>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  const html = `
+    <div class="report-header">
+      <div class="report-brand-wrap">
+        <div class="report-emblem">📜</div>
+        <div class="report-header-text">
+          <h2>กรมส่งเสริมสหกรณ์ กระทรวงเกษตรและสหกรณ์</h2>
+          <p>ระบบติดตามการพิจารณาระเบียบและข้อบังคับสหกรณ์</p>
+        </div>
+      </div>
+      <div class="report-meta-box">
+        <div><strong>วันที่พิมพ์รายงาน:</strong></div>
+        <div>${printDateStr}</div>
+      </div>
+    </div>
+
+    <div class="report-title-banner">
+      <h3>รายงานสรุปการพิจารณาระเบียบและข้อบังคับสหกรณ์</h3>
+      <div class="report-subtitle">${escapeHtml(filterDesc)}</div>
+    </div>
+
+    <!-- KPI Summary Cards -->
+    <div class="report-kpi-row">
+      <div class="report-kpi-card">
+        <div class="report-kpi-val">${totalCount}</div>
+        <div class="report-kpi-lbl">รายการทั้งหมด</div>
+      </div>
+      <div class="report-kpi-card">
+        <div class="report-kpi-val" style="color: #7c3aed;">${bylawCount}</div>
+        <div class="report-kpi-lbl">ข้อบังคับสหกรณ์</div>
+      </div>
+      <div class="report-kpi-card">
+        <div class="report-kpi-val" style="color: #0284c7;">${ruleCount}</div>
+        <div class="report-kpi-lbl">ระเบียบสหกรณ์</div>
+      </div>
+      <div class="report-kpi-card">
+        <div class="report-kpi-val" style="color: #059669;">${doneCount}</div>
+        <div class="report-kpi-lbl">รับจดทะเบียน/เห็นชอบแล้ว</div>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th style="width: 35px;">ลำดับ</th>
+          <th>ชื่อระเบียบ/ข้อบังคับ / สหกรณ์</th>
+          <th style="width: 100px;">ประเภท</th>
+          <th style="width: 110px;">เลขที่รับเรื่อง</th>
+          <th style="width: 95px;">วันที่ยื่น</th>
+          <th style="width: 80px;">ความคืบหน้า</th>
+          <th style="width: 130px;">จนท. ผู้รับผิดชอบ</th>
+          <th style="width: 110px;">สถานะ</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows}
+      </tbody>
+    </table>
+
+    <div class="report-footer">
+      <div>พิมพ์จากระบบศูนย์บริการงานนายทะเบียนและส่งเสริมสหกรณ์ (พบ ${totalCount} รายการ)</div>
+      <div>พิมพ์เมื่อ ${printDateStr}</div>
+    </div>
+  `;
+
+  const filename = `รายงานสรุปรายการระเบียบข้อบังคับ_${todayThaiDate().replace(/\//g, '-')}.pdf`;
+  openPdfPreview(html, filename, 'รายงานสรุปการพิจารณาระเบียบและข้อบังคับ', `จำนวนทั้งสิ้น ${totalCount} รายการ`, 'landscape');
+}
+
+// 5. Open PDF Preview Modal
+function openPdfPreview(htmlContent, filename, title, subtitle, orientation = 'portrait') {
+  AppState.currentPdfData = {
+    html: htmlContent,
+    filename: filename || 'document.pdf',
+    orientation: orientation
+  };
+
+  const titleEl = document.getElementById('pdfPreviewModalTitle');
+  const subtitleEl = document.getElementById('pdfPreviewModalSubtitle');
+  const contentEl = document.getElementById('pdfPreviewContent');
+
+  if (titleEl) titleEl.innerText = title || 'ตัวอย่างเอกสารรายงาน PDF';
+  if (subtitleEl) subtitleEl.innerText = subtitle || 'ระบบศูนย์บริการงานนายทะเบียนและส่งเสริมสหกรณ์';
+  if (contentEl) {
+    contentEl.className = `pdf-document-paper ${orientation === 'landscape' ? 'landscape' : ''}`;
+    contentEl.innerHTML = htmlContent;
+  }
+
+  openModal('pdfPreviewModal');
+}
+
+// 6. Trigger Direct PDF Download using html2pdf.js
+function triggerDirectPdfDownload() {
+  if (!AppState.currentPdfData) {
+    showToast('ไม่มีข้อมูลเอกสารสำหรับดาวน์โหลด', 'warning');
+    return;
+  }
+
+  const contentEl = document.getElementById('pdfPreviewContent');
+  if (!contentEl) return;
+
+  const { filename, orientation } = AppState.currentPdfData;
+  const isLandscape = orientation === 'landscape';
+
+  showToast('กำลังประมวลผลและสร้างไฟล์ PDF...', 'info');
+  setLoading(true);
+
+  const opt = {
+    margin: isLandscape ? [8, 8, 8, 8] : [10, 10, 10, 10],
+    filename: filename || 'report.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      letterRendering: true,
+      logging: false
+    },
+    jsPDF: {
+      unit: 'mm',
+      format: 'a4',
+      orientation: orientation || 'portrait'
+    },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+  };
+
+  // Check if html2pdf is available
+  if (typeof window.html2pdf !== 'undefined') {
+    window.html2pdf().set(opt).from(contentEl).save()
+      .then(() => {
+        setLoading(false);
+        showToast('ดาวน์โหลดไฟล์ PDF เรียบร้อยแล้ว', 'success');
+      })
+      .catch((err) => {
+        setLoading(false);
+        console.error('html2pdf error:', err);
+        showToast('เกิดข้อผิดพลาดในการสร้างไฟล์ PDF กำลังเปลี่ยนไปใช้ Print to PDF', 'warning');
+        triggerPrintDialog();
+      });
+  } else {
+    setLoading(false);
+    showToast('กำลังเปิดหน้าต่างพิมพ์ (Print / Save as PDF)...', 'info');
+    triggerPrintDialog();
+  }
+}
+
+// 7. Trigger Native Print Dialog (Vector high-res print to PDF)
+function triggerPrintDialog() {
+  if (!AppState.currentPdfData) {
+    showToast('ไม่มีข้อมูลเอกสารสำหรับพิมพ์', 'warning');
+    return;
+  }
+
+  const { html, orientation } = AppState.currentPdfData;
+  const isLandscape = orientation === 'landscape';
+
+  // Create dedicated hidden print iframe for pure isolated printing
+  let printFrame = document.getElementById('reportPrintFrame');
+  if (!printFrame) {
+    printFrame = document.createElement('iframe');
+    printFrame.id = 'reportPrintFrame';
+    printFrame.style.position = 'fixed';
+    printFrame.style.top = '-9999px';
+    printFrame.style.left = '-9999px';
+    printFrame.style.width = '0px';
+    printFrame.style.height = '0px';
+    printFrame.style.border = 'none';
+    document.body.appendChild(printFrame);
+  }
+
+  const frameDoc = printFrame.contentWindow.document;
+  frameDoc.open();
+  frameDoc.write(`
+    <!DOCTYPE html>
+    <html lang="th">
+    <head>
+      <meta charset="UTF-8">
+      <title>${escapeHtml(AppState.currentPdfData.filename || 'พิมพ์รายงาน')}</title>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap">
+      <link rel="stylesheet" href="styles.css">
+      <style>
+        body {
+          background: #ffffff !important;
+          margin: 0 !important;
+          padding: ${isLandscape ? '10mm' : '12mm'} !important;
+        }
+        .pdf-document-paper {
+          box-shadow: none !important;
+          padding: 0 !important;
+          max-width: 100% !important;
+          width: 100% !important;
+        }
+        @page {
+          size: A4 ${isLandscape ? 'landscape' : 'portrait'};
+          margin: ${isLandscape ? '8mm' : '10mm'};
+        }
+      </style>
+    </head>
+    <body>
+      <div class="pdf-document-paper ${isLandscape ? 'landscape' : ''}">
+        ${html}
+      </div>
+      <script>
+        window.onload = function() {
+          setTimeout(function() {
+            window.focus();
+            window.print();
+          }, 300);
+        };
+      </script>
+    </body>
+    </html>
+  `);
+  frameDoc.close();
+}
+
+// Quick Export Helpers
+async function quickExportCasePdf(caseId) {
+  if (AppState.selectedCase && AppState.selectedCase.caseId === caseId) {
+    exportCurrentCasePdf();
+    return;
+  }
+  setLoading(true);
+  try {
+    const caseData = await ApiClient.get('getCaseDetail', { caseId: caseId });
+    AppState.selectedCase = caseData;
+    exportCurrentCasePdf();
+  } catch (err) {
+    showToast('ไม่สามารถดึงข้อมูลสำหรับส่งออก PDF ได้: ' + err.message, 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function quickExportRegPdf(regId) {
+  if (AppState.selectedReg && AppState.selectedReg.regId === regId) {
+    exportCurrentRegPdf();
+    return;
+  }
+  setLoading(true);
+  try {
+    const regData = await ApiClient.get('getRegDetail', { regId: regId });
+    AppState.selectedReg = regData;
+    exportCurrentRegPdf();
+  } catch (err) {
+    showToast('ไม่สามารถดึงข้อมูลสำหรับส่งออก PDF ได้: ' + err.message, 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+// Expose PDF export functions to global window scope
+window.exportCurrentCasePdf = exportCurrentCasePdf;
+window.exportCurrentRegPdf = exportCurrentRegPdf;
+window.exportCasesListPdf = exportCasesListPdf;
+window.exportRegulationsListPdf = exportRegulationsListPdf;
+window.quickExportCasePdf = quickExportCasePdf;
+window.quickExportRegPdf = quickExportRegPdf;
+window.openPdfPreview = openPdfPreview;
+window.triggerDirectPdfDownload = triggerDirectPdfDownload;
+window.triggerPrintDialog = triggerPrintDialog;
+
 // Startup
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
   initializeApp();
 }
+
