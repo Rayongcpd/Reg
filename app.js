@@ -2788,6 +2788,26 @@ function getIssuesSummaryText(item) {
   return '';
 }
 
+// Helper: Safely extract liquidators summary text
+function getLiquidatorsSummaryText(item) {
+  if (!item) return '-';
+  if (Array.isArray(item.liquidators)) {
+    const names = item.liquidators.map(l => (typeof l === 'string' ? l : (l?.name || ''))).filter(Boolean);
+    if (names.length > 0) return names.join(', ');
+  }
+  if (Array.isArray(item.liquidatorsDetail)) {
+    const names = item.liquidatorsDetail.map(l => l?.name || '').filter(Boolean);
+    if (names.length > 0) return names.join(', ');
+  }
+  if (typeof item.liquidators === 'string' && item.liquidators.trim()) {
+    return item.liquidators.trim();
+  }
+  if (typeof item.liquidatorName === 'string' && item.liquidatorName.trim()) {
+    return item.liquidatorName.trim();
+  }
+  return '-';
+}
+
 // 1. Export Individual Liquidation Case PDF
 function exportCurrentCasePdf() {
   const caseData = AppState.selectedCase;
@@ -2852,25 +2872,39 @@ function exportCurrentCasePdf() {
   }).join('');
 
   // Liquidators rows
-  const liqRows = (caseData.liquidators && caseData.liquidators.length > 0) ? caseData.liquidators.map((liq, idx) => `
+  const liqList = Array.isArray(caseData.liquidatorsDetail) && caseData.liquidatorsDetail.length > 0
+    ? caseData.liquidatorsDetail
+    : (Array.isArray(caseData.liquidators) ? caseData.liquidators : []);
+
+  const liqRows = liqList.length > 0 ? liqList.map((liq, idx) => `
     <tr>
       <td style="text-align: center;">${idx + 1}</td>
-      <td style="font-weight: 600;">${escapeHtml(liq.name)}</td>
-      <td>${escapeHtml(liq.position || 'ผู้ชำระบัญชี')}</td>
-      <td>${formatThaiDate(liq.appointmentDate)}</td>
-      <td>${formatThaiDate(liq.vacateDate)}</td>
-      <td>${escapeHtml(liq.phone || '-')}</td>
+      <td style="font-weight: 600;">${escapeHtml(typeof liq === 'string' ? liq : (liq.name || '-'))}</td>
+      <td>${escapeHtml((typeof liq === 'object' && liq.position) ? liq.position : 'ผู้ชำระบัญชี')}</td>
+      <td>${(typeof liq === 'object' && liq.appointmentDate) ? formatThaiDate(liq.appointmentDate) : '-'}</td>
+      <td>${(typeof liq === 'object' && liq.vacateDate) ? formatThaiDate(liq.vacateDate) : '-'}</td>
+      <td>${escapeHtml((typeof liq === 'object' && liq.phone) ? liq.phone : '-')}</td>
       <td style="text-align: center;">
-        <span class="report-badge ${liq.status === 'พ้นตำแหน่ง' ? 'report-badge-pending' : 'report-badge-done'}">
-          ${escapeHtml(liq.status || 'ปฏิบัติหน้าที่')}
+        <span class="report-badge ${(typeof liq === 'object' && liq.status === 'พ้นตำแหน่ง') ? 'report-badge-pending' : 'report-badge-done'}">
+          ${escapeHtml((typeof liq === 'object' && liq.status) ? liq.status : 'ปฏิบัติหน้าที่')}
         </span>
       </td>
     </tr>
-  `).join('') : `
+  `).join('') : (typeof caseData.liquidators === 'string' && caseData.liquidators.trim() ? `
+    <tr>
+      <td style="text-align: center;">1</td>
+      <td style="font-weight: 600;">${escapeHtml(caseData.liquidators)}</td>
+      <td>ผู้ชำระบัญชี</td>
+      <td>${formatThaiDate(caseData.orderDate)}</td>
+      <td>-</td>
+      <td>-</td>
+      <td style="text-align: center;"><span class="report-badge report-badge-done">ปฏิบัติหน้าที่</span></td>
+    </tr>
+  ` : `
     <tr>
       <td colspan="7" style="text-align: center; color: #94a3b8; padding: 12px;">ยังไม่มีข้อมูลการแต่งตั้งผู้ชำระบัญชี</td>
     </tr>
-  `;
+  `);
 
   // Documents list
   const docRows = (caseData.documents && caseData.documents.length > 0) ? caseData.documents.map((doc, idx) => `
@@ -3284,7 +3318,7 @@ function exportCasesListPdf() {
   const rows = items.map((item, idx) => {
     const isDone = item.caseStatus === 'เสร็จสิ้น' || item.currentStep >= 10;
     const dissolutionType = item.dissolutionType || (item.orderNumber && item.orderNumber.includes('ประกาศ') ? 'ประกาศ' : 'คำสั่ง');
-    const liqName = (item.liquidators && item.liquidators.length > 0) ? item.liquidators.map(l => l.name).join(', ') : (item.liquidatorName || '-');
+    const liqName = getLiquidatorsSummaryText(item);
 
     return `
       <tr>
@@ -3713,7 +3747,7 @@ async function exportAllActiveOperationsPdf() {
   // Render Liquidation Cases Table Rows
   const caseRows = activeCases.length > 0 ? activeCases.map((item, idx) => {
     const dissolutionType = item.dissolutionType || (item.orderNumber && item.orderNumber.includes('ประกาศ') ? 'ประกาศ' : 'คำสั่ง');
-    const liqName = (item.liquidators && item.liquidators.length > 0) ? item.liquidators.map(l => l.name).join(', ') : (item.liquidatorName || '-');
+    const liqName = getLiquidatorsSummaryText(item);
     const curStepNum = parseInt(item.currentStep, 10) || 1;
     const dur = WorkingDaysUtil.calculate(item.orderDate, null, 'กำลังชำระบัญชี');
     const issuesText = getIssuesSummaryText(item);
@@ -3929,7 +3963,7 @@ function exportActiveCasesOnlyPdf() {
 
   const rows = activeCases.map((item, idx) => {
     const dissolutionType = item.dissolutionType || (item.orderNumber && item.orderNumber.includes('ประกาศ') ? 'ประกาศ' : 'คำสั่ง');
-    const liqName = (item.liquidators && item.liquidators.length > 0) ? item.liquidators.map(l => l.name).join(', ') : (item.liquidatorName || '-');
+    const liqName = getLiquidatorsSummaryText(item);
     const curStepNum = parseInt(item.currentStep, 10) || 1;
     const dur = WorkingDaysUtil.calculate(item.orderDate, null, 'กำลังชำระบัญชี');
     const issuesText = getIssuesSummaryText(item);
@@ -4230,7 +4264,7 @@ function renderActiveExportTables(casesToRender, regsToRender) {
     } else {
       tbodyCases.innerHTML = casesToRender.map((item, idx) => {
         const dissolutionType = item.dissolutionType || (item.orderNumber && item.orderNumber.includes('ประกาศ') ? 'ประกาศเลิก' : 'คำสั่งเลิก');
-        const liqName = (item.liquidators && item.liquidators.length > 0) ? item.liquidators.map(l => l.name).join(', ') : (item.liquidatorName || '-');
+        const liqName = getLiquidatorsSummaryText(item);
         const curStepNum = parseInt(item.currentStep, 10) || 1;
         const dur = WorkingDaysUtil.calculate(item.orderDate, null, 'กำลังชำระบัญชี');
         const issuesText = getIssuesSummaryText(item);
@@ -4349,7 +4383,7 @@ function filterActiveExportPreview(query) {
     (c.regNumber && c.regNumber.toLowerCase().includes(q)) ||
     (c.orderNumber && c.orderNumber.toLowerCase().includes(q)) ||
     (c.coopType && c.coopType.toLowerCase().includes(q)) ||
-    (c.liquidatorName && c.liquidatorName.toLowerCase().includes(q)) ||
+    (getLiquidatorsSummaryText(c).toLowerCase().includes(q)) ||
     (getIssuesSummaryText(c).toLowerCase().includes(q))
   );
 
@@ -4425,7 +4459,7 @@ async function exportCombinedActiveExcel() {
 
   const caseRows = activeCases.map((item, idx) => {
     const dissolutionType = item.dissolutionType || (item.orderNumber && item.orderNumber.includes('ประกาศ') ? 'ประกาศเลิก' : 'คำสั่งเลิก');
-    const liqName = (item.liquidators && item.liquidators.length > 0) ? item.liquidators.map(l => l.name).join(', ') : (item.liquidatorName || '-');
+    const liqName = getLiquidatorsSummaryText(item);
     const curStepNum = parseInt(item.currentStep, 10) || 1;
     const dur = WorkingDaysUtil.calculate(item.orderDate, null, 'กำลังชำระบัญชี');
     const stepTitle = CONFIG.LIQUIDATION_STEPS[curStepNum - 1]?.title || `ขั้นที่ ${curStepNum}`;
@@ -4594,7 +4628,7 @@ function exportCombinedActiveCsv() {
   
   activeCases.forEach((item, idx) => {
     const dissolutionType = item.dissolutionType || (item.orderNumber && item.orderNumber.includes('ประกาศ') ? 'ประกาศเลิก' : 'คำสั่งเลิก');
-    const liqName = (item.liquidators && item.liquidators.length > 0) ? item.liquidators.map(l => l.name).join('; ') : (item.liquidatorName || '-');
+    const liqName = getLiquidatorsSummaryText(item);
     const curStepNum = parseInt(item.currentStep, 10) || 1;
     const dur = WorkingDaysUtil.calculate(item.orderDate, null, 'กำลังชำระบัญชี');
 
