@@ -2762,6 +2762,32 @@ function formatThaiDateTime(dateVal) {
   return `${date.getDate()} ${months[date.getMonth()]} พ.ศ. ${year} เวลา ${hours}:${minutes} น.`;
 }
 
+// Helper: Safely check if a case item has issues (supports boolean, array of objects, or string)
+function hasCaseIssues(item) {
+  if (!item) return false;
+  if (item.caseStatus === 'มีปัญหา') return true;
+  if (item.hasIssues) return true;
+  if (Array.isArray(item.issues) && item.issues.length > 0) return true;
+  if (typeof item.issues === 'string' && item.issues.trim().length > 0) return true;
+  return false;
+}
+
+// Helper: Safely extract issues text summary as string
+function getIssuesSummaryText(item) {
+  if (!item) return '';
+  if (Array.isArray(item.issues)) {
+    return item.issues.map(iss => {
+      if (typeof iss === 'string') return iss;
+      if (iss && iss.issue) return `ขั้นที่ ${iss.stepNumber || ''}: ${iss.issue}`;
+      if (iss && iss.text) return iss.text;
+      return JSON.stringify(iss);
+    }).filter(Boolean).join(' | ');
+  }
+  if (typeof item.issues === 'string') return item.issues.trim();
+  if (item.hasIssues) return 'มีปัญหาอุปสรรค';
+  return '';
+}
+
 // 1. Export Individual Liquidation Case PDF
 function exportCurrentCasePdf() {
   const caseData = AppState.selectedCase;
@@ -3250,7 +3276,7 @@ function exportCasesListPdf() {
   const totalCount = items.length;
   const activeCount = items.filter(c => c.caseStatus !== 'เสร็จสิ้น' && c.currentStep < 10).length;
   const doneCount = items.filter(c => c.caseStatus === 'เสร็จสิ้น' || c.currentStep >= 10).length;
-  const issuesCount = items.filter(c => c.caseStatus === 'มีปัญหา' || (c.issues && c.issues.trim().length > 0)).length;
+  const issuesCount = items.filter(c => hasCaseIssues(c)).length;
 
   // Filter summary text
   const filterDesc = `ตัวกรอง: ขั้นตอน [${AppState.filterStep}] | สถานะ [${AppState.filterStatus}] | ประเภท [${AppState.filterType}] ${AppState.searchTerm ? '| ค้นหา: "' + AppState.searchTerm + '"' : ''}`;
@@ -3680,7 +3706,7 @@ async function exportAllActiveOperationsPdf() {
   // Statistics
   const totalCasesActive = activeCases.length;
   const totalRegsActive = activeRegs.length;
-  const casesWithIssues = activeCases.filter(c => c.caseStatus === 'มีปัญหา' || (c.issues && c.issues.trim().length > 0)).length;
+  const casesWithIssues = activeCases.filter(c => hasCaseIssues(c)).length;
   const regsWithIssues = activeRegs.filter(r => r.status === 'ส่งคืนแก้ไข').length;
   const totalIssues = casesWithIssues + regsWithIssues;
 
@@ -3690,7 +3716,7 @@ async function exportAllActiveOperationsPdf() {
     const liqName = (item.liquidators && item.liquidators.length > 0) ? item.liquidators.map(l => l.name).join(', ') : (item.liquidatorName || '-');
     const curStepNum = parseInt(item.currentStep, 10) || 1;
     const dur = WorkingDaysUtil.calculate(item.orderDate, null, 'กำลังชำระบัญชี');
-    const issuesText = item.issues || (item.hasIssues ? 'มีปัญหาอุปสรรค' : '');
+    const issuesText = getIssuesSummaryText(item);
 
     let stepGroup = '🌱 ขั้น 1-3';
     if (curStepNum >= 7) stepGroup = '📑 ขั้น 7-9';
@@ -3899,14 +3925,14 @@ function exportActiveCasesOnlyPdf() {
 
   const printDateStr = formatThaiDateTime(new Date());
   const totalCount = activeCases.length;
-  const issuesCount = activeCases.filter(c => c.caseStatus === 'มีปัญหา' || (c.issues && c.issues.trim().length > 0)).length;
+  const issuesCount = activeCases.filter(c => hasCaseIssues(c)).length;
 
   const rows = activeCases.map((item, idx) => {
     const dissolutionType = item.dissolutionType || (item.orderNumber && item.orderNumber.includes('ประกาศ') ? 'ประกาศ' : 'คำสั่ง');
     const liqName = (item.liquidators && item.liquidators.length > 0) ? item.liquidators.map(l => l.name).join(', ') : (item.liquidatorName || '-');
     const curStepNum = parseInt(item.currentStep, 10) || 1;
     const dur = WorkingDaysUtil.calculate(item.orderDate, null, 'กำลังชำระบัญชี');
-    const issuesText = item.issues || (item.hasIssues ? 'มีปัญหาอุปสรรค' : '');
+    const issuesText = getIssuesSummaryText(item);
 
     return `
       <tr>
@@ -4164,7 +4190,7 @@ async function openActiveExportModal() {
   const activeRegs = (AppState.regulations || []).filter(r => r.status !== 'รับจดทะเบียน/เห็นชอบ/รับทราบ' && r.status !== 'รับจดทะเบียน/เห็นชอบแล้ว' && (parseInt(r.currentStep, 10) || 1) < 5);
 
   const totalActive = activeCases.length + activeRegs.length;
-  const casesWithIssues = activeCases.filter(c => c.caseStatus === 'มีปัญหา' || (c.issues && c.issues.trim().length > 0)).length;
+  const casesWithIssues = activeCases.filter(c => hasCaseIssues(c)).length;
   const regsWithIssues = activeRegs.filter(r => r.status === 'ส่งคืนแก้ไข').length;
   const totalIssues = casesWithIssues + regsWithIssues;
 
@@ -4207,7 +4233,7 @@ function renderActiveExportTables(casesToRender, regsToRender) {
         const liqName = (item.liquidators && item.liquidators.length > 0) ? item.liquidators.map(l => l.name).join(', ') : (item.liquidatorName || '-');
         const curStepNum = parseInt(item.currentStep, 10) || 1;
         const dur = WorkingDaysUtil.calculate(item.orderDate, null, 'กำลังชำระบัญชี');
-        const issuesText = item.issues || (item.hasIssues ? 'มีปัญหาอุปสรรค' : '');
+        const issuesText = getIssuesSummaryText(item);
 
         let stepGroup = '🌱 ขั้น 1-3';
         if (curStepNum >= 7) stepGroup = '📑 ขั้น 7-9';
@@ -4324,7 +4350,7 @@ function filterActiveExportPreview(query) {
     (c.orderNumber && c.orderNumber.toLowerCase().includes(q)) ||
     (c.coopType && c.coopType.toLowerCase().includes(q)) ||
     (c.liquidatorName && c.liquidatorName.toLowerCase().includes(q)) ||
-    (c.issues && c.issues.toLowerCase().includes(q))
+    (getIssuesSummaryText(c).toLowerCase().includes(q))
   );
 
   const filteredRegs = activeRegs.filter(r => 
@@ -4419,7 +4445,7 @@ async function exportCombinedActiveExcel() {
       liqName,
       dur.hasData ? dur.workingDays : 0,
       item.caseStatus || 'กำลังชำระบัญชี',
-      item.issues || (item.hasIssues ? 'มีปัญหาอุปสรรค' : 'ปกติ'),
+      getIssuesSummaryText(item) || 'ปกติ',
       formatThaiDate(item.updatedAt || item.createdAt)
     ];
   });
@@ -4519,7 +4545,7 @@ async function exportCombinedActiveExcel() {
   // ----------------------------------------------------
   // Sheet 3: สรุปภาพรวม (Summary KPIs)
   // ----------------------------------------------------
-  const casesWithIssues = activeCases.filter(c => c.caseStatus === 'มีปัญหา' || (c.issues && c.issues.trim().length > 0)).length;
+  const casesWithIssues = activeCases.filter(c => hasCaseIssues(c)).length;
   const regsWithIssues = activeRegs.filter(r => r.status === 'ส่งคืนแก้ไข').length;
   const totalIssues = casesWithIssues + regsWithIssues;
 
@@ -4586,7 +4612,7 @@ function exportCombinedActiveCsv() {
       `"${liqName.replace(/"/g, '""')}"`,
       dur.hasData ? dur.workingDays : 0,
       `"${item.caseStatus || 'กำลังชำระบัญชี'}"`,
-      `"${(item.issues || (item.hasIssues ? 'มีปัญหาอุปสรรค' : 'ปกติ')).replace(/"/g, '""')}"`
+      `"${(getIssuesSummaryText(item) || 'ปกติ').replace(/"/g, '""')}"`
     ];
     csvContent += row.join(',') + "\r\n";
   });
