@@ -653,6 +653,39 @@ button {
   font-size: 0.82rem;
 }
 
+.btn-outline-primary {
+  background: #ffffff;
+  color: var(--primary);
+  border: 1px solid #94a3b8;
+}
+
+.btn-outline-primary:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.btn-outline-warning {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.btn-outline-warning:hover {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fcd34d;
+}
+
+.btn-warning {
+  background: var(--accent-amber);
+  color: var(--text-white);
+}
+
+.btn-warning:hover {
+  background: #b45309;
+}
+
 /* --- Cards View (Grid) --- */
 .cases-grid {
   display: grid;

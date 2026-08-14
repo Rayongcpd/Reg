@@ -3653,11 +3653,505 @@ async function quickExportRegPdf(regId) {
   }
 }
 
+// 8. Export Combined Master Report for ALL In-Progress Operations (Both Modules)
+async function exportAllActiveOperationsPdf() {
+  if ((!AppState.cases || AppState.cases.length === 0) || (!AppState.regulations || AppState.regulations.length === 0)) {
+    setLoading(true);
+    try {
+      await Promise.all([loadCasesData(), loadRegulationsData()]);
+    } catch (e) {
+      console.warn('Load data error for master active report:', e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const activeCases = (AppState.cases || []).filter(c => c.caseStatus !== 'เสร็จสิ้น' && (parseInt(c.currentStep, 10) || 1) < 10);
+  const activeRegs = (AppState.regulations || []).filter(r => r.status !== 'รับจดทะเบียน/เห็นชอบ/รับทราบ' && r.status !== 'รับจดทะเบียน/เห็นชอบแล้ว' && (parseInt(r.currentStep, 10) || 1) < 5);
+
+  const totalActive = activeCases.length + activeRegs.length;
+  if (totalActive === 0) {
+    showToast('ยอดเยี่ยม! ขณะนี้ไม่มีรายการงานที่ค้างหรืออยู่ระหว่างดำเนินการ', 'success');
+    return;
+  }
+
+  const printDateStr = formatThaiDateTime(new Date());
+
+  // Statistics
+  const totalCasesActive = activeCases.length;
+  const totalRegsActive = activeRegs.length;
+  const casesWithIssues = activeCases.filter(c => c.caseStatus === 'มีปัญหา' || (c.issues && c.issues.trim().length > 0)).length;
+  const regsWithIssues = activeRegs.filter(r => r.status === 'ส่งคืนแก้ไข').length;
+  const totalIssues = casesWithIssues + regsWithIssues;
+
+  // Render Liquidation Cases Table Rows
+  const caseRows = activeCases.length > 0 ? activeCases.map((item, idx) => {
+    const dissolutionType = item.dissolutionType || (item.orderNumber && item.orderNumber.includes('ประกาศ') ? 'ประกาศ' : 'คำสั่ง');
+    const liqName = (item.liquidators && item.liquidators.length > 0) ? item.liquidators.map(l => l.name).join(', ') : (item.liquidatorName || '-');
+    const curStepNum = parseInt(item.currentStep, 10) || 1;
+    const dur = WorkingDaysUtil.calculate(item.orderDate, null, 'กำลังชำระบัญชี');
+    const issuesText = item.issues || (item.hasIssues ? 'มีปัญหาอุปสรรค' : '');
+
+    let stepGroup = '🌱 ขั้น 1-3';
+    if (curStepNum >= 7) stepGroup = '📑 ขั้น 7-9';
+    else if (curStepNum >= 4) stepGroup = '⚖️ ขั้น 4-6';
+
+    return `
+      <tr>
+        <td style="text-align: center;">${idx + 1}</td>
+        <td>
+          <div style="font-weight: 600; color: #0e3760;">${escapeHtml(item.coopName)}</div>
+          <div style="font-size: 0.72rem; color: #64748b;">ทะเบียน: ${escapeHtml(item.regNumber || '-')} | ที่ตั้ง: ${escapeHtml(item.location || '-')}</div>
+        </td>
+        <td style="font-size: 0.74rem;">${escapeHtml(item.coopType || '-')}</td>
+        <td style="font-size: 0.74rem;">
+          <div>${escapeHtml(dissolutionType)}: ${escapeHtml(item.orderNumber || '-')}</div>
+          <div style="color: #64748b;">วันที่: ${formatThaiDate(item.orderDate)}</div>
+        </td>
+        <td style="text-align: center; font-size: 0.74rem;">
+          <div style="font-weight: 600; color: #0369a1;">${stepGroup} (ขั้นที่ ${curStepNum}/10)</div>
+          <div style="color: #64748b;">ความคืบหน้า ${curStepNum * 10}%</div>
+        </td>
+        <td style="font-size: 0.74rem;">${escapeHtml(liqName)}</td>
+        <td style="text-align: center; font-size: 0.74rem; font-weight: 600; color: #0e3760;">
+          ${dur.hasData ? `${dur.workingDays} วันทำการ` : '-'}
+        </td>
+        <td style="font-size: 0.74rem;">
+          ${issuesText ? `<span style="color: #dc2626; font-weight: 500;">⚠️ ${escapeHtml(issuesText)}</span>` : '<span style="color: #059669;">ปกติ</span>'}
+        </td>
+      </tr>
+    `;
+  }).join('') : `
+    <tr>
+      <td colspan="8" style="text-align: center; color: #059669; padding: 14px;">✅ ไม่มีสหกรณ์ที่อยู่ระหว่างการชำระบัญชีในขณะนี้</td>
+    </tr>
+  `;
+
+  // Render Regulations Table Rows
+  const regRows = activeRegs.length > 0 ? activeRegs.map((item, idx) => {
+    const curStepNum = parseInt(item.currentStep, 10) || 1;
+    const dur = WorkingDaysUtil.calculate(item.submitDate, null, 'อยู่ระหว่างพิจารณา');
+    const isReturned = item.status === 'ส่งคืนแก้ไข';
+
+    return `
+      <tr>
+        <td style="text-align: center;">${idx + 1}</td>
+        <td>
+          <div style="font-weight: 600; color: #0e3760;">${escapeHtml(item.title)}</div>
+          <div style="font-size: 0.72rem; color: #64748b;">${escapeHtml(item.coopName)} (${escapeHtml(item.regNumber || '-')})</div>
+        </td>
+        <td style="text-align: center; font-size: 0.74rem;">
+          <span class="report-badge ${item.docType === 'ข้อบังคับสหกรณ์' ? 'report-badge-active' : 'report-badge-pending'}">
+            ${escapeHtml(item.docType || 'ข้อบังคับ')}
+          </span>
+        </td>
+        <td style="font-size: 0.74rem;">
+          <div>${escapeHtml(item.docNumber || '-')}</div>
+          <div style="color: #64748b;">ยื่น: ${formatThaiDate(item.submitDate)}</div>
+        </td>
+        <td style="text-align: center; font-size: 0.74rem;">
+          <div style="font-weight: 600; color: #0d9488;">ขั้นที่ ${curStepNum}/5</div>
+          <div style="font-size: 0.7rem; color: #64748b;">${escapeHtml(CONFIG.REGULATION_STEPS[curStepNum - 1]?.title || '')}</div>
+        </td>
+        <td style="font-size: 0.74rem;">
+          <div>${escapeHtml(item.officerName || '-')}</div>
+          ${item.officerContact ? `<div style="color: #64748b; font-size: 0.7rem;">${escapeHtml(item.officerContact)}</div>` : ''}
+        </td>
+        <td style="text-align: center; font-size: 0.74rem; font-weight: 600; color: #0e3760;">
+          ${dur.hasData ? `${dur.workingDays} วันทำการ` : '-'}
+        </td>
+        <td style="text-align: center;">
+          <span class="report-badge ${isReturned ? 'report-badge-issue' : 'report-badge-active'}">
+            ${isReturned ? '⚠️ ส่งคืนแก้ไข' : '● อยู่ระหว่างพิจารณา'}
+          </span>
+        </td>
+      </tr>
+    `;
+  }).join('') : `
+    <tr>
+      <td colspan="8" style="text-align: center; color: #059669; padding: 14px;">✅ ไม่มีระเบียบหรือข้อบังคับที่อยู่ระหว่างพิจารณาในขณะนี้</td>
+    </tr>
+  `;
+
+  const html = `
+    <div class="report-header">
+      <div class="report-brand-wrap">
+        <div class="report-emblem">🏛️</div>
+        <div class="report-header-text">
+          <h2>กรมส่งเสริมสหกรณ์ กระทรวงเกษตรและสหกรณ์</h2>
+          <p>ระบบศูนย์บริการงานนายทะเบียนและส่งเสริมสหกรณ์ (Master Operations Tracking)</p>
+        </div>
+      </div>
+      <div class="report-meta-box">
+        <div><strong>วันที่พิมพ์รายงาน:</strong></div>
+        <div>${printDateStr}</div>
+      </div>
+    </div>
+
+    <div class="report-title-banner">
+      <h3>รายงานรวมสรุปเรื่องที่อยู่ระหว่างดำเนินการ (Master In-Progress Report)</h3>
+      <div class="report-subtitle">รวมงานติดตามการชำระบัญชีสหกรณ์ และการพิจารณาระเบียบ/ข้อบังคับสหกรณ์ที่กำลังดำเนินการทั้งหมด</div>
+    </div>
+
+    <!-- Executive KPI Row -->
+    <div class="report-kpi-row">
+      <div class="report-kpi-card" style="border-left: 4px solid #0e3760;">
+        <div class="report-kpi-val">${totalActive}</div>
+        <div class="report-kpi-lbl">งานกำลังดำเนินการทั้งหมด (เรื่อง)</div>
+      </div>
+      <div class="report-kpi-card" style="border-left: 4px solid #0284c7;">
+        <div class="report-kpi-val" style="color: #0284c7;">${totalCasesActive}</div>
+        <div class="report-kpi-lbl">สหกรณ์กำลังชำระบัญชี (แห่ง)</div>
+      </div>
+      <div class="report-kpi-card" style="border-left: 4px solid #0d9488;">
+        <div class="report-kpi-val" style="color: #0d9488;">${totalRegsActive}</div>
+        <div class="report-kpi-lbl">ระเบียบ/ข้อบังคับกำลังพิจารณา (เรื่อง)</div>
+      </div>
+      <div class="report-kpi-card" style="border-left: 4px solid #dc2626;">
+        <div class="report-kpi-val" style="color: #dc2626;">${totalIssues}</div>
+        <div class="report-kpi-lbl">รายการที่มีปัญหา/ส่งคืนแก้ไข (เรื่อง)</div>
+      </div>
+    </div>
+
+    <!-- Section 1: Active Liquidation Cases -->
+    <div class="report-section" style="margin-top: 18px;">
+      <div class="report-section-header">
+        <h4 class="report-section-title">หมวดที่ 1: รายการสหกรณ์ที่อยู่ระหว่างการชำระบัญชี (${totalCasesActive} แห่ง)</h4>
+      </div>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th style="width: 32px;">ที่</th>
+            <th>ชื่อสหกรณ์ / ทะเบียน / ที่ตั้ง</th>
+            <th style="width: 100px;">ประเภท</th>
+            <th style="width: 120px;">คำสั่ง/ประกาศเลิก</th>
+            <th style="width: 110px;">ความคืบหน้า</th>
+            <th style="width: 120px;">ผู้ชำระบัญชี</th>
+            <th style="width: 85px;">วันทำการที่ใช้</th>
+            <th style="width: 120px;">ปัญหาอุปสรรค</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${caseRows}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Section 2: Active Regulations -->
+    <div class="report-section" style="margin-top: 24px;">
+      <div class="report-section-header">
+        <h4 class="report-section-title">หมวดที่ 2: รายการระเบียบและข้อบังคับสหกรณ์ที่อยู่ระหว่างการพิจารณา (${totalRegsActive} เรื่อง)</h4>
+      </div>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th style="width: 32px;">ที่</th>
+            <th>ชื่อเรื่อง ระเบียบ/ข้อบังคับ / สหกรณ์</th>
+            <th style="width: 85px;">ประเภท</th>
+            <th style="width: 100px;">เลขที่/วันยื่น</th>
+            <th style="width: 120px;">ขั้นตอนปัจจุบัน</th>
+            <th style="width: 110px;">จนท. ผู้รับผิดชอบ</th>
+            <th style="width: 85px;">วันทำการที่ใช้</th>
+            <th style="width: 105px;">สถานะ</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${regRows}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Signatures -->
+    <div class="report-signature-section">
+      <div class="report-sig-box">
+        <div>ลงชื่อ...................................................................ผู้รวบรวมรายงาน</div>
+        <div class="report-sig-line"></div>
+        <div>(...................................................................)</div>
+        <div>ตำแหน่ง เจ้าหน้าที่กลุ่มส่งเสริมและพัฒนาการบริหารการจัดการสหกรณ์</div>
+        <div>วันที่.......เดือน.......................พ.ศ............</div>
+      </div>
+      <div class="report-sig-box">
+        <div>ลงชื่อ...................................................................ผู้รับทราบ/นายทะเบียน</div>
+        <div class="report-sig-line"></div>
+        <div>(...................................................................)</div>
+        <div>ตำแหน่ง นายทะเบียนสหกรณ์ / สหกรณ์จังหวัด</div>
+        <div>วันที่.......เดือน.......................พ.ศ............</div>
+      </div>
+    </div>
+
+    <div class="report-footer">
+      <div>ศูนย์บริการงานนายทะเบียนและส่งเสริมสหกรณ์ กรมส่งเสริมสหกรณ์ (รวมงานค้างดำเนินงาน ${totalActive} รายการ)</div>
+      <div>พิมพ์เมื่อ ${printDateStr}</div>
+    </div>
+  `;
+
+  const filename = `รายงานรวมเรื่องกำลังดำเนินการ_${todayThaiDate().replace(/\//g, '-')}.pdf`;
+  openPdfPreview(html, filename, 'รายงานรวมเรื่องที่อยู่ระหว่างดำเนินการ', `จำนวนงานกำลังดำเนินการทั้งสิ้น ${totalActive} รายการ`, 'landscape');
+}
+
+// 9. Export Dedicated Active Liquidation Cases Summary PDF
+function exportActiveCasesOnlyPdf() {
+  const activeCases = (AppState.cases || []).filter(c => c.caseStatus !== 'เสร็จสิ้น' && (parseInt(c.currentStep, 10) || 1) < 10);
+  if (activeCases.length === 0) {
+    showToast('ขณะนี้ไม่มีสหกรณ์ที่อยู่ระหว่างการชำระบัญชี', 'info');
+    return;
+  }
+
+  const printDateStr = formatThaiDateTime(new Date());
+  const totalCount = activeCases.length;
+  const issuesCount = activeCases.filter(c => c.caseStatus === 'มีปัญหา' || (c.issues && c.issues.trim().length > 0)).length;
+
+  const rows = activeCases.map((item, idx) => {
+    const dissolutionType = item.dissolutionType || (item.orderNumber && item.orderNumber.includes('ประกาศ') ? 'ประกาศ' : 'คำสั่ง');
+    const liqName = (item.liquidators && item.liquidators.length > 0) ? item.liquidators.map(l => l.name).join(', ') : (item.liquidatorName || '-');
+    const curStepNum = parseInt(item.currentStep, 10) || 1;
+    const dur = WorkingDaysUtil.calculate(item.orderDate, null, 'กำลังชำระบัญชี');
+    const issuesText = item.issues || (item.hasIssues ? 'มีปัญหาอุปสรรค' : '');
+
+    return `
+      <tr>
+        <td style="text-align: center;">${idx + 1}</td>
+        <td>
+          <div style="font-weight: 600; color: #0e3760;">${escapeHtml(item.coopName)}</div>
+          <div style="font-size: 0.74rem; color: #64748b;">ทะเบียน: ${escapeHtml(item.regNumber || '-')} | ที่ตั้ง: ${escapeHtml(item.location || '-')}</div>
+        </td>
+        <td style="font-size: 0.76rem;">${escapeHtml(item.coopType || '-')}</td>
+        <td style="font-size: 0.76rem;">
+          <div>${escapeHtml(dissolutionType)}: ${escapeHtml(item.orderNumber || '-')}</div>
+          <div style="color: #64748b;">วันที่: ${formatThaiDate(item.orderDate)}</div>
+        </td>
+        <td style="text-align: center; font-size: 0.76rem;">
+          <div style="font-weight: 600; color: #0284c7;">ขั้นที่ ${curStepNum}/10 (${curStepNum * 10}%)</div>
+          <div style="font-size: 0.7rem; color: #64748b;">${escapeHtml(CONFIG.LIQUIDATION_STEPS[curStepNum - 1]?.title || '')}</div>
+        </td>
+        <td style="font-size: 0.76rem;">${escapeHtml(liqName)}</td>
+        <td style="text-align: center; font-size: 0.76rem; font-weight: 600; color: #0e3760;">
+          ${dur.hasData ? `${dur.workingDays} วันทำการ` : '-'}
+        </td>
+        <td style="font-size: 0.76rem;">
+          ${issuesText ? `<span style="color: #dc2626; font-weight: 500;">⚠️ ${escapeHtml(issuesText)}</span>` : '<span style="color: #059669;">ปกติ</span>'}
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  const html = `
+    <div class="report-header">
+      <div class="report-brand-wrap">
+        <div class="report-emblem">⚖️</div>
+        <div class="report-header-text">
+          <h2>กรมส่งเสริมสหกรณ์ กระทรวงเกษตรและสหกรณ์</h2>
+          <p>ระบบติดตามการชำระบัญชีสหกรณ์ (Cooperative Liquidation Tracking System)</p>
+        </div>
+      </div>
+      <div class="report-meta-box">
+        <div><strong>วันที่พิมพ์รายงาน:</strong></div>
+        <div>${printDateStr}</div>
+      </div>
+    </div>
+
+    <div class="report-title-banner">
+      <h3>รายงานสรุปรายการสหกรณ์ที่อยู่ระหว่างการชำระบัญชี (เฉพาะเรื่องที่กำลังดำเนินการ)</h3>
+      <div class="report-subtitle">ติดตามความคืบหน้า 10 ขั้นตอน ระยะเวลาที่ใช้ และประเด็นปัญหาอุปสรรคเพื่อการเร่งรัดงาน</div>
+    </div>
+
+    <div class="report-kpi-row">
+      <div class="report-kpi-card">
+        <div class="report-kpi-val" style="color: #0284c7;">${totalCount}</div>
+        <div class="report-kpi-lbl">สหกรณ์ที่กำลังชำระบัญชี (แห่ง)</div>
+      </div>
+      <div class="report-kpi-card">
+        <div class="report-kpi-val" style="color: #059669;">${totalCount - issuesCount}</div>
+        <div class="report-kpi-lbl">การดำเนินงานปกติ (แห่ง)</div>
+      </div>
+      <div class="report-kpi-card">
+        <div class="report-kpi-val" style="color: #dc2626;">${issuesCount}</div>
+        <div class="report-kpi-lbl">มีปัญหาอุปสรรค (แห่ง)</div>
+      </div>
+    </div>
+
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th style="width: 35px;">ที่</th>
+          <th>สหกรณ์ / เลขทะเบียน / ที่ตั้ง</th>
+          <th style="width: 110px;">ประเภท</th>
+          <th style="width: 130px;">คำสั่ง/ประกาศเลิก</th>
+          <th style="width: 140px;">ขั้นตอนปัจจุบัน</th>
+          <th style="width: 130px;">ผู้ชำระบัญชี</th>
+          <th style="width: 90px;">วันทำการที่ใช้</th>
+          <th style="width: 120px;">ปัญหาอุปสรรค</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows}
+      </tbody>
+    </table>
+
+    <div class="report-signature-section">
+      <div class="report-sig-box">
+        <div>ลงชื่อ...................................................................ผู้จัดทำรายงาน</div>
+        <div class="report-sig-line"></div>
+        <div>(...................................................................)</div>
+        <div>ตำแหน่ง.............................................................</div>
+      </div>
+      <div class="report-sig-box">
+        <div>ลงชื่อ...................................................................นายทะเบียนสหกรณ์</div>
+        <div class="report-sig-line"></div>
+        <div>(...................................................................)</div>
+        <div>ตำแหน่ง นายทะเบียนสหกรณ์ / ผู้ตรวจการสหกรณ์</div>
+      </div>
+    </div>
+
+    <div class="report-footer">
+      <div>ระบบติดตามการชำระบัญชีสหกรณ์ กรมส่งเสริมสหกรณ์ (พบ ${totalCount} รายการ)</div>
+      <div>พิมพ์เมื่อ ${printDateStr}</div>
+    </div>
+  `;
+
+  const filename = `รายงานสหกรณ์กำลังชำระบัญชี_${todayThaiDate().replace(/\//g, '-')}.pdf`;
+  openPdfPreview(html, filename, 'รายงานสหกรณ์ที่อยู่ระหว่างการชำระบัญชี', `จำนวนทั้งสิ้น ${totalCount} แห่ง`, 'landscape');
+}
+
+// 10. Export Dedicated Active Regulations Summary PDF
+function exportActiveRegulationsOnlyPdf() {
+  const activeRegs = (AppState.regulations || []).filter(r => r.status !== 'รับจดทะเบียน/เห็นชอบ/รับทราบ' && r.status !== 'รับจดทะเบียน/เห็นชอบแล้ว' && (parseInt(r.currentStep, 10) || 1) < 5);
+  if (activeRegs.length === 0) {
+    showToast('ขณะนี้ไม่มีระเบียบหรือข้อบังคับที่อยู่ระหว่างพิจารณา', 'info');
+    return;
+  }
+
+  const printDateStr = formatThaiDateTime(new Date());
+  const totalCount = activeRegs.length;
+  const returnedCount = activeRegs.filter(r => r.status === 'ส่งคืนแก้ไข').length;
+
+  const rows = activeRegs.map((item, idx) => {
+    const curStepNum = parseInt(item.currentStep, 10) || 1;
+    const dur = WorkingDaysUtil.calculate(item.submitDate, null, 'อยู่ระหว่างพิจารณา');
+    const isReturned = item.status === 'ส่งคืนแก้ไข';
+
+    return `
+      <tr>
+        <td style="text-align: center;">${idx + 1}</td>
+        <td>
+          <div style="font-weight: 600; color: #0e3760;">${escapeHtml(item.title)}</div>
+          <div style="font-size: 0.74rem; color: #64748b;">${escapeHtml(item.coopName)} (${escapeHtml(item.regNumber || '-')})</div>
+        </td>
+        <td style="text-align: center; font-size: 0.76rem;">
+          <span class="report-badge ${item.docType === 'ข้อบังคับสหกรณ์' ? 'report-badge-active' : 'report-badge-pending'}">
+            ${escapeHtml(item.docType || 'ข้อบังคับ')}
+          </span>
+        </td>
+        <td style="font-size: 0.76rem;">
+          <div>${escapeHtml(item.docNumber || '-')}</div>
+          <div style="color: #64748b;">ยื่น: ${formatThaiDate(item.submitDate)}</div>
+        </td>
+        <td style="text-align: center; font-size: 0.76rem;">
+          <div style="font-weight: 600; color: #0d9488;">ขั้นที่ ${curStepNum}/5</div>
+          <div style="font-size: 0.7rem; color: #64748b;">${escapeHtml(CONFIG.REGULATION_STEPS[curStepNum - 1]?.title || '')}</div>
+        </td>
+        <td style="font-size: 0.76rem;">
+          <div>${escapeHtml(item.officerName || '-')}</div>
+          ${item.officerContact ? `<div style="color: #64748b; font-size: 0.7rem;">${escapeHtml(item.officerContact)}</div>` : ''}
+        </td>
+        <td style="text-align: center; font-size: 0.76rem; font-weight: 600; color: #0e3760;">
+          ${dur.hasData ? `${dur.workingDays} วันทำการ` : '-'}
+        </td>
+        <td style="text-align: center;">
+          <span class="report-badge ${isReturned ? 'report-badge-issue' : 'report-badge-active'}">
+            ${isReturned ? '⚠️ ส่งคืนแก้ไข' : '● อยู่ระหว่างพิจารณา'}
+          </span>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  const html = `
+    <div class="report-header">
+      <div class="report-brand-wrap">
+        <div class="report-emblem">📜</div>
+        <div class="report-header-text">
+          <h2>กรมส่งเสริมสหกรณ์ กระทรวงเกษตรและสหกรณ์</h2>
+          <p>ระบบติดตามการพิจารณาระเบียบและข้อบังคับสหกรณ์</p>
+        </div>
+      </div>
+      <div class="report-meta-box">
+        <div><strong>วันที่พิมพ์รายงาน:</strong></div>
+        <div>${printDateStr}</div>
+      </div>
+    </div>
+
+    <div class="report-title-banner">
+      <h3>รายงานสรุปการพิจารณาระเบียบและข้อบังคับ (เฉพาะเรื่องที่อยู่ระหว่างพิจารณา)</h3>
+      <div class="report-subtitle">ติดตาม 5 ขั้นตอนการพิจารณา ระยะเวลาสะสม และเจ้าหน้าที่ผู้รับผิดชอบ</div>
+    </div>
+
+    <div class="report-kpi-row">
+      <div class="report-kpi-card">
+        <div class="report-kpi-val" style="color: #0d9488;">${totalCount}</div>
+        <div class="report-kpi-lbl">เรื่องที่อยู่ระหว่างพิจารณา (เรื่อง)</div>
+      </div>
+      <div class="report-kpi-card">
+        <div class="report-kpi-val" style="color: #0284c7;">${totalCount - returnedCount}</div>
+        <div class="report-kpi-lbl">อยู่ระหว่างตรวจร่าง/เสนอ (เรื่อง)</div>
+      </div>
+      <div class="report-kpi-card">
+        <div class="report-kpi-val" style="color: #dc2626;">${returnedCount}</div>
+        <div class="report-kpi-lbl">ส่งคืนแก้ไขปรับปรุง (เรื่อง)</div>
+      </div>
+    </div>
+
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th style="width: 35px;">ที่</th>
+          <th>ชื่อระเบียบ/ข้อบังคับ / สหกรณ์</th>
+          <th style="width: 100px;">ประเภท</th>
+          <th style="width: 110px;">เลขที่/วันยื่น</th>
+          <th style="width: 130px;">ขั้นตอนปัจจุบัน</th>
+          <th style="width: 120px;">จนท. ผู้รับผิดชอบ</th>
+          <th style="width: 90px;">วันทำการที่ใช้</th>
+          <th style="width: 110px;">สถานะ</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows}
+      </tbody>
+    </table>
+
+    <div class="report-signature-section">
+      <div class="report-sig-box">
+        <div>ลงชื่อ...................................................................เจ้าหน้าที่ผู้รวบรวม</div>
+        <div class="report-sig-line"></div>
+        <div>(...................................................................)</div>
+        <div>ตำแหน่ง นักวิชาการสหกรณ์ / นิติกร</div>
+      </div>
+      <div class="report-sig-box">
+        <div>ลงชื่อ...................................................................นายทะเบียนสหกรณ์</div>
+        <div class="report-sig-line"></div>
+        <div>(...................................................................)</div>
+        <div>ตำแหน่ง นายทะเบียนสหกรณ์ / ผู้ได้รับมอบอำนาจ</div>
+      </div>
+    </div>
+
+    <div class="report-footer">
+      <div>ระบบติดตามการพิจารณาระเบียบและข้อบังคับสหกรณ์ (พบ ${totalCount} เรื่อง)</div>
+      <div>พิมพ์เมื่อ ${printDateStr}</div>
+    </div>
+  `;
+
+  const filename = `รายงานระเบียบข้อบังคับกำลังพิจารณา_${todayThaiDate().replace(/\//g, '-')}.pdf`;
+  openPdfPreview(html, filename, 'รายงานระเบียบและข้อบังคับที่อยู่ระหว่างพิจารณา', `จำนวนทั้งสิ้น ${totalCount} เรื่อง`, 'landscape');
+}
+
 // Expose PDF export functions to global window scope
 window.exportCurrentCasePdf = exportCurrentCasePdf;
 window.exportCurrentRegPdf = exportCurrentRegPdf;
 window.exportCasesListPdf = exportCasesListPdf;
 window.exportRegulationsListPdf = exportRegulationsListPdf;
+window.exportAllActiveOperationsPdf = exportAllActiveOperationsPdf;
+window.exportActiveCasesOnlyPdf = exportActiveCasesOnlyPdf;
+window.exportActiveRegulationsOnlyPdf = exportActiveRegulationsOnlyPdf;
 window.quickExportCasePdf = quickExportCasePdf;
 window.quickExportRegPdf = quickExportRegPdf;
 window.openPdfPreview = openPdfPreview;
@@ -3670,4 +4164,5 @@ if (document.readyState === 'loading') {
 } else {
   initializeApp();
 }
+
 
