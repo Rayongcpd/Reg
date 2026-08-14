@@ -16,6 +16,9 @@
 
   <!-- html2pdf.js for client-side PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <!-- SheetJS (xlsx) for client-side Excel export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 
 <body>
@@ -53,9 +56,9 @@
       </div>
 
       <div class="navbar-actions">
-        <!-- Export All Active PDF Button -->
-        <button id="btnNavExportActivePdf" class="btn btn-outline-primary btn-sm" onclick="exportAllActiveOperationsPdf()" title="ส่งออกรายงานรวมเรื่องที่กำลังดำเนินการทั้งหมดทั้ง 2 ระบบ">
-          📑 PDF รวมเรื่องกำลังดำเนินการ
+        <!-- Export All Active Modal Button -->
+        <button id="btnNavExportActivePdf" class="btn btn-outline-primary btn-sm" onclick="openActiveExportModal()" title="ส่งออกข้อมูลเรื่องที่กำลังดำเนินการแบบรวม แยกส่วนชำระบัญชี และส่วนระเบียบข้อบังคับ (Excel / PDF / CSV)">
+          📑 ส่งออกเรื่องกำลังดำเนินการ
         </button>
 
         <!-- Audit Log Button -->
@@ -201,8 +204,8 @@
           </div>
         </div>
         <div class="hub-announcement-actions">
-          <button class="btn btn-primary btn-sm" onclick="exportAllActiveOperationsPdf()" title="ส่งออกรายงานรวมเรื่องที่กำลังดำเนินการทั้งหมด 2 ระบบเป็น PDF" style="background: linear-gradient(135deg, #0e3760 0%, #0284c7 100%); font-weight: 600;">
-            📑 ส่งออก PDF รวมเรื่องที่กำลังดำเนินการ
+          <button class="btn btn-primary btn-sm" onclick="openActiveExportModal()" title="ส่งออกข้อมูลเรื่องที่กำลังดำเนินการแบบรวม (Excel / PDF / CSV)" style="background: linear-gradient(135deg, #0e3760 0%, #0284c7 100%); font-weight: 600;">
+            📑 ส่งออกข้อมูลเรื่องที่กำลังดำเนินการ (รวม)
           </button>
           <button class="btn btn-secondary btn-sm" onclick="switchAppView('liquidation')">
             ⚖️ ดูงานชำระบัญชี
@@ -290,6 +293,9 @@
           </div>
 
           <div class="filter-panel-actions">
+            <button class="btn btn-outline-info btn-sm" onclick="openActiveExportModal()" title="ส่งออกข้อมูลเรื่องที่กำลังดำเนินการแบบรวม 2 ระบบ (Excel/PDF/CSV)">
+              📑 รวมเรื่องกำลังดำเนินการ
+            </button>
             <button id="btnExportActiveCasesPdf" class="btn btn-outline-warning btn-sm" onclick="exportActiveCasesOnlyPdf()" title="ส่งออกรายงานเฉพาะเรื่องที่กำลังชำระบัญชีเป็น PDF">
               ⏳ เฉพาะกำลังชำระบัญชี (PDF)
             </button>
@@ -534,6 +540,9 @@
           </div>
 
           <div class="filter-panel-actions">
+            <button class="btn btn-outline-info btn-sm" onclick="openActiveExportModal()" title="ส่งออกข้อมูลเรื่องที่กำลังดำเนินการแบบรวม 2 ระบบ (Excel/PDF/CSV)">
+              📑 รวมเรื่องกำลังดำเนินการ
+            </button>
             <button id="btnExportActiveRegsPdf" class="btn btn-outline-warning btn-sm" onclick="exportActiveRegulationsOnlyPdf()" title="ส่งออกรายงานเฉพาะเรื่องที่อยู่ระหว่างพิจารณาเป็น PDF">
               ⏳ เฉพาะอยู่ระหว่างพิจารณา (PDF)
             </button>
@@ -1697,6 +1706,198 @@
       </div>
       <div class="modal-footer" style="justify-content: center;">
         <button class="btn btn-secondary btn-sm" onclick="closeModal('loginModal')">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: ส่งออกข้อมูลเรื่องที่กำลังดำเนินการแบบรวม (Master In-Progress Export Modal) -->
+  <!-- ========================================================================= -->
+  <div id="activeExportModal" class="modal-backdrop">
+    <div class="modal-container active-export-modal-container" style="max-width: 1100px; width: 95%;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #0e3760 0%, #0369a1 100%); color: #fff;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 1.6rem; background: rgba(255,255,255,0.15); border-radius: 10px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">📑</span>
+          <div>
+            <h3 style="font-size: 1.2rem; margin: 0; color: #fff; font-weight: 700;">ส่งออกข้อมูลเรื่องที่กำลังดำเนินการ (แบบรวม)</h3>
+            <span style="font-size: 0.82rem; color: rgba(255,255,255,0.85);">
+              รวมข้อมูลงานชำระบัญชีสหกรณ์ และงานพิจารณาระเบียบ/ข้อบังคับ โดยแยกส่วนข้อมูลอย่างชัดเจน
+            </span>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('activeExportModal')" style="color: #fff; font-size: 1.5rem; opacity: 0.85;">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 1.25rem; max-height: calc(85vh - 140px); overflow-y: auto;">
+        <!-- KPI Summary Bar -->
+        <div class="export-kpi-grid">
+          <div class="export-kpi-card kpi-total">
+            <div class="export-kpi-icon">📋</div>
+            <div class="export-kpi-info">
+              <span class="export-kpi-val" id="exportKpiTotalActive">0</span>
+              <span class="export-kpi-lbl">งานกำลังดำเนินการรวม (เรื่อง)</span>
+            </div>
+          </div>
+          <div class="export-kpi-card kpi-cases">
+            <div class="export-kpi-icon">⚖️</div>
+            <div class="export-kpi-info">
+              <span class="export-kpi-val" id="exportKpiActiveCases">0</span>
+              <span class="export-kpi-lbl">สหกรณ์กำลังชำระบัญชี (แห่ง)</span>
+            </div>
+          </div>
+          <div class="export-kpi-card kpi-regs">
+            <div class="export-kpi-icon">📜</div>
+            <div class="export-kpi-info">
+              <span class="export-kpi-val" id="exportKpiActiveRegs">0</span>
+              <span class="export-kpi-lbl">ระเบียบ/ข้อบังคับกำลังพิจารณา (เรื่อง)</span>
+            </div>
+          </div>
+          <div class="export-kpi-card kpi-issues">
+            <div class="export-kpi-icon">⚠️</div>
+            <div class="export-kpi-info">
+              <span class="export-kpi-val" id="exportKpiTotalIssues">0</span>
+              <span class="export-kpi-lbl">รายการที่มีปัญหา/ส่งคืนแก้ไข (เรื่อง)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Export Action Center -->
+        <div class="export-action-toolbar">
+          <div class="export-toolbar-title">
+            <strong>🎯 รูปแบบการส่งออกข้อมูล (Export Formats):</strong>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">เลือกรูปแบบไฟล์ที่ต้องการนำไปใช้งาน</span>
+          </div>
+          <div class="export-btn-group">
+            <button class="btn btn-success export-action-btn" onclick="exportCombinedActiveExcel()" title="ส่งออกเป็นไฟล์ Excel (.xlsx) แยก 2 ชีต: ชำระบัญชี และ ระเบียบข้อบังคับ">
+              <span class="export-btn-icon">📊</span>
+              <div class="export-btn-text">
+                <strong>ส่งออก Excel (.xlsx)</strong>
+                <small>แยกชีตชำระบัญชี + ระเบียบข้อบังคับ</small>
+              </div>
+            </button>
+
+            <button class="btn btn-primary export-action-btn" onclick="exportAllActiveOperationsPdf()" title="ดูตัวอย่างเอกสารและส่งออกรายงานทางการเป็น PDF พร้อมลายมือชื่อ">
+              <span class="export-btn-icon">📑</span>
+              <div class="export-btn-text">
+                <strong>ส่งออก PDF ทางการ (.pdf)</strong>
+                <small>รายงานรวม 2 หมวดหมู่ พร้อมพิมพ์</small>
+              </div>
+            </button>
+
+            <button class="btn btn-outline-primary export-action-btn" onclick="exportCombinedActiveCsv()" title="ส่งออกข้อมูลเป็นไฟล์ CSV (UTF-8 รองรับภาษาไทย)">
+              <span class="export-btn-icon">📄</span>
+              <div class="export-btn-text">
+                <strong>ส่งออก CSV (.csv)</strong>
+                <small>ไฟล์ข้อมูลสำหรับเปิดในสเปรดชีต</small>
+              </div>
+            </button>
+
+            <button class="btn btn-secondary export-action-btn" onclick="triggerActiveExportDirectPrint()" title="สั่งพิมพ์รายงานรวมเรื่องกำลังดำเนินการผ่านเครื่องพิมพ์">
+              <span class="export-btn-icon">🖨️</span>
+              <div class="export-btn-text">
+                <strong>สั่งพิมพ์รายงาน (Print)</strong>
+                <small>พิมพ์ออกเครื่องพิมพ์โดยตรง</small>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section Tabs & Search Filter -->
+        <div class="export-preview-header">
+          <div class="export-tabs-nav">
+            <button id="btnExportTabCases" class="export-tab-btn active" onclick="switchActiveExportTab('cases')">
+              ⚖️ ส่วนที่ 1: สหกรณ์กำลังชำระบัญชี <span id="exportTabCasesBadge" class="export-tab-badge">0</span>
+            </button>
+            <button id="btnExportTabRegs" class="export-tab-btn" onclick="switchActiveExportTab('regs')">
+              📜 ส่วนที่ 2: ระเบียบและข้อบังคับกำลังพิจารณา <span id="exportTabRegsBadge" class="export-tab-badge">0</span>
+            </button>
+          </div>
+
+          <div class="export-search-box">
+            <input type="text" id="exportSearchInput" class="form-input" placeholder="🔍 ค้นหาในตารางตัวอย่าง (ชื่อสหกรณ์, เลขที่, ผู้รับผิดชอบ...)" oninput="filterActiveExportPreview(this.value)">
+          </div>
+        </div>
+
+        <!-- Tab 1: Liquidation Cases Preview -->
+        <div id="exportTabContentCases" class="export-tab-content active">
+          <div class="export-section-notice" style="border-left: 4px solid #0284c7; background: #f0f9ff; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; font-size: 0.85rem; color: #0369a1; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong>หมวดที่ 1: รายการสหกรณ์ที่อยู่ระหว่างการชำระบัญชี (ขั้นตอนที่ 1 - 9)</strong>
+              <div style="font-size: 0.78rem; color: #0284c7; margin-top: 2px;">แสดงสหกรณ์ที่ยังไม่เสร็จสิ้นกระบวนการชำระบัญชี พร้อมระยะเวลาสะสมและปัญหาอุปสรรค</div>
+            </div>
+            <button class="btn btn-outline-primary btn-sm" onclick="exportActiveCasesOnlyPdf()" title="ส่งออกเฉพาะหมวดนี้เป็น PDF">
+              📄 PDF เฉพาะชำระบัญชี
+            </button>
+          </div>
+
+          <div class="table-responsive" style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+            <table class="cases-table" style="width: 100%; font-size: 0.82rem;">
+              <thead style="position: sticky; top: 0; z-index: 2; background: #f8fafc;">
+                <tr>
+                  <th style="width: 40px; text-align: center;">ลำดับ</th>
+                  <th>ชื่อสหกรณ์ / ทะเบียน / ที่ตั้ง</th>
+                  <th style="width: 120px;">ประเภท</th>
+                  <th style="width: 130px;">คำสั่ง/ประกาศเลิก</th>
+                  <th style="width: 140px;">ขั้นตอนและความคืบหน้า</th>
+                  <th style="width: 130px;">ผู้ชำระบัญชี</th>
+                  <th style="width: 90px; text-align: center;">วันทำการ</th>
+                  <th style="width: 130px;">ปัญหาอุปสรรค</th>
+                </tr>
+              </thead>
+              <tbody id="exportCasesTableBody">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 2: Regulations Preview -->
+        <div id="exportTabContentRegs" class="export-tab-content" style="display: none;">
+          <div class="export-section-notice" style="border-left: 4px solid #0d9488; background: #f0fdfa; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; font-size: 0.85rem; color: #0f766e; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong>หมวดที่ 2: รายการระเบียบและข้อบังคับสหกรณ์ที่อยู่ระหว่างพิจารณา (ขั้นตอนที่ 1 - 4)</strong>
+              <div style="font-size: 0.78rem; color: #0d9488; margin-top: 2px;">แสดงระเบียบและข้อบังคับที่ยื่นขอจดทะเบียน/เห็นชอบ และอยู่ระหว่างการตรวจร่างหรือเสนอนายทะเบียน</div>
+            </div>
+            <button class="btn btn-outline-primary btn-sm" onclick="exportActiveRegulationsOnlyPdf()" title="ส่งออกเฉพาะหมวดนี้เป็น PDF">
+              📄 PDF เฉพาะระเบียบข้อบังคับ
+            </button>
+          </div>
+
+          <div class="table-responsive" style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+            <table class="cases-table" style="width: 100%; font-size: 0.82rem;">
+              <thead style="position: sticky; top: 0; z-index: 2; background: #f8fafc;">
+                <tr>
+                  <th style="width: 40px; text-align: center;">ลำดับ</th>
+                  <th>ชื่อเรื่อง ระเบียบ/ข้อบังคับ / สหกรณ์</th>
+                  <th style="width: 100px;">ประเภท</th>
+                  <th style="width: 120px;">เลขที่/วันยื่น</th>
+                  <th style="width: 150px;">ขั้นตอนปัจจุบัน</th>
+                  <th style="width: 120px;">จนท. ผู้รับผิดชอบ</th>
+                  <th style="width: 90px; text-align: center;">วันทำการ</th>
+                  <th style="width: 120px; text-align: center;">สถานะ</th>
+                </tr>
+              </thead>
+              <tbody id="exportRegsTableBody">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="justify-content: space-between; flex-wrap: wrap; gap: 10px; background: #f8fafc;">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-muted);">
+          <span>💡 สามารถดาวน์โหลดเป็น Excel (.xlsx) ซึ่งจะมีชีตแยก 2 ส่วนชัดเจน หรือเปิดตัวอย่างรายงาน PDF</span>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-secondary" onclick="closeModal('activeExportModal')">ปิดหน้าต่าง</button>
+          <button class="btn btn-success" onclick="exportCombinedActiveExcel()">
+            📊 ดาวน์โหลด Excel (.xlsx)
+          </button>
+          <button class="btn btn-primary" onclick="exportAllActiveOperationsPdf()">
+            📑 ดูตัวอย่าง & พิมพ์ PDF
+          </button>
+        </div>
       </div>
     </div>
   </div>

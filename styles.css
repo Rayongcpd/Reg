@@ -677,6 +677,18 @@ button {
   border-color: #fcd34d;
 }
 
+.btn-outline-info {
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.btn-outline-info:hover {
+  background: #e0f2fe;
+  color: #0284c7;
+  border-color: #7dd3fc;
+}
+
 .btn-warning {
   background: var(--accent-amber);
   color: var(--text-white);
@@ -2736,6 +2748,237 @@ body {
     size: A4 portrait;
     margin: 12mm 12mm;
   }
+}
+
+/* ==========================================================================
+   Combined In-Progress Operations Export Modal & Components
+   ========================================================================== */
+.active-export-modal-container {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(14, 55, 96, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.export-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 1.25rem;
+}
+
+.export-kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.export-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.export-kpi-card.kpi-total {
+  border-left: 4px solid #0e3760;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.export-kpi-card.kpi-cases {
+  border-left: 4px solid #0284c7;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+}
+
+.export-kpi-card.kpi-regs {
+  border-left: 4px solid #0d9488;
+  background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+}
+
+.export-kpi-card.kpi-issues {
+  border-left: 4px solid #dc2626;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+.export-kpi-icon {
+  font-size: 1.8rem;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.export-kpi-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.export-kpi-val {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1.2;
+}
+
+.export-kpi-card.kpi-cases .export-kpi-val {
+  color: #0369a1;
+}
+
+.export-kpi-card.kpi-regs .export-kpi-val {
+  color: #0f766e;
+}
+
+.export-kpi-card.kpi-issues .export-kpi-val {
+  color: #dc2626;
+}
+
+.export-kpi-lbl {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Action Toolbar */
+.export-action-toolbar {
+  background: #f8fafc;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.export-toolbar-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--primary);
+}
+
+.export-btn-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.export-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  text-align: left;
+  transition: all 0.2s ease;
+  font-size: 0.88rem;
+}
+
+.export-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.export-btn-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.export-btn-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.export-btn-text strong {
+  font-size: 0.88rem;
+}
+
+.export-btn-text small {
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+
+/* Tabs & Filter Header */
+.export-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 8px;
+}
+
+.export-tabs-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.export-tab-btn {
+  background: transparent;
+  border: none;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 3px solid transparent;
+}
+
+.export-tab-btn:hover {
+  color: var(--primary);
+  background: rgba(14, 55, 96, 0.05);
+}
+
+.export-tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  background: rgba(14, 55, 96, 0.08);
+}
+
+.export-tab-badge {
+  background: #cbd5e1;
+  color: #1e293b;
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.export-tab-btn.active .export-tab-badge {
+  background: var(--primary);
+  color: #fff;
+}
+
+.export-search-box {
+  min-width: 280px;
+  flex: 1;
+  max-width: 400px;
+}
+
+.export-tab-content {
+  display: none;
+}
+
+.export-tab-content.active {
+  display: block;
+  animation: fadeIn 0.2s ease-in-out;
 }
 
 

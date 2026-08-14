@@ -4144,7 +4144,499 @@ function exportActiveRegulationsOnlyPdf() {
   openPdfPreview(html, filename, 'รายงานระเบียบและข้อบังคับที่อยู่ระหว่างพิจารณา', `จำนวนทั้งสิ้น ${totalCount} เรื่อง`, 'landscape');
 }
 
-// Expose PDF export functions to global window scope
+// ==============================================================================
+// 10. Master Combined Active Operations Export Modal & Multi-Sheet Excel Engine
+// ==============================================================================
+
+async function openActiveExportModal() {
+  if ((!AppState.cases || AppState.cases.length === 0) || (!AppState.regulations || AppState.regulations.length === 0)) {
+    setLoading(true);
+    try {
+      await Promise.all([loadCasesData(), loadRegulationsData()]);
+    } catch (e) {
+      console.warn('Load data error for active export modal:', e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const activeCases = (AppState.cases || []).filter(c => c.caseStatus !== 'เสร็จสิ้น' && (parseInt(c.currentStep, 10) || 1) < 10);
+  const activeRegs = (AppState.regulations || []).filter(r => r.status !== 'รับจดทะเบียน/เห็นชอบ/รับทราบ' && r.status !== 'รับจดทะเบียน/เห็นชอบแล้ว' && (parseInt(r.currentStep, 10) || 1) < 5);
+
+  const totalActive = activeCases.length + activeRegs.length;
+  const casesWithIssues = activeCases.filter(c => c.caseStatus === 'มีปัญหา' || (c.issues && c.issues.trim().length > 0)).length;
+  const regsWithIssues = activeRegs.filter(r => r.status === 'ส่งคืนแก้ไข').length;
+  const totalIssues = casesWithIssues + regsWithIssues;
+
+  // Update KPI counters in modal
+  const elTotal = document.getElementById('exportKpiTotalActive');
+  const elCases = document.getElementById('exportKpiActiveCases');
+  const elRegs = document.getElementById('exportKpiActiveRegs');
+  const elIssues = document.getElementById('exportKpiTotalIssues');
+  const badgeCases = document.getElementById('exportTabCasesBadge');
+  const badgeRegs = document.getElementById('exportTabRegsBadge');
+  const searchInput = document.getElementById('exportSearchInput');
+
+  if (elTotal) elTotal.innerText = totalActive;
+  if (elCases) elCases.innerText = activeCases.length;
+  if (elRegs) elRegs.innerText = activeRegs.length;
+  if (elIssues) elIssues.innerText = totalIssues;
+  if (badgeCases) badgeCases.innerText = activeCases.length;
+  if (badgeRegs) badgeRegs.innerText = activeRegs.length;
+  if (searchInput) searchInput.value = '';
+
+  // Render Preview Tables
+  renderActiveExportTables(activeCases, activeRegs);
+
+  // Default to Tab 1 (Cases)
+  switchActiveExportTab('cases');
+
+  openModal('activeExportModal');
+}
+
+function renderActiveExportTables(casesToRender, regsToRender) {
+  const tbodyCases = document.getElementById('exportCasesTableBody');
+  const tbodyRegs = document.getElementById('exportRegsTableBody');
+
+  if (tbodyCases) {
+    if (casesToRender.length === 0) {
+      tbodyCases.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #059669; padding: 20px;">✅ ไม่มีสหกรณ์ที่อยู่ระหว่างการชำระบัญชีในขณะนี้</td></tr>`;
+    } else {
+      tbodyCases.innerHTML = casesToRender.map((item, idx) => {
+        const dissolutionType = item.dissolutionType || (item.orderNumber && item.orderNumber.includes('ประกาศ') ? 'ประกาศเลิก' : 'คำสั่งเลิก');
+        const liqName = (item.liquidators && item.liquidators.length > 0) ? item.liquidators.map(l => l.name).join(', ') : (item.liquidatorName || '-');
+        const curStepNum = parseInt(item.currentStep, 10) || 1;
+        const dur = WorkingDaysUtil.calculate(item.orderDate, null, 'กำลังชำระบัญชี');
+        const issuesText = item.issues || (item.hasIssues ? 'มีปัญหาอุปสรรค' : '');
+
+        let stepGroup = '🌱 ขั้น 1-3';
+        if (curStepNum >= 7) stepGroup = '📑 ขั้น 7-9';
+        else if (curStepNum >= 4) stepGroup = '⚖️ ขั้น 4-6';
+
+        return `
+          <tr>
+            <td style="text-align: center; color: var(--text-muted); font-weight: 500;">${idx + 1}</td>
+            <td>
+              <div style="font-weight: 600; color: var(--primary);">${escapeHtml(item.coopName)}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">เลขทะเบียน: ${escapeHtml(item.regNumber || '-')} | ที่ตั้ง: ${escapeHtml(item.location || '-')}</div>
+            </td>
+            <td><span class="case-type-badge coop-type-badge">${escapeHtml(item.coopType || '-')}</span></td>
+            <td>
+              <div><strong>${escapeHtml(item.orderNumber || '-')}</strong></div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(dissolutionType)} (${formatThaiDate(item.orderDate)})</div>
+            </td>
+            <td>
+              <div style="font-weight: 600; color: #0369a1; font-size: 0.8rem;">${stepGroup} (ขั้นที่ ${curStepNum}/10)</div>
+              <div class="progress-bar-bg" style="height: 5px; width: 80px; margin-top: 3px;">
+                <div class="progress-bar-fill" style="width: ${curStepNum * 10}%;"></div>
+              </div>
+            </td>
+            <td style="font-size: 0.78rem;">${escapeHtml(liqName)}</td>
+            <td style="text-align: center; font-weight: 600; color: var(--primary);">
+              ${dur.hasData ? `${dur.workingDays} วัน` : '-'}
+            </td>
+            <td>
+              ${issuesText ? `<span class="status-badge issue" style="font-size: 0.72rem;">⚠️ ${escapeHtml(issuesText)}</span>` : '<span class="status-badge" style="background:#ecfdf5; color:#059669; font-size: 0.72rem;">ปกติ</span>'}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  if (tbodyRegs) {
+    if (regsToRender.length === 0) {
+      tbodyRegs.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #059669; padding: 20px;">✅ ไม่มีระเบียบหรือข้อบังคับที่อยู่ระหว่างพิจารณาในขณะนี้</td></tr>`;
+    } else {
+      tbodyRegs.innerHTML = regsToRender.map((item, idx) => {
+        const curStepNum = parseInt(item.currentStep, 10) || 1;
+        const dur = WorkingDaysUtil.calculate(item.submitDate, null, 'อยู่ระหว่างพิจารณา');
+        const isReturned = item.status === 'ส่งคืนแก้ไข';
+        const typeBadgeClass = item.docType === 'ข้อบังคับสหกรณ์' ? 'reg-type-bylaw' : 'reg-type-rule';
+
+        return `
+          <tr>
+            <td style="text-align: center; color: var(--text-muted); font-weight: 500;">${idx + 1}</td>
+            <td>
+              <div style="font-weight: 600; color: var(--primary);">${escapeHtml(item.title)}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(item.coopName)} (${escapeHtml(item.regNumber || '-')})</div>
+            </td>
+            <td><span class="case-type-badge ${typeBadgeClass}">${escapeHtml(item.docType || 'ข้อบังคับ')}</span></td>
+            <td>
+              <div><strong>${escapeHtml(item.docNumber || '-')}</strong></div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">ยื่น: ${formatThaiDate(item.submitDate)}</div>
+            </td>
+            <td>
+              <div style="font-weight: 600; color: #0d9488; font-size: 0.8rem;">ขั้นที่ ${curStepNum}/5</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">${escapeHtml(CONFIG.REGULATION_STEPS[curStepNum - 1]?.title || '')}</div>
+            </td>
+            <td style="font-size: 0.78rem;">
+              <div>${escapeHtml(item.officerName || '-')}</div>
+              ${item.officerContact ? `<div style="font-size: 0.7rem; color: var(--text-muted);">${escapeHtml(item.officerContact)}</div>` : ''}
+            </td>
+            <td style="text-align: center; font-weight: 600; color: var(--primary);">
+              ${dur.hasData ? `${dur.workingDays} วัน` : '-'}
+            </td>
+            <td style="text-align: center;">
+              <span class="status-badge ${isReturned ? 'issue' : 'active'}" style="font-size: 0.72rem;">
+                ${isReturned ? '⚠️ ส่งคืนแก้ไข' : '● อยู่ระหว่างพิจารณา'}
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+}
+
+function switchActiveExportTab(tabName) {
+  const btnCases = document.getElementById('btnExportTabCases');
+  const btnRegs = document.getElementById('btnExportTabRegs');
+  const contentCases = document.getElementById('exportTabContentCases');
+  const contentRegs = document.getElementById('exportTabContentRegs');
+
+  if (tabName === 'cases') {
+    if (btnCases) btnCases.classList.add('active');
+    if (btnRegs) btnRegs.classList.remove('active');
+    if (contentCases) { contentCases.style.display = 'block'; contentCases.classList.add('active'); }
+    if (contentRegs) { contentRegs.style.display = 'none'; contentRegs.classList.remove('active'); }
+  } else {
+    if (btnRegs) btnRegs.classList.add('active');
+    if (btnCases) btnCases.classList.remove('active');
+    if (contentRegs) { contentRegs.style.display = 'block'; contentRegs.classList.add('active'); }
+    if (contentCases) { contentCases.style.display = 'none'; contentCases.classList.remove('active'); }
+  }
+}
+
+function filterActiveExportPreview(query) {
+  const q = (query || '').trim().toLowerCase();
+  const activeCases = (AppState.cases || []).filter(c => c.caseStatus !== 'เสร็จสิ้น' && (parseInt(c.currentStep, 10) || 1) < 10);
+  const activeRegs = (AppState.regulations || []).filter(r => r.status !== 'รับจดทะเบียน/เห็นชอบ/รับทราบ' && r.status !== 'รับจดทะเบียน/เห็นชอบแล้ว' && (parseInt(r.currentStep, 10) || 1) < 5);
+
+  if (!q) {
+    renderActiveExportTables(activeCases, activeRegs);
+    return;
+  }
+
+  const filteredCases = activeCases.filter(c => 
+    (c.coopName && c.coopName.toLowerCase().includes(q)) ||
+    (c.regNumber && c.regNumber.toLowerCase().includes(q)) ||
+    (c.orderNumber && c.orderNumber.toLowerCase().includes(q)) ||
+    (c.coopType && c.coopType.toLowerCase().includes(q)) ||
+    (c.liquidatorName && c.liquidatorName.toLowerCase().includes(q)) ||
+    (c.issues && c.issues.toLowerCase().includes(q))
+  );
+
+  const filteredRegs = activeRegs.filter(r => 
+    (r.title && r.title.toLowerCase().includes(q)) ||
+    (r.coopName && r.coopName.toLowerCase().includes(q)) ||
+    (r.regNumber && r.regNumber.toLowerCase().includes(q)) ||
+    (r.docNumber && r.docNumber.toLowerCase().includes(q)) ||
+    (r.docType && r.docType.toLowerCase().includes(q)) ||
+    (r.officerName && r.officerName.toLowerCase().includes(q))
+  );
+
+  renderActiveExportTables(filteredCases, filteredRegs);
+}
+
+// 11. Export Combined Active Operations to Excel (.xlsx) with Multi-Sheets
+async function exportCombinedActiveExcel() {
+  if (typeof XLSX === 'undefined') {
+    showToast('กำลังโหลดโมดูล Excel กรุณารอสักครู่...', 'info');
+    return;
+  }
+
+  if ((!AppState.cases || AppState.cases.length === 0) || (!AppState.regulations || AppState.regulations.length === 0)) {
+    setLoading(true);
+    try {
+      await Promise.all([loadCasesData(), loadRegulationsData()]);
+    } catch (e) {
+      console.warn('Load data error for Excel export:', e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const activeCases = (AppState.cases || []).filter(c => c.caseStatus !== 'เสร็จสิ้น' && (parseInt(c.currentStep, 10) || 1) < 10);
+  const activeRegs = (AppState.regulations || []).filter(r => r.status !== 'รับจดทะเบียน/เห็นชอบ/รับทราบ' && r.status !== 'รับจดทะเบียน/เห็นชอบแล้ว' && (parseInt(r.currentStep, 10) || 1) < 5);
+
+  const totalActive = activeCases.length + activeRegs.length;
+  if (totalActive === 0) {
+    showToast('ไม่มีรายการเรื่องที่กำลังดำเนินการในขณะนี้', 'info');
+    return;
+  }
+
+  const printDateStr = formatThaiDateTime(new Date());
+  const wb = XLSX.utils.book_new();
+
+  // ----------------------------------------------------
+  // Sheet 1: งานชำระบัญชี (กำลังดำเนินการ)
+  // ----------------------------------------------------
+  const caseHeader = [
+    ["ระบบติดตามการชำระบัญชีสหกรณ์ กรมส่งเสริมสหกรณ์"],
+    ["รายงานรายการสหกรณ์ที่อยู่ระหว่างการชำระบัญชี (กำลังดำเนินการ)"],
+    [`ข้อมูล ณ วันที่: ${printDateStr}`, `จำนวนทั้งหมด: ${activeCases.length} แห่ง`],
+    [],
+    [
+      "ลำดับ",
+      "ชื่อสหกรณ์ / สถาบันเกษตรกร",
+      "เลขทะเบียนสหกรณ์",
+      "ที่ตั้ง (จังหวัด/อำเภอ)",
+      "ประเภทสถาบัน",
+      "ประเภทการเลิก",
+      "เลขที่คำสั่ง/ประกาศ",
+      "วันที่สั่งเลิก",
+      "ขั้นตอนปัจจุบัน",
+      "ชื่อขั้นตอนมาตรฐาน",
+      "ความคืบหน้า (%)",
+      "รายชื่อผู้ชำระบัญชี",
+      "ระยะเวลาสะสม (วันทำการ)",
+      "สถานะการดำเนินงาน",
+      "ปัญหาและอุปสรรค",
+      "วันที่ปรับปรุงข้อมูลล่าสุด"
+    ]
+  ];
+
+  const caseRows = activeCases.map((item, idx) => {
+    const dissolutionType = item.dissolutionType || (item.orderNumber && item.orderNumber.includes('ประกาศ') ? 'ประกาศเลิก' : 'คำสั่งเลิก');
+    const liqName = (item.liquidators && item.liquidators.length > 0) ? item.liquidators.map(l => l.name).join(', ') : (item.liquidatorName || '-');
+    const curStepNum = parseInt(item.currentStep, 10) || 1;
+    const dur = WorkingDaysUtil.calculate(item.orderDate, null, 'กำลังชำระบัญชี');
+    const stepTitle = CONFIG.LIQUIDATION_STEPS[curStepNum - 1]?.title || `ขั้นที่ ${curStepNum}`;
+
+    return [
+      idx + 1,
+      item.coopName || '-',
+      item.regNumber || '-',
+      item.location || '-',
+      item.coopType || '-',
+      dissolutionType,
+      item.orderNumber || '-',
+      formatThaiDate(item.orderDate),
+      `ขั้นที่ ${curStepNum}/10`,
+      stepTitle,
+      `${curStepNum * 10}%`,
+      liqName,
+      dur.hasData ? dur.workingDays : 0,
+      item.caseStatus || 'กำลังชำระบัญชี',
+      item.issues || (item.hasIssues ? 'มีปัญหาอุปสรรค' : 'ปกติ'),
+      formatThaiDate(item.updatedAt || item.createdAt)
+    ];
+  });
+
+  const wsCasesData = [...caseHeader, ...caseRows];
+  const wsCases = XLSX.utils.aoa_to_sheet(wsCasesData);
+  wsCases['!cols'] = [
+    { wch: 6 },  // ลำดับ
+    { wch: 36 }, // ชื่อสหกรณ์
+    { wch: 18 }, // เลขทะเบียน
+    { wch: 22 }, // ที่ตั้ง
+    { wch: 22 }, // ประเภทสถาบัน
+    { wch: 15 }, // ประเภทการเลิก
+    { wch: 22 }, // เลขที่คำสั่ง
+    { wch: 14 }, // วันที่สั่งเลิก
+    { wch: 14 }, // ขั้นตอน
+    { wch: 40 }, // ชื่อขั้นตอน
+    { wch: 14 }, // ความคืบหน้า
+    { wch: 30 }, // ผู้ชำระบัญชี
+    { wch: 22 }, // ระยะเวลาวันทำการ
+    { wch: 18 }, // สถานะ
+    { wch: 35 }, // ปัญหาอุปสรรค
+    { wch: 18 }  // วันที่ปรับปรุง
+  ];
+
+  // ----------------------------------------------------
+  // Sheet 2: ระเบียบข้อบังคับ (กำลังพิจารณา)
+  // ----------------------------------------------------
+  const regHeader = [
+    ["ระบบติดตามการพิจารณาระเบียบและข้อบังคับสหกรณ์ กรมส่งเสริมสหกรณ์"],
+    ["รายงานรายการระเบียบและข้อบังคับที่อยู่ระหว่างการพิจารณา (กำลังดำเนินการ)"],
+    [`ข้อมูล ณ วันที่: ${printDateStr}`, `จำนวนทั้งหมด: ${activeRegs.length} เรื่อง`],
+    [],
+    [
+      "ลำดับ",
+      "ชื่อเรื่อง ระเบียบ/ข้อบังคับ",
+      "ชื่อสหกรณ์ / สถาบันเกษตรกร",
+      "เลขทะเบียนสหกรณ์",
+      "ประเภทเอกสาร",
+      "เลขที่หนังสือยื่น",
+      "วันที่ยื่นเรื่อง",
+      "ขั้นตอนปัจจุบัน",
+      "ชื่อขั้นตอนการพิจารณา",
+      "เจ้าหน้าที่ผู้รับผิดชอบ",
+      "เบอร์ติดต่อเจ้าหน้าที่",
+      "ระยะเวลาสะสม (วันทำการ)",
+      "สถานะการพิจารณา",
+      "ข้อตรวจพบ/หมายเหตุ",
+      "วันที่ปรับปรุงข้อมูลล่าสุด"
+    ]
+  ];
+
+  const regRows = activeRegs.map((item, idx) => {
+    const curStepNum = parseInt(item.currentStep, 10) || 1;
+    const dur = WorkingDaysUtil.calculate(item.submitDate, null, 'อยู่ระหว่างพิจารณา');
+    const stepTitle = CONFIG.REGULATION_STEPS[curStepNum - 1]?.title || `ขั้นที่ ${curStepNum}`;
+
+    return [
+      idx + 1,
+      item.title || '-',
+      item.coopName || '-',
+      item.regNumber || '-',
+      item.docType || 'ข้อบังคับ',
+      item.docNumber || '-',
+      formatThaiDate(item.submitDate),
+      `ขั้นที่ ${curStepNum}/5`,
+      stepTitle,
+      item.officerName || '-',
+      item.officerContact || '-',
+      dur.hasData ? dur.workingDays : 0,
+      item.status || 'อยู่ระหว่างพิจารณา',
+      item.remarks || item.reviewNotes || '-',
+      formatThaiDate(item.updatedAt || item.createdAt)
+    ];
+  });
+
+  const wsRegsData = [...regHeader, ...regRows];
+  const wsRegs = XLSX.utils.aoa_to_sheet(wsRegsData);
+  wsRegs['!cols'] = [
+    { wch: 6 },  // ลำดับ
+    { wch: 38 }, // ชื่อเรื่อง
+    { wch: 35 }, // ชื่อสหกรณ์
+    { wch: 18 }, // เลขทะเบียน
+    { wch: 20 }, // ประเภทเอกสาร
+    { wch: 20 }, // เลขที่ยื่น
+    { wch: 14 }, // วันที่ยื่น
+    { wch: 14 }, // ขั้นตอน
+    { wch: 38 }, // ชื่อขั้นตอน
+    { wch: 24 }, // เจ้าหน้าที่
+    { wch: 18 }, // เบอร์ติดต่อ
+    { wch: 22 }, // ระยะเวลาวันทำการ
+    { wch: 20 }, // สถานะ
+    { wch: 35 }, // หมายเหตุ
+    { wch: 18 }  // วันที่ปรับปรุง
+  ];
+
+  // ----------------------------------------------------
+  // Sheet 3: สรุปภาพรวม (Summary KPIs)
+  // ----------------------------------------------------
+  const casesWithIssues = activeCases.filter(c => c.caseStatus === 'มีปัญหา' || (c.issues && c.issues.trim().length > 0)).length;
+  const regsWithIssues = activeRegs.filter(r => r.status === 'ส่งคืนแก้ไข').length;
+  const totalIssues = casesWithIssues + regsWithIssues;
+
+  const overviewData = [
+    ["ระบบศูนย์บริการงานนายทะเบียนและส่งเสริมสหกรณ์ กรมส่งเสริมสหกรณ์"],
+    ["รายงานสรุปภาพรวมเรื่องที่อยู่ระหว่างดำเนินการ (Master Operations Summary)"],
+    [],
+    ["หัวข้อสรุปภาพรวม", "จำนวนตัวเลข", "หน่วยนับ", "คำอธิบาย"],
+    ["1. งานที่อยู่ระหว่างดำเนินการทั้งหมด (รวม 2 ด้าน)", totalActive, "เรื่อง", "รวมทั้งงานชำระบัญชีและงานระเบียบข้อบังคับ"],
+    ["2. สหกรณ์ที่อยู่ระหว่างการชำระบัญชี", activeCases.length, "แห่ง", "ขั้นตอนที่ 1 ถึงขั้นตอนที่ 9"],
+    ["3. ระเบียบและข้อบังคับที่อยู่ระหว่างพิจารณา", activeRegs.length, "เรื่อง", "ขั้นตอนที่ 1 ถึงขั้นตอนที่ 4"],
+    ["4. รายการที่มีปัญหาอุปสรรค / ส่งคืนแก้ไข", totalIssues, "เรื่อง", `ชำระบัญชีมีปัญหา: ${casesWithIssues} แห่ง | ระเบียบส่งคืน: ${regsWithIssues} เรื่อง`],
+    [],
+    ["วันที่ส่งออกรายงาน", printDateStr, "", ""],
+    ["ผู้จัดทำรายงาน", AppState.currentUser ? (AppState.currentUser.name || AppState.currentUser.email) : "เจ้าหน้าที่กลุ่มส่งเสริมและพัฒนาการบริหารการจัดการสหกรณ์", "", ""]
+  ];
+
+  const wsOverview = XLSX.utils.aoa_to_sheet(overviewData);
+  wsOverview['!cols'] = [
+    { wch: 45 },
+    { wch: 16 },
+    { wch: 12 },
+    { wch: 50 }
+  ];
+
+  // Append Sheets to Workbook
+  XLSX.utils.book_append_sheet(wb, wsCases, "งานชำระบัญชี");
+  XLSX.utils.book_append_sheet(wb, wsRegs, "งานระเบียบข้อบังคับ");
+  XLSX.utils.book_append_sheet(wb, wsOverview, "ภาพรวมสรุป");
+
+  const filename = `รายงานรวมเรื่องกำลังดำเนินการ_${todayThaiDate().replace(/\//g, '-')}.xlsx`;
+  XLSX.writeFile(wb, filename);
+
+  showToast(`ส่งออกไฟล์ Excel (${filename}) แยก 2 ส่วนเรียบร้อยแล้ว`, 'success');
+}
+
+// 12. Export Combined Active CSV
+function exportCombinedActiveCsv() {
+  const activeCases = (AppState.cases || []).filter(c => c.caseStatus !== 'เสร็จสิ้น' && (parseInt(c.currentStep, 10) || 1) < 10);
+  const activeRegs = (AppState.regulations || []).filter(r => r.status !== 'รับจดทะเบียน/เห็นชอบ/รับทราบ' && r.status !== 'รับจดทะเบียน/เห็นชอบแล้ว' && (parseInt(r.currentStep, 10) || 1) < 5);
+
+  let csvContent = '\uFEFF'; // UTF-8 BOM for Thai Excel
+
+  csvContent += "=== หมวดที่ 1: รายการสหกรณ์ที่อยู่ระหว่างการชำระบัญชี ===\r\n";
+  csvContent += "ลำดับ,ชื่อสหกรณ์,เลขทะเบียน,ที่ตั้ง,ประเภทสถาบัน,ประเภทการเลิก,เลขที่คำสั่ง/ประกาศ,วันที่สั่งเลิก,ขั้นตอนปัจจุบัน,ความคืบหน้า,ผู้ชำระบัญชี,วันทำการสะสม,สถานะ,ปัญหาอุปสรรค\r\n";
+  
+  activeCases.forEach((item, idx) => {
+    const dissolutionType = item.dissolutionType || (item.orderNumber && item.orderNumber.includes('ประกาศ') ? 'ประกาศเลิก' : 'คำสั่งเลิก');
+    const liqName = (item.liquidators && item.liquidators.length > 0) ? item.liquidators.map(l => l.name).join('; ') : (item.liquidatorName || '-');
+    const curStepNum = parseInt(item.currentStep, 10) || 1;
+    const dur = WorkingDaysUtil.calculate(item.orderDate, null, 'กำลังชำระบัญชี');
+
+    const row = [
+      idx + 1,
+      `"${(item.coopName || '').replace(/"/g, '""')}"`,
+      `"${(item.regNumber || '').replace(/"/g, '""')}"`,
+      `"${(item.location || '').replace(/"/g, '""')}"`,
+      `"${(item.coopType || '').replace(/"/g, '""')}"`,
+      `"${dissolutionType}"`,
+      `"${(item.orderNumber || '').replace(/"/g, '""')}"`,
+      `"${formatThaiDate(item.orderDate)}"`,
+      `"ขั้นที่ ${curStepNum}/10"`,
+      `"${curStepNum * 10}%"`,
+      `"${liqName.replace(/"/g, '""')}"`,
+      dur.hasData ? dur.workingDays : 0,
+      `"${item.caseStatus || 'กำลังชำระบัญชี'}"`,
+      `"${(item.issues || (item.hasIssues ? 'มีปัญหาอุปสรรค' : 'ปกติ')).replace(/"/g, '""')}"`
+    ];
+    csvContent += row.join(',') + "\r\n";
+  });
+
+  csvContent += "\r\n=== หมวดที่ 2: รายการระเบียบและข้อบังคับสหกรณ์ที่อยู่ระหว่างการพิจารณา ===\r\n";
+  csvContent += "ลำดับ,ชื่อเรื่องระเบียบ/ข้อบังคับ,ชื่อสหกรณ์,เลขทะเบียน,ประเภทเอกสาร,เลขที่ยื่น,วันที่ยื่นเรื่อง,ขั้นตอนปัจจุบัน,จนท.ผู้รับผิดชอบ,เบอร์ติดต่อ,วันทำการสะสม,สถานะ,ข้อตรวจพบ/หมายเหตุ\r\n";
+
+  activeRegs.forEach((item, idx) => {
+    const curStepNum = parseInt(item.currentStep, 10) || 1;
+    const dur = WorkingDaysUtil.calculate(item.submitDate, null, 'อยู่ระหว่างพิจารณา');
+
+    const row = [
+      idx + 1,
+      `"${(item.title || '').replace(/"/g, '""')}"`,
+      `"${(item.coopName || '').replace(/"/g, '""')}"`,
+      `"${(item.regNumber || '').replace(/"/g, '""')}"`,
+      `"${item.docType || 'ข้อบังคับ'}"`,
+      `"${(item.docNumber || '').replace(/"/g, '""')}"`,
+      `"${formatThaiDate(item.submitDate)}"`,
+      `"ขั้นที่ ${curStepNum}/5"`,
+      `"${(item.officerName || '').replace(/"/g, '""')}"`,
+      `"${(item.officerContact || '').replace(/"/g, '""')}"`,
+      dur.hasData ? dur.workingDays : 0,
+      `"${item.status || 'อยู่ระหว่างพิจารณา'}"`,
+      `"${(item.remarks || item.reviewNotes || '-').replace(/"/g, '""')}"`
+    ];
+    csvContent += row.join(',') + "\r\n";
+  });
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `รายงานรวมเรื่องกำลังดำเนินการ_${todayThaiDate().replace(/\//g, '-')}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
+  showToast('ส่งออกไฟล์ CSV รวมเรียบร้อยแล้ว', 'success');
+}
+
+function triggerActiveExportDirectPrint() {
+  exportAllActiveOperationsPdf();
+  setTimeout(() => {
+    triggerPrintDialog();
+  }, 400);
+}
+
+// Expose PDF and Active Export functions to global window scope
 window.exportCurrentCasePdf = exportCurrentCasePdf;
 window.exportCurrentRegPdf = exportCurrentRegPdf;
 window.exportCasesListPdf = exportCasesListPdf;
@@ -4157,6 +4649,12 @@ window.quickExportRegPdf = quickExportRegPdf;
 window.openPdfPreview = openPdfPreview;
 window.triggerDirectPdfDownload = triggerDirectPdfDownload;
 window.triggerPrintDialog = triggerPrintDialog;
+window.openActiveExportModal = openActiveExportModal;
+window.switchActiveExportTab = switchActiveExportTab;
+window.filterActiveExportPreview = filterActiveExportPreview;
+window.exportCombinedActiveExcel = exportCombinedActiveExcel;
+window.exportCombinedActiveCsv = exportCombinedActiveCsv;
+window.triggerActiveExportDirectPrint = triggerActiveExportDirectPrint;
 
 // Startup
 if (document.readyState === 'loading') {
@@ -4164,5 +4662,6 @@ if (document.readyState === 'loading') {
 } else {
   initializeApp();
 }
+
 
 
