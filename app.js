@@ -48,7 +48,7 @@ const AppState = {
 // 2. API Transport
 // ------------------------------------------------------------------------------
 const ApiClient = {
-  async get(action, params = {}) {
+  async get(action, params = {}, retries = 2) {
     if (!CONFIG.APPS_SCRIPT_URL) {
       throw new Error('ยังไม่ได้กำหนดค่า APPS_SCRIPT_URL ใน config.js');
     }
@@ -57,13 +57,47 @@ const ApiClient = {
     Object.keys(params).forEach(k => {
       if (params[k] !== undefined && params[k] !== null) url.searchParams.set(k, params[k]);
     });
-    const response = await fetch(url.toString(), { method: 'GET', headers: { 'Accept': 'application/json' } });
-    const json = await response.json();
-    if (!json.success) throw new Error(json.error || 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
-    return json.data;
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const response = await fetch(url.toString(), {
+          method: 'GET',
+          credentials: 'omit',
+          redirect: 'follow'
+        });
+
+        const text = await response.text();
+        let json;
+        try {
+          json = JSON.parse(text);
+        } catch (parseErr) {
+          console.warn(`[ApiClient] Parse error on ${action} (attempt ${attempt + 1}/${retries + 1}):`, text.substring(0, 300));
+          if (attempt < retries) {
+            await new Promise(r => setTimeout(r, 1200 * (attempt + 1)));
+            continue;
+          }
+          if (text.includes('accounts.google.com') || text.includes('Service Login') || text.includes('Sign in')) {
+            throw new Error('Google Apps Script ติดปัญหาการยืนยันตัวตน Google (แนะนำลองเปิดในโหมดไม่ระบุตัวตน / Incognito หรือตรวจการตั้งค่า Web App Deploy ให้สิทธิ์ Everyone/Anyone)');
+          }
+          if (text.includes('Google Docs') || text.includes('Service Spreadsheets') || text.includes('Exceeded')) {
+            throw new Error('เซิร์ฟเวอร์ Google Apps Script กำลังยุ่งหรือทำงานเกินเวลา กรุณารีเฟรชใหม่อีกครั้ง');
+          }
+          throw new Error(`การตอบกลับจากเซิร์ฟเวอร์ไม่ใช่ JSON (${text.substring(0, 80)}...)`);
+        }
+
+        if (!json.success) throw new Error(json.error || 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
+        return json.data;
+      } catch (err) {
+        if (attempt < retries && !err.message.includes('ยังไม่ได้กำหนดค่า')) {
+          await new Promise(r => setTimeout(r, 1200 * (attempt + 1)));
+          continue;
+        }
+        throw err;
+      }
+    }
   },
 
-  async post(action, data = {}) {
+  async post(action, data = {}, retries = 1) {
     if (!CONFIG.APPS_SCRIPT_URL) {
       throw new Error('ยังไม่ได้กำหนดค่า APPS_SCRIPT_URL ใน config.js');
     }
@@ -72,14 +106,40 @@ const ApiClient = {
       sessionToken: AppState.currentUser ? (AppState.currentUser.token || AppState.currentUser.sessionToken) : null,
       ...data
     };
-    const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    });
-    const json = await response.json();
-    if (!json.success) throw new Error(json.error || 'การบันทึกข้อมูลไม่สำเร็จ');
-    return json.data;
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
+          method: 'POST',
+          credentials: 'omit',
+          redirect: 'follow',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+
+        const text = await response.text();
+        let json;
+        try {
+          json = JSON.parse(text);
+        } catch (parseErr) {
+          console.warn(`[ApiClient.post] Parse error on ${action}:`, text.substring(0, 300));
+          if (attempt < retries) {
+            await new Promise(r => setTimeout(r, 1500));
+            continue;
+          }
+          throw new Error(`การตอบกลับจากเซิร์ฟเวอร์ไม่ใช่ JSON (${text.substring(0, 80)}...)`);
+        }
+
+        if (!json.success) throw new Error(json.error || 'การบันทึกข้อมูลไม่สำเร็จ');
+        return json.data;
+      } catch (err) {
+        if (attempt < retries && !err.message.includes('ยังไม่ได้กำหนดค่า')) {
+          await new Promise(r => setTimeout(r, 1500));
+          continue;
+        }
+        throw err;
+      }
+    }
   }
 };
 
@@ -185,7 +245,9 @@ async function initializeApp() {
 
   setLoading(true);
   try {
-    await Promise.all([loadCasesData(), loadRegulationsData()]);
+    // โหลดข้อมูลแบบ sequential เพื่อป้องกัน Google Apps Script เกิดปัญหา Concurrency/Lock ชนกัน
+    await loadCasesData();
+    await loadRegulationsData();
   } catch (err) {
     console.error('Initial data load error:', err);
   } finally {
