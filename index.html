@@ -56,9 +56,9 @@
       </div>
 
       <div class="navbar-actions">
-        <!-- Export All Active Modal Button -->
-        <button id="btnNavExportActivePdf" class="btn btn-outline-primary btn-sm" onclick="openActiveExportModal()" title="ส่งออกข้อมูลเรื่องที่กำลังดำเนินการแบบรวม แยกส่วนชำระบัญชี และส่วนระเบียบข้อบังคับ (Excel / PDF / CSV)">
-          📑 ส่งออกเรื่องกำลังดำเนินการ
+        <!-- Export Summary Modal Button -->
+        <button id="btnNavExportActivePdf" class="btn btn-outline-primary btn-sm" onclick="openActiveExportModal()" title="ส่งออกสรุปข้อมูลงานชำระบัญชี และระเบียบข้อบังคับ สามารถเลือกกรองข้อมูลได้ทุกเงื่อนไข (Excel / PDF / CSV)">
+          📑 ส่งออกสรุปข้อมูล
         </button>
 
         <!-- Audit Log Button -->
@@ -204,8 +204,8 @@
           </div>
         </div>
         <div class="hub-announcement-actions">
-          <button class="btn btn-primary btn-sm" onclick="openActiveExportModal()" title="ส่งออกข้อมูลเรื่องที่กำลังดำเนินการแบบรวม (Excel / PDF / CSV)" style="background: linear-gradient(135deg, #0e3760 0%, #0284c7 100%); font-weight: 600;">
-            📑 ส่งออกข้อมูลเรื่องที่กำลังดำเนินการ (รวม)
+          <button class="btn btn-primary btn-sm" onclick="openActiveExportModal()" title="ส่งออกสรุปข้อมูลแบบกำหนดตัวกรองได้ทุกข้อมูล (Excel / PDF / CSV)" style="background: linear-gradient(135deg, #0e3760 0%, #0284c7 100%); font-weight: 600;">
+            📑 ส่งออกสรุปข้อมูล (Excel / PDF / CSV)
           </button>
           <button class="btn btn-secondary btn-sm" onclick="switchAppView('liquidation')">
             ⚖️ ดูงานชำระบัญชี
@@ -1751,14 +1751,14 @@
   <!-- MODAL: ส่งออกข้อมูลเรื่องที่กำลังดำเนินการแบบรวม (Master In-Progress Export Modal) -->
   <!-- ========================================================================= -->
   <div id="activeExportModal" class="modal-backdrop">
-    <div class="modal-container active-export-modal-container" style="max-width: 1100px; width: 95%;">
+    <div class="modal-container active-export-modal-container" style="max-width: 1140px; width: 95%;">
       <div class="modal-header" style="background: linear-gradient(135deg, #0e3760 0%, #0369a1 100%); color: #fff;">
         <div style="display: flex; align-items: center; gap: 12px;">
           <span style="font-size: 1.6rem; background: rgba(255,255,255,0.15); border-radius: 10px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">📑</span>
           <div>
-            <h3 style="font-size: 1.2rem; margin: 0; color: #fff; font-weight: 700;">ส่งออกข้อมูลเรื่องที่กำลังดำเนินการ (แบบรวม)</h3>
-            <span style="font-size: 0.82rem; color: rgba(255,255,255,0.85);">
-              รวมข้อมูลงานชำระบัญชีสหกรณ์ และงานพิจารณาระเบียบ/ข้อบังคับ โดยแยกส่วนข้อมูลอย่างชัดเจน
+            <h3 style="font-size: 1.25rem; margin: 0; color: #fff; font-weight: 700;">ศูนย์ส่งออกสรุปข้อมูล (Data Export & Reporting Hub)</h3>
+            <span style="font-size: 0.82rem; color: rgba(255,255,255,0.88);">
+              ส่งออกข้อมูลงานชำระบัญชีสหกรณ์และระเบียบข้อบังคับ กำหนดตัวกรองได้ทุกมิติ พร้อมส่งออก Excel, PDF และ CSV
             </span>
           </div>
         </div>
@@ -1772,29 +1772,163 @@
             <div class="export-kpi-icon">📋</div>
             <div class="export-kpi-info">
               <span class="export-kpi-val" id="exportKpiTotalActive">0</span>
-              <span class="export-kpi-lbl">งานกำลังดำเนินการรวม (เรื่อง)</span>
+              <span class="export-kpi-lbl" id="exportKpiTotalLabel">รายการตรงตามตัวกรอง (เรื่อง)</span>
             </div>
           </div>
           <div class="export-kpi-card kpi-cases">
             <div class="export-kpi-icon">⚖️</div>
             <div class="export-kpi-info">
               <span class="export-kpi-val" id="exportKpiActiveCases">0</span>
-              <span class="export-kpi-lbl">สหกรณ์กำลังชำระบัญชี (แห่ง)</span>
+              <span class="export-kpi-lbl">งานชำระบัญชีสหกรณ์ (แห่ง)</span>
             </div>
           </div>
           <div class="export-kpi-card kpi-regs">
             <div class="export-kpi-icon">📜</div>
             <div class="export-kpi-info">
               <span class="export-kpi-val" id="exportKpiActiveRegs">0</span>
-              <span class="export-kpi-lbl">ระเบียบ/ข้อบังคับกำลังพิจารณา (เรื่อง)</span>
+              <span class="export-kpi-lbl">งานระเบียบและข้อบังคับ (เรื่อง)</span>
             </div>
           </div>
           <div class="export-kpi-card kpi-issues">
             <div class="export-kpi-icon">⚠️</div>
             <div class="export-kpi-info">
               <span class="export-kpi-val" id="exportKpiTotalIssues">0</span>
-              <span class="export-kpi-lbl">รายการที่มีปัญหา/ส่งคืนแก้ไข (เรื่อง)</span>
+              <span class="export-kpi-lbl">มีปัญหาอุปสรรค / ส่งคืน (เรื่อง)</span>
             </div>
+          </div>
+        </div>
+
+        <!-- Comprehensive Filter Controls Panel -->
+        <div class="export-filter-panel">
+          <div class="export-filter-panel-top">
+            <div class="export-filter-title">
+              <strong>🔍 ตัวกรองข้อมูลสรุป (Export Filters):</strong>
+              <span id="exportFilterMatchedText" class="export-filter-status-text">พบ 0 รายการ</span>
+            </div>
+            <div class="export-quick-presets">
+              <span class="preset-label">เลือกด่วน:</span>
+              <button type="button" class="preset-pill active" id="presetActiveOnly" onclick="setExportScopePreset('ACTIVE')">🟡 กำลังดำเนินการ</button>
+              <button type="button" class="preset-pill" id="presetDoneOnly" onclick="setExportScopePreset('DONE')">🟢 เสร็จสิ้นแล้ว</button>
+              <button type="button" class="preset-pill" id="presetAllRecords" onclick="setExportScopePreset('ALL')">🌐 ข้อมูลทั้งหมด</button>
+              <button type="button" class="preset-pill preset-issues" id="presetIssuesOnly" onclick="setExportScopePreset('ISSUES')">⚠️ มีปัญหา/ส่งคืน</button>
+              <button type="button" class="export-reset-btn" onclick="resetExportFilters()" title="ล้างตัวกรองทั้งหมด">
+                🔄 ล้างตัวกรอง
+              </button>
+            </div>
+          </div>
+
+          <div class="export-filter-grid">
+            <!-- 1. สถานะ/ขอบเขตข้อมูล -->
+            <div class="export-filter-item">
+              <label for="exportFilterScope">สถานะ / ขอบเขตข้อมูล</label>
+              <select id="exportFilterScope" onchange="handleExportFilterChange()">
+                <option value="ACTIVE" selected>🟡 กำลังดำเนินการ (In-progress)</option>
+                <option value="DONE">🟢 เสร็จสิ้น / รับจดทะเบียนแล้ว (Completed)</option>
+                <option value="ALL">🌐 ข้อมูลทั้งหมดทุกสถานะ (All Records)</option>
+              </select>
+            </div>
+
+            <!-- 2. หมวดงานที่ส่งออก -->
+            <div class="export-filter-item">
+              <label for="exportFilterModule">หมวดงานที่ต้องการส่งออก</label>
+              <select id="exportFilterModule" onchange="handleExportFilterChange()">
+                <option value="ALL" selected>📑 รวม 2 หมวด (ชำระบัญชี + ระเบียบ)</option>
+                <option value="CASES">⚖️ เฉพาะงานชำระบัญชีสหกรณ์</option>
+                <option value="REGS">📜 เฉพาะงานระเบียบและข้อบังคับ</option>
+              </select>
+            </div>
+
+            <!-- 3. ประเภทสถาบัน / สหกรณ์ -->
+            <div class="export-filter-item">
+              <label for="exportFilterCoopType">ประเภทสหกรณ์ / สถาบัน</label>
+              <select id="exportFilterCoopType" onchange="handleExportFilterChange()">
+                <option value="ALL" selected>🏛️ ทุกประเภทสถาบัน</option>
+                <option value="สหกรณ์การเกษตร">สหกรณ์การเกษตร</option>
+                <option value="สหกรณ์ออมทรัพย์">สหกรณ์ออมทรัพย์</option>
+                <option value="สหกรณ์บริการ">สหกรณ์บริการ</option>
+                <option value="สหกรณ์นิคม">สหกรณ์นิคม</option>
+                <option value="สหกรณ์ร้านค้า">สหกรณ์ร้านค้า</option>
+                <option value="สหกรณ์ประมง">สหกรณ์ประมง</option>
+                <option value="สหกรณ์เครดิตยูเนี่ยน">สหกรณ์เครดิตยูเนี่ยน</option>
+                <option value="กลุ่มเกษตรกร">🌾 กลุ่มเกษตรกร (ทุกประเภท)</option>
+                <option value="กลุ่มเกษตรกรทำนา">กลุ่มเกษตรกรทำนา</option>
+                <option value="กลุ่มเกษตรกรทำไร่">กลุ่มเกษตรกรทำไร่</option>
+                <option value="กลุ่มเกษตรกรทำสวน">กลุ่มเกษตรกรทำสวน</option>
+                <option value="กลุ่มเกษตรกรเลี้ยงสัตว์">กลุ่มเกษตรกรเลี้ยงสัตว์</option>
+                <option value="กลุ่มเกษตรกรประมง">กลุ่มเกษตรกรประมง</option>
+              </select>
+            </div>
+
+            <!-- 4. ขั้นตอนชำระบัญชี -->
+            <div class="export-filter-item" id="exportFilterCaseStepWrap">
+              <label for="exportFilterCaseStep">ขั้นตอนชำระบัญชี</label>
+              <select id="exportFilterCaseStep" onchange="handleExportFilterChange()">
+                <option value="ALL" selected>ทุกขั้นตอน (1 - 10)</option>
+                <option value="PHASE_1">🌱 ขั้น 1-3: รับมอบทรัพย์สิน/งบการเงิน</option>
+                <option value="PHASE_2">⚖️ ขั้น 4-6: ตรวจสอบงบ/ชำระหนี้</option>
+                <option value="PHASE_3">📑 ขั้น 7-9: งบเสร็จสิ้น/สั่งถอนชื่อ</option>
+                <option value="PHASE_4">🏁 ขั้น 10: ส่งมอบเอกสาร (เสร็จสิ้น)</option>
+                <option value="1">ขั้นที่ 1: ประกาศเลิกและแต่งตั้งผู้ชำระบัญชี</option>
+                <option value="2">ขั้นที่ 2: รับมอบทรัพย์สิน บัญชี เอกสาร</option>
+                <option value="3">ขั้นที่ 3: ส่งงบการเงิน ณ วันเลิก ให้ผู้สอบบัญชี</option>
+                <option value="4">ขั้นที่ 4: ผู้สอบบัญชีตรวจสอบรับรองงบ</option>
+                <option value="5">ขั้นที่ 5: ขออนุมัติงบการเงิน ณ วันเลิก</option>
+                <option value="6">ขั้นที่ 6: ชำระสะสางทรัพย์สินและหนี้สิน</option>
+                <option value="7">ขั้นที่ 7: จัดทำงบเสร็จสิ้นการชำระบัญชี</option>
+                <option value="8">ขั้นที่ 8: ผู้สอบบัญชีรับรองงบเสร็จสิ้น</option>
+                <option value="9">ขั้นที่ 9: นายทะเบียนสั่งถอนชื่อสหกรณ์</option>
+                <option value="10">ขั้นที่ 10: ส่งมอบสมุดบัญชี (เสร็จสิ้น)</option>
+              </select>
+            </div>
+
+            <!-- 5. ขั้นตอนระเบียบข้อบังคับ -->
+            <div class="export-filter-item" id="exportFilterRegStepWrap">
+              <label for="exportFilterRegStep">ขั้นตอนระเบียบ/ข้อบังคับ</label>
+              <select id="exportFilterRegStep" onchange="handleExportFilterChange()">
+                <option value="ALL" selected>ทุกขั้นตอน (1 - 4)</option>
+                <option value="1">ขั้นที่ 1: ฝ่ายบริหารทั่วไปลงรับหนังสือ</option>
+                <option value="2">ขั้นที่ 2: กลุ่มจัดตั้งฯ ตรวจสอบร่าง</option>
+                <option value="3">ขั้นที่ 3: เสนอนายทะเบียนลงนาม</option>
+                <option value="4">ขั้นที่ 4: ส่งเอกสารให้สหกรณ์/เสร็จสิ้น</option>
+              </select>
+            </div>
+
+            <!-- 6. ประเภทเอกสาร (ระเบียบ) -->
+            <div class="export-filter-item" id="exportFilterDocTypeWrap">
+              <label for="exportFilterDocType">ประเภทเอกสารระเบียบ</label>
+              <select id="exportFilterDocType" onchange="handleExportFilterChange()">
+                <option value="ALL" selected>ทุกประเภทเอกสาร</option>
+                <option value="ข้อบังคับสหกรณ์">📘 ข้อบังคับสหกรณ์ (14 วัน)</option>
+                <option value="ระเบียบสหกรณ์ (เห็นชอบ)">📗 ระเบียบ - นายทะเบียนเห็นชอบ (7 วัน)</option>
+                <option value="ระเบียบสหกรณ์ (รับทราบ)">📙 ระเบียบ - รับทราบ (30 วัน)</option>
+              </select>
+            </div>
+
+            <!-- 7. สถานะปัญหา / SLA -->
+            <div class="export-filter-item">
+              <label for="exportFilterIssue">ปัญหาอุปสรรค / SLA</label>
+              <select id="exportFilterIssue" onchange="handleExportFilterChange()">
+                <option value="ALL" selected>ทุกสถานะปัญหา/SLA</option>
+                <option value="ISSUES">⚠️ มีปัญหาอุปสรรค / ส่งคืนแก้ไข</option>
+                <option value="NORMAL">✅ สถานะปกติ (ไม่มีปัญหา)</option>
+                <option value="OVERDUE">⏰ เกินกำหนดเวลา SLA (งานล่าช้า)</option>
+              </select>
+            </div>
+
+            <!-- 8. ค้นหาคำสำคัญ -->
+            <div class="export-filter-item export-filter-search">
+              <label for="exportSearchInput">ค้นหาคำสำคัญ (ทุกฟิลด์)</label>
+              <div class="export-search-input-wrap">
+                <input type="text" id="exportSearchInput" placeholder="🔍 ค้นหาชื่อสหกรณ์, เลขทะเบียน, คำสั่ง, ผู้ชำระบัญชี, เจ้าหน้าที่, ที่ตั้ง..." oninput="handleExportFilterChange()">
+                <button type="button" id="exportSearchClearBtn" class="export-search-clear-btn" onclick="clearExportSearchInput()" title="ล้างคำค้น">&times;</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Filter Tags Display -->
+          <div id="exportActiveFilterTags" class="export-active-tags-bar" style="display: none;">
+            <span class="tags-label">เงื่อนไขที่เลือก:</span>
+            <div id="exportTagsContainer" class="export-tags-list"></div>
           </div>
         </div>
 
@@ -1802,10 +1936,10 @@
         <div class="export-action-toolbar">
           <div class="export-toolbar-title">
             <strong>🎯 รูปแบบการส่งออกข้อมูล (Export Formats):</strong>
-            <span style="font-size: 0.8rem; color: var(--text-muted);">เลือกรูปแบบไฟล์ที่ต้องการนำไปใช้งาน</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">ส่งออกข้อมูลตามเงื่อนไขตัวกรองที่เลือก</span>
           </div>
           <div class="export-btn-group">
-            <button class="btn btn-success export-action-btn" onclick="exportCombinedActiveExcel()" title="ส่งออกเป็นไฟล์ Excel (.xlsx) แยก 2 ชีต: ชำระบัญชี และ ระเบียบข้อบังคับ">
+            <button class="btn btn-success export-action-btn" onclick="exportCombinedActiveExcel()" title="ส่งออกเป็นไฟล์ Excel (.xlsx) ตามเงื่อนไขตัวกรอง">
               <span class="export-btn-icon">📊</span>
               <div class="export-btn-text">
                 <strong>ส่งออก Excel (.xlsx)</strong>
@@ -1813,15 +1947,15 @@
               </div>
             </button>
 
-            <button class="btn btn-primary export-action-btn" onclick="exportAllActiveOperationsPdf()" title="ดูตัวอย่างเอกสารและส่งออกรายงานทางการเป็น PDF พร้อมลายมือชื่อ">
+            <button class="btn btn-primary export-action-btn" onclick="exportAllActiveOperationsPdf()" title="ดูตัวอย่างเอกสารและส่งออกรายงานทางการเป็น PDF ตามเงื่อนไขตัวกรอง">
               <span class="export-btn-icon">📑</span>
               <div class="export-btn-text">
                 <strong>ส่งออก PDF ทางการ (.pdf)</strong>
-                <small>รายงานรวม 2 หมวดหมู่ พร้อมพิมพ์</small>
+                <small>รายงานสรุปพร้อมพิมพ์ตามตัวกรอง</small>
               </div>
             </button>
 
-            <button class="btn btn-outline-primary export-action-btn" onclick="exportCombinedActiveCsv()" title="ส่งออกข้อมูลเป็นไฟล์ CSV (UTF-8 รองรับภาษาไทย)">
+            <button class="btn btn-outline-primary export-action-btn" onclick="exportCombinedActiveCsv()" title="ส่งออกข้อมูลเป็นไฟล์ CSV ตามเงื่อนไขตัวกรอง (UTF-8 รองรับภาษาไทย)">
               <span class="export-btn-icon">📄</span>
               <div class="export-btn-text">
                 <strong>ส่งออก CSV (.csv)</strong>
@@ -1829,7 +1963,7 @@
               </div>
             </button>
 
-            <button class="btn btn-secondary export-action-btn" onclick="triggerActiveExportDirectPrint()" title="สั่งพิมพ์รายงานรวมเรื่องกำลังดำเนินการผ่านเครื่องพิมพ์">
+            <button class="btn btn-secondary export-action-btn" onclick="triggerActiveExportDirectPrint()" title="สั่งพิมพ์รายงานสรุปตามเงื่อนไขตัวกรองผ่านเครื่องพิมพ์">
               <span class="export-btn-icon">🖨️</span>
               <div class="export-btn-text">
                 <strong>สั่งพิมพ์รายงาน (Print)</strong>
@@ -1843,15 +1977,11 @@
         <div class="export-preview-header">
           <div class="export-tabs-nav">
             <button id="btnExportTabCases" class="export-tab-btn active" onclick="switchActiveExportTab('cases')">
-              ⚖️ ส่วนที่ 1: สหกรณ์กำลังชำระบัญชี <span id="exportTabCasesBadge" class="export-tab-badge">0</span>
+              ⚖️ ส่วนที่ 1: งานชำระบัญชีสหกรณ์ <span id="exportTabCasesBadge" class="export-tab-badge">0</span>
             </button>
             <button id="btnExportTabRegs" class="export-tab-btn" onclick="switchActiveExportTab('regs')">
-              📜 ส่วนที่ 2: ระเบียบและข้อบังคับกำลังพิจารณา <span id="exportTabRegsBadge" class="export-tab-badge">0</span>
+              📜 ส่วนที่ 2: ระเบียบและข้อบังคับ <span id="exportTabRegsBadge" class="export-tab-badge">0</span>
             </button>
-          </div>
-
-          <div class="export-search-box">
-            <input type="text" id="exportSearchInput" class="form-input" placeholder="🔍 ค้นหาในตารางตัวอย่าง (ชื่อสหกรณ์, เลขที่, ผู้รับผิดชอบ...)" oninput="filterActiveExportPreview(this.value)">
           </div>
         </div>
 
@@ -1859,8 +1989,8 @@
         <div id="exportTabContentCases" class="export-tab-content active">
           <div class="export-section-notice" style="border-left: 4px solid #0284c7; background: #f0f9ff; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; font-size: 0.85rem; color: #0369a1; display: flex; justify-content: space-between; align-items: center;">
             <div>
-              <strong>หมวดที่ 1: รายการสหกรณ์ที่อยู่ระหว่างการชำระบัญชี (ขั้นตอนที่ 1 - 9)</strong>
-              <div style="font-size: 0.78rem; color: #0284c7; margin-top: 2px;">แสดงสหกรณ์ที่ยังไม่เสร็จสิ้นกระบวนการชำระบัญชี พร้อมระยะเวลาสะสมและปัญหาอุปสรรค</div>
+              <strong id="exportCasesSectionTitle">หมวดที่ 1: รายการสหกรณ์ชำระบัญชี (ตรงตามตัวกรอง)</strong>
+              <div id="exportCasesSectionSubtitle" style="font-size: 0.78rem; color: #0284c7; margin-top: 2px;">แสดงรายการสหกรณ์ที่ตรงตามเงื่อนไขตัวกรอง พร้อมระยะเวลาสะสมและปัญหาอุปสรรค</div>
             </div>
             <button class="btn btn-outline-primary btn-sm" onclick="exportActiveCasesOnlyPdf()" title="ส่งออกเฉพาะหมวดนี้เป็น PDF">
               📄 PDF เฉพาะชำระบัญชี
@@ -1892,8 +2022,8 @@
         <div id="exportTabContentRegs" class="export-tab-content" style="display: none;">
           <div class="export-section-notice" style="border-left: 4px solid #0d9488; background: #f0fdfa; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; font-size: 0.85rem; color: #0f766e; display: flex; justify-content: space-between; align-items: center;">
             <div>
-              <strong>หมวดที่ 2: รายการระเบียบและข้อบังคับสหกรณ์ที่อยู่ระหว่างพิจารณา (ขั้นตอนที่ 1 - 4)</strong>
-              <div style="font-size: 0.78rem; color: #0d9488; margin-top: 2px;">แสดงระเบียบและข้อบังคับที่ยื่นขอจดทะเบียน/เห็นชอบ และอยู่ระหว่างการตรวจร่างหรือเสนอนายทะเบียน</div>
+              <strong id="exportRegsSectionTitle">หมวดที่ 2: รายการระเบียบและข้อบังคับสหกรณ์ (ตรงตามตัวกรอง)</strong>
+              <div id="exportRegsSectionSubtitle" style="font-size: 0.78rem; color: #0d9488; margin-top: 2px;">แสดงระเบียบและข้อบังคับที่ตรงตามเงื่อนไขตัวกรอง พร้อมระยะเวลาสะสมและสถานะ</div>
             </div>
             <button class="btn btn-outline-primary btn-sm" onclick="exportActiveRegulationsOnlyPdf()" title="ส่งออกเฉพาะหมวดนี้เป็น PDF">
               📄 PDF เฉพาะระเบียบข้อบังคับ
@@ -1924,10 +2054,13 @@
 
       <div class="modal-footer" style="justify-content: space-between; flex-wrap: wrap; gap: 10px; background: #f8fafc;">
         <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-muted);">
-          <span>💡 สามารถดาวน์โหลดเป็น Excel (.xlsx) ซึ่งจะมีชีตแยก 2 ส่วนชัดเจน หรือเปิดตัวอย่างรายงาน PDF</span>
+          <span>💡 สามารถดาวน์โหลดเป็น Excel (.xlsx), เอกสาร PDF ทางการ หรือไฟล์ CSV โดยข้อมูลจะถูกส่งออกตามตัวกรองที่เลือกจริง</span>
         </div>
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
           <button class="btn btn-secondary" onclick="closeModal('activeExportModal')">ปิดหน้าต่าง</button>
+          <button class="btn btn-outline-primary" onclick="exportCombinedActiveCsv()">
+            📄 ส่งออก CSV (.csv)
+          </button>
           <button class="btn btn-success" onclick="exportCombinedActiveExcel()">
             📊 ดาวน์โหลด Excel (.xlsx)
           </button>

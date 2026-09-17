@@ -3043,5 +3043,231 @@ body {
   animation: fadeIn 0.2s ease-in-out;
 }
 
+/* ==========================================================================
+   Comprehensive Filter Controls inside Export Modal
+   ========================================================================== */
+.export-filter-panel {
+  background: #f8fafc;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.export-filter-panel-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
+}
+
+.export-filter-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--primary);
+}
+
+.export-filter-status-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: #e0f2fe;
+  color: #0284c7;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.export-quick-presets {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.preset-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.preset-pill {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.preset-pill:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.preset-pill.active {
+  background: #0e3760;
+  color: #ffffff;
+  border-color: #0e3760;
+  box-shadow: 0 2px 4px rgba(14, 55, 96, 0.2);
+}
+
+.preset-pill.preset-issues.active {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+}
+
+.export-reset-btn {
+  font-size: 0.76rem;
+  padding: 4px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  transition: all 0.15s ease;
+}
+
+.export-reset-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+.export-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px 12px;
+}
+
+.export-filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.export-filter-item label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.export-filter-item select,
+.export-filter-item input {
+  height: 34px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.82rem;
+  padding: 4px 8px;
+  background-color: #ffffff;
+  color: var(--text-main);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.export-filter-item select:focus,
+.export-filter-item input:focus {
+  border-color: #0284c7;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+}
+
+.export-filter-search {
+  grid-column: span 2;
+}
+
+@media (max-width: 768px) {
+  .export-filter-search {
+    grid-column: span 1;
+  }
+}
+
+.export-search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.export-search-input-wrap input {
+  width: 100%;
+  padding-right: 28px;
+}
+
+.export-search-clear-btn {
+  position: absolute;
+  right: 6px;
+  background: none;
+  border: none;
+  font-size: 1.15rem;
+  color: #94a3b8;
+  cursor: pointer;
+  line-height: 1;
+  display: none;
+  padding: 2px 4px;
+}
+
+.export-search-clear-btn:hover {
+  color: #ef4444;
+}
+
+.export-active-tags-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #cbd5e1;
+  flex-wrap: wrap;
+  font-size: 0.76rem;
+}
+
+.tags-label {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.export-tags-list {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.export-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-size: 0.74rem;
+  font-weight: 500;
+  border: 1px solid #bae6fd;
+}
+
+.export-tag-chip.tag-issue {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.export-tag-chip.tag-done {
+  background: #ecfdf5;
+  color: #059669;
+  border-color: #a7f3d0;
+}
+
+
 
 
