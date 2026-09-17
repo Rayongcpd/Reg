@@ -1990,6 +1990,128 @@
             </div>
           </div>
 
+          <!-- Executive Date & Period Filter Section -->
+          <div class="export-time-filter-section">
+            <div class="export-time-filter-top">
+              <div class="time-header-title">
+                <span class="time-header-icon">📅</span>
+                <strong>กำหนดช่วงเวลาสำหรับรายงานสรุปเสนอผู้บริหาร:</strong>
+              </div>
+              <div class="export-time-presets">
+                <span class="time-preset-label">ลัด:</span>
+                <button type="button" class="time-preset-btn" onclick="setExportTimePreset('THIS_MONTH')" title="กรองเฉพาะเดือนปัจจุบัน">เดือนนี้</button>
+                <button type="button" class="time-preset-btn" onclick="setExportTimePreset('LAST_MONTH')" title="กรองเฉพาะเดือนที่แล้ว">เดือนก่อน</button>
+                <button type="button" class="time-preset-btn" onclick="setExportTimePreset('THIS_QUARTER')" title="กรองเฉพาะไตรมาสปัจจุบัน">ไตรมาสนี้</button>
+                <button type="button" class="time-preset-btn" onclick="setExportTimePreset('THIS_FISCAL_YEAR')" title="กรองตลอดปีงบประมาณปัจจุบัน">ปีงบฯ นี้</button>
+                <button type="button" class="time-preset-btn time-preset-clear" onclick="setExportTimePreset('ALL')" title="ไม่จำกัดช่วงเวลา">ทุกช่วงเวลา</button>
+              </div>
+            </div>
+
+            <div class="export-time-controls-grid">
+              <!-- 1. เกณฑ์วันที่ (Date Criterion) -->
+              <div class="export-time-control-item criterion-item">
+                <label for="exportDateCriterion">
+                  🎯 เกณฑ์วันที่อ้างอิง
+                </label>
+                <select id="exportDateCriterion" onchange="handleExportFilterChange()">
+                  <option value="RECEIVE_DATE" selected>📥 1. วันที่ฝ่ายได้ลงรับเรื่อง / วันที่คำสั่งเลิก</option>
+                  <option value="APPROVE_DATE">✍️ 2. วันที่นายทะเบียน รับทราบ/เห็นชอบ/รับจดทะเบียน</option>
+                  <option value="LAST_UPDATED">🕒 3. วันที่ปรับปรุงข้อมูลล่าสุด</option>
+                </select>
+              </div>
+
+              <!-- 2. รูปแบบการเลือกช่วงเวลา (Time Mode) -->
+              <div class="export-time-control-item mode-item">
+                <label for="exportTimeMode">
+                  🗓️ รูปแบบการเลือกช่วงเวลา
+                </label>
+                <select id="exportTimeMode" onchange="handleExportTimeModeChange()">
+                  <option value="ALL" selected>🌐 ทั้งหมด (ไม่จำกัดช่วงเวลา)</option>
+                  <option value="RANGE">📅 ระบุช่วงวันที่ (วันเริ่มต้น - สิ้นสุด)</option>
+                  <option value="MONTH">🗓️ สรุปรายเดือน (เลือกเดือนและปี)</option>
+                  <option value="QUARTER">📊 สรุปรายไตรมาส (ประชุมผู้บริหาร)</option>
+                </select>
+              </div>
+
+              <!-- 3. Dynamic Inputs Container -->
+              <div class="export-time-dynamic-inputs" id="exportTimeDynamicInputs">
+                <!-- Mode: RANGE -->
+                <div id="timeInputsRange" class="time-dynamic-group" style="display: none;">
+                  <div class="time-input-field">
+                    <label for="exportStartDate">ตั้งแต่วันที่</label>
+                    <input type="date" id="exportStartDate" onchange="handleExportFilterChange()">
+                  </div>
+                  <span class="time-range-dash">ถึง</span>
+                  <div class="time-input-field">
+                    <label for="exportEndDate">ถึงวันที่</label>
+                    <input type="date" id="exportEndDate" onchange="handleExportFilterChange()">
+                  </div>
+                </div>
+
+                <!-- Mode: MONTH -->
+                <div id="timeInputsMonth" class="time-dynamic-group" style="display: none;">
+                  <div class="time-input-field">
+                    <label for="exportSelectMonth">ประจำเดือน</label>
+                    <select id="exportSelectMonth" onchange="handleExportFilterChange()">
+                      <option value="1">1 - มกราคม (ม.ค.)</option>
+                      <option value="2">2 - กุมภาพันธ์ (ก.พ.)</option>
+                      <option value="3">3 - มีนาคม (มี.ค.)</option>
+                      <option value="4">4 - เมษายน (เม.ย.)</option>
+                      <option value="5">5 - พฤษภาคม (พ.ค.)</option>
+                      <option value="6">6 - มิถุนายน (มิ.ย.)</option>
+                      <option value="7">7 - กรกฎาคม (ก.ค.)</option>
+                      <option value="8">8 - สิงหาคม (ส.ค.)</option>
+                      <option value="9">9 - กันยายน (ก.ย.)</option>
+                      <option value="10">10 - ตุลาคม (ต.ค.)</option>
+                      <option value="11">11 - พฤศจิกายน (พ.ย.)</option>
+                      <option value="12">12 - ธันวาคม (ธ.ค.)</option>
+                    </select>
+                  </div>
+                  <div class="time-input-field">
+                    <label for="exportSelectMonthYear">ปี พ.ศ.</label>
+                    <select id="exportSelectMonthYear" onchange="handleExportFilterChange()">
+                      <!-- Populated in JS -->
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Mode: QUARTER -->
+                <div id="timeInputsQuarter" class="time-dynamic-group" style="display: none;">
+                  <div class="time-input-field">
+                    <label for="exportQuarterType">ประเภทไตรมาส</label>
+                    <select id="exportQuarterType" onchange="handleExportQuarterTypeChange()">
+                      <option value="FISCAL" selected>🏛️ ปีงบประมาณราชการ (ต.ค.-ก.ย.)</option>
+                      <option value="CALENDAR">📆 ปีปฏิทิน (ม.ค.-ธ.ค.)</option>
+                    </select>
+                  </div>
+                  <div class="time-input-field">
+                    <label for="exportSelectQuarter">ไตรมาสที่</label>
+                    <select id="exportSelectQuarter" onchange="handleExportFilterChange()">
+                      <!-- Populated in JS based on Fiscal vs Calendar -->
+                    </select>
+                  </div>
+                  <div class="time-input-field">
+                    <label for="exportSelectQuarterYear">ปี พ.ศ.</label>
+                    <select id="exportSelectQuarterYear" onchange="handleExportFilterChange()">
+                      <!-- Populated in JS -->
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Mode: ALL helper text -->
+                <div id="timeInputsAll" class="time-dynamic-group" style="display: flex;">
+                  <span class="time-all-note">🌐 ประมวลผลข้อมูลทุกช่วงเวลา (สามารถเลือกกดปุ่มลัดด้านบน เช่น "เดือนนี้", "ไตรมาสนี้" ได้)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Date Range Realtime Summary Banner -->
+            <div id="exportActiveDateRangeBanner" class="export-date-range-banner" style="display: none;">
+              <span class="date-banner-icon">📌</span>
+              <span id="exportActiveDateRangeText" class="date-banner-text">ช่วงวันที่ที่นำมาประมวลผล: -</span>
+            </div>
+          </div>
+
           <div class="export-filter-grid">
             <!-- 1. สถานะ/ขอบเขตข้อมูล -->
             <div class="export-filter-item">

@@ -3150,6 +3150,231 @@ body {
   border-color: #fca5a5;
 }
 
+/* ==============================================================================
+   Export Executive Time & Date Filter Section
+   ============================================================================== */
+.export-time-filter-section {
+  background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #0284c7;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.export-time-filter-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.time-header-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: #0e3760;
+}
+
+.time-header-icon {
+  font-size: 1rem;
+}
+
+.export-time-presets {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.time-preset-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-right: 2px;
+}
+
+.time-preset-btn {
+  padding: 2px 9px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.73rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-weight: 500;
+}
+
+.time-preset-btn:hover {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+  transform: translateY(-1px);
+}
+
+.time-preset-btn.active {
+  background: #0e3760;
+  color: #ffffff;
+  border-color: #0e3760;
+}
+
+.time-preset-btn.time-preset-clear:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+.export-time-controls-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 1.4fr) minmax(200px, 1fr) minmax(280px, 1.8fr);
+  gap: 10px 12px;
+  align-items: flex-end;
+}
+
+@media (max-width: 992px) {
+  .export-time-controls-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .export-time-dynamic-inputs {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 600px) {
+  .export-time-controls-grid {
+    grid-template-columns: 1fr;
+  }
+  .export-time-dynamic-inputs {
+    grid-column: span 1;
+  }
+}
+
+.export-time-control-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.export-time-control-item label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.export-time-control-item select,
+.export-time-control-item input {
+  height: 34px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.82rem;
+  padding: 4px 8px;
+  background-color: #ffffff;
+  color: var(--text-main);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.export-time-control-item select:focus,
+.export-time-control-item input:focus {
+  border-color: #0284c7;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+}
+
+.export-time-dynamic-inputs {
+  display: flex;
+  align-items: center;
+}
+
+.time-dynamic-group {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  width: 100%;
+}
+
+.time-input-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.time-input-field label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.time-input-field select,
+.time-input-field input {
+  height: 34px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.82rem;
+  padding: 4px 8px;
+  background-color: #ffffff;
+  color: var(--text-main);
+  width: 100%;
+}
+
+.time-range-dash {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 600;
+  padding-bottom: 7px;
+}
+
+.time-all-note {
+  font-size: 0.78rem;
+  color: #64748b;
+  background: #ffffff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px dashed #cbd5e1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  height: 34px;
+}
+
+.export-date-range-banner {
+  margin-top: 8px;
+  padding: 5px 10px;
+  background: #ecfeff;
+  border: 1px solid #a5f3fc;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: #0e7490;
+  font-weight: 500;
+}
+
+.date-banner-icon {
+  font-size: 0.85rem;
+}
+
+.export-tag-chip.tag-time {
+  background: #e0f2fe;
+  color: #0369a1;
+  border-color: #7dd3fc;
+}
+
+.export-tag-chip.tag-criterion {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
 .export-filter-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

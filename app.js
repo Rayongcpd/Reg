@@ -4669,11 +4669,167 @@ const ExportFilterState = {
   docType: 'ALL',       // 'ALL' | specific doc type
   issue: 'ALL',         // 'ALL' | 'ISSUES' | 'NORMAL' | 'OVERDUE'
   search: '',           // search query
-  activeTab: 'cases'    // 'cases' | 'regs'
+  activeTab: 'cases',   // 'cases' | 'regs'
+
+  // Executive Date & Period Filters
+  dateCriterion: 'RECEIVE_DATE', // 'RECEIVE_DATE' | 'APPROVE_DATE' | 'LAST_UPDATED'
+  timeMode: 'ALL',              // 'ALL' | 'RANGE' | 'MONTH' | 'QUARTER'
+  startDate: '',                // 'YYYY-MM-DD'
+  endDate: '',                  // 'YYYY-MM-DD'
+  selectedMonth: (new Date().getMonth() + 1),
+  selectedMonthYear: (new Date().getFullYear() + 543),
+  quarterType: 'FISCAL',        // 'FISCAL' | 'CALENDAR'
+  selectedQuarter: 1,
+  selectedQuarterYear: (new Date().getFullYear() + 543)
 };
+
+// Returns Date object for item based on chosen executive criterion
+function getEffectiveItemDate(item, moduleType, criterion) {
+  if (!item) return null;
+
+  if (criterion === 'LAST_UPDATED') {
+    return WorkingDaysUtil.parseDate(item.lastUpdated || item.updatedAt || item.createdAt);
+  }
+
+  if (criterion === 'APPROVE_DATE') {
+    if (moduleType === 'REGS') {
+      // 1. Explicit registrar approve date (Step 3 endDate)
+      if (item.regApproveDate) {
+        const d = WorkingDaysUtil.parseDate(item.regApproveDate);
+        if (d) return d;
+      }
+      // 2. Step 3 endDate from steps array
+      if (item.steps && Array.isArray(item.steps)) {
+        const s3 = item.steps.find(s => parseInt(s.stepNumber, 10) === 3);
+        if (s3 && s3.endDate) {
+          const d = WorkingDaysUtil.parseDate(s3.endDate);
+          if (d) return d;
+        }
+      }
+      // 3. If finished/approved, fallback to lastUpdated
+      const curStep = parseInt(item.currentStep, 10) || 1;
+      const isDone = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || curStep >= 4;
+      if (isDone) {
+        return WorkingDaysUtil.parseDate(item.lastUpdated || item.updatedAt);
+      }
+      return null;
+    } else {
+      // Cases: Completed date (Step 9/10 or caseStatus = เสร็จสิ้น)
+      const curStep = parseInt(item.currentStep, 10) || 1;
+      const isDone = item.caseStatus === 'เสร็จสิ้น' || curStep >= 10;
+      if (isDone) {
+        return WorkingDaysUtil.parseDate(item.lastUpdated || item.updatedAt);
+      }
+      return null;
+    }
+  }
+
+  // Default: RECEIVE_DATE (วันที่ฝ่ายได้ลงรับเรื่อง)
+  if (moduleType === 'REGS') {
+    return WorkingDaysUtil.parseDate(item.receiveDate || item.submitDate || item.lastUpdated);
+  } else {
+    return WorkingDaysUtil.parseDate(item.orderDate || item.lastUpdated);
+  }
+}
+
+// Calculates active start/end Date range object based on timeMode
+function getExportCalculatedDateRange() {
+  if (ExportFilterState.timeMode === 'ALL') {
+    return null;
+  }
+
+  if (ExportFilterState.timeMode === 'RANGE') {
+    const start = ExportFilterState.startDate ? WorkingDaysUtil.parseDate(ExportFilterState.startDate) : null;
+    const end = ExportFilterState.endDate ? WorkingDaysUtil.parseDate(ExportFilterState.endDate) : null;
+    if (!start && !end) return null;
+    return {
+      start: start ? new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0) : null,
+      end: end ? new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999) : null,
+      label: `ช่วงวันที่ ${start ? formatThaiDate(start) : 'แรกเริ่ม'} ถึง ${end ? formatThaiDate(end) : 'ปัจจุบัน'}`
+    };
+  }
+
+  if (ExportFilterState.timeMode === 'MONTH') {
+    const month = parseInt(ExportFilterState.selectedMonth, 10) || (new Date().getMonth() + 1);
+    let bYear = parseInt(ExportFilterState.selectedMonthYear, 10) || (new Date().getFullYear() + 543);
+    const ceYear = bYear > 2400 ? bYear - 543 : bYear;
+
+    const start = new Date(ceYear, month - 1, 1, 0, 0, 0, 0);
+    const end = new Date(ceYear, month, 0, 23, 59, 59, 999);
+    const monthNames = ['', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+
+    return {
+      start,
+      end,
+      label: `ประจำเดือน${monthNames[month]} พ.ศ. ${bYear} (${formatThaiDate(start)} - ${formatThaiDate(end)})`
+    };
+  }
+
+  if (ExportFilterState.timeMode === 'QUARTER') {
+    const qNum = parseInt(ExportFilterState.selectedQuarter, 10) || 1;
+    let bYear = parseInt(ExportFilterState.selectedQuarterYear, 10) || (new Date().getFullYear() + 543);
+    const ceYear = bYear > 2400 ? bYear - 543 : bYear;
+    const isFiscal = ExportFilterState.quarterType === 'FISCAL';
+
+    let start, end, qLabel;
+    if (isFiscal) {
+      // Fiscal Year (Starts Oct 1 of previous CE year to Sep 30 of current CE year)
+      if (qNum === 1) {
+        start = new Date(ceYear - 1, 9, 1, 0, 0, 0, 0);
+        end = new Date(ceYear - 1, 11, 31, 23, 59, 59, 999);
+        qLabel = `ไตรมาส 1 (ต.ค. - ธ.ค. ${bYear - 1})`;
+      } else if (qNum === 2) {
+        start = new Date(ceYear, 0, 1, 0, 0, 0, 0);
+        end = new Date(ceYear, 2, 31, 23, 59, 59, 999);
+        qLabel = `ไตรมาส 2 (ม.ค. - มี.ค. ${bYear})`;
+      } else if (qNum === 3) {
+        start = new Date(ceYear, 3, 1, 0, 0, 0, 0);
+        end = new Date(ceYear, 5, 30, 23, 59, 59, 999);
+        qLabel = `ไตรมาส 3 (เม.ย. - มิ.ย. ${bYear})`;
+      } else {
+        start = new Date(ceYear, 6, 1, 0, 0, 0, 0);
+        end = new Date(ceYear, 8, 30, 23, 59, 59, 999);
+        qLabel = `ไตรมาส 4 (ก.ค. - ก.ย. ${bYear})`;
+      }
+      return {
+        start,
+        end,
+        label: `${qLabel} ปีงบประมาณ ${bYear} (${formatThaiDate(start)} - ${formatThaiDate(end)})`
+      };
+    } else {
+      // Calendar Year
+      if (qNum === 1) {
+        start = new Date(ceYear, 0, 1, 0, 0, 0, 0);
+        end = new Date(ceYear, 2, 31, 23, 59, 59, 999);
+        qLabel = `ไตรมาส 1 (ม.ค. - มี.ค.)`;
+      } else if (qNum === 2) {
+        start = new Date(ceYear, 3, 1, 0, 0, 0, 0);
+        end = new Date(ceYear, 5, 30, 23, 59, 59, 999);
+        qLabel = `ไตรมาส 2 (เม.ย. - มิ.ย.)`;
+      } else if (qNum === 3) {
+        start = new Date(ceYear, 6, 1, 0, 0, 0, 0);
+        end = new Date(ceYear, 8, 30, 23, 59, 59, 999);
+        qLabel = `ไตรมาส 3 (ก.ค. - ก.ย.)`;
+      } else {
+        start = new Date(ceYear, 9, 1, 0, 0, 0, 0);
+        end = new Date(ceYear, 11, 31, 23, 59, 59, 999);
+        qLabel = `ไตรมาส 4 (ต.ค. - ธ.ค.)`;
+      }
+      return {
+        start,
+        end,
+        label: `${qLabel} ปีปฏิทิน ${bYear} (${formatThaiDate(start)} - ${formatThaiDate(end)})`
+      };
+    }
+  }
+
+  return null;
+}
 
 function getFilteredExportCases() {
   const allCases = AppState.cases || [];
+  const dateRange = getExportCalculatedDateRange();
+
   return allCases.filter(item => {
     // 1. Module check
     if (ExportFilterState.module === 'REGS') return false;
@@ -4711,7 +4867,15 @@ function getFilteredExportCases() {
       if (!dur.hasData || dur.workingDays < 180) return false;
     }
 
-    // 6. Search keyword
+    // 6. Executive Date & Period Filter
+    if (dateRange) {
+      const itemDate = getEffectiveItemDate(item, 'CASES', ExportFilterState.dateCriterion);
+      if (!itemDate) return false;
+      if (dateRange.start && itemDate < dateRange.start) return false;
+      if (dateRange.end && itemDate > dateRange.end) return false;
+    }
+
+    // 7. Search keyword
     if (ExportFilterState.search) {
       const q = ExportFilterState.search.toLowerCase();
       const dissolutionType = item.dissolutionType || (item.orderNumber && item.orderNumber.includes('ประกาศ') ? 'ประกาศเลิก' : 'คำสั่งเลิก');
@@ -4736,6 +4900,8 @@ function getFilteredExportCases() {
 
 function getFilteredExportRegulations() {
   const allRegs = AppState.regulations || [];
+  const dateRange = getExportCalculatedDateRange();
+
   return allRegs.filter(item => {
     // 1. Module check
     if (ExportFilterState.module === 'CASES') return false;
@@ -4773,7 +4939,15 @@ function getFilteredExportRegulations() {
     if (ExportFilterState.issue === 'NORMAL' && (isReturned || isOverdue)) return false;
     if (ExportFilterState.issue === 'OVERDUE' && !isOverdue) return false;
 
-    // 7. Search keyword
+    // 7. Executive Date & Period Filter
+    if (dateRange) {
+      const itemDate = getEffectiveItemDate(item, 'REGS', ExportFilterState.dateCriterion);
+      if (!itemDate) return false;
+      if (dateRange.start && itemDate < dateRange.start) return false;
+      if (dateRange.end && itemDate > dateRange.end) return false;
+    }
+
+    // 8. Search keyword
     if (ExportFilterState.search) {
       const q = ExportFilterState.search.toLowerCase();
       const match = (
@@ -4796,20 +4970,33 @@ function getFilteredExportRegulations() {
 
 function getActiveFilterSummaryText() {
   const parts = [];
-  // Scope
+
+  // 1. Executive Date & Period Summary
+  const dateRange = getExportCalculatedDateRange();
+  let critLabel = 'วันที่ฝ่ายได้ลงรับเรื่อง';
+  if (ExportFilterState.dateCriterion === 'APPROVE_DATE') critLabel = 'วันที่นายทะเบียน รับทราบ/เห็นชอบ/รับจดทะเบียน';
+  else if (ExportFilterState.dateCriterion === 'LAST_UPDATED') critLabel = 'วันที่ปรับปรุงข้อมูลล่าสุด';
+
+  if (dateRange) {
+    parts.push(`เกณฑ์วันที่: ${critLabel} (${dateRange.label})`);
+  } else {
+    parts.push('ช่วงเวลา: ทุกช่วงเวลา (ไม่จำกัด)');
+  }
+
+  // 2. Scope
   if (ExportFilterState.scope === 'ACTIVE') parts.push('สถานะ: กำลังดำเนินการ');
   else if (ExportFilterState.scope === 'DONE') parts.push('สถานะ: เสร็จสิ้น/อนุมัติแล้ว');
   else parts.push('สถานะ: ทุกสถานะ');
 
-  // Module
+  // 3. Module
   if (ExportFilterState.module === 'CASES') parts.push('หมวด: ชำระบัญชี');
   else if (ExportFilterState.module === 'REGS') parts.push('หมวด: ระเบียบข้อบังคับ');
   else parts.push('หมวด: รวม 2 ด้าน');
 
-  // Coop Type
+  // 4. Coop Type
   if (ExportFilterState.coopType !== 'ALL') parts.push(`ประเภท: ${ExportFilterState.coopType}`);
 
-  // Steps
+  // 5. Steps
   if (ExportFilterState.caseStep !== 'ALL') {
     if (ExportFilterState.caseStep === 'PHASE_1') parts.push('ขั้นชำระบัญชี: ขั้น 1-3');
     else if (ExportFilterState.caseStep === 'PHASE_2') parts.push('ขั้นชำระบัญชี: ขั้น 4-6');
@@ -4819,21 +5006,167 @@ function getActiveFilterSummaryText() {
   }
   if (ExportFilterState.regStep !== 'ALL') parts.push(`ขั้นระเบียบ: ขั้นที่ ${ExportFilterState.regStep}`);
 
-  // Doc Type
+  // 6. Doc Type
   if (ExportFilterState.docType !== 'ALL') parts.push(`เอกสาร: ${ExportFilterState.docType}`);
 
-  // Issues
+  // 7. Issues
   if (ExportFilterState.issue === 'ISSUES') parts.push('ประเด็น: มีปัญหาอุปสรรค/ส่งคืน');
   else if (ExportFilterState.issue === 'NORMAL') parts.push('ประเด็น: สถานะปกติ');
   else if (ExportFilterState.issue === 'OVERDUE') parts.push('ประเด็น: เกินกำหนด SLA');
 
-  // Search
+  // 8. Search
   if (ExportFilterState.search) parts.push(`คำค้นหา: "${ExportFilterState.search}"`);
 
   return parts.join(' | ');
 }
 
+function initExportTimeSelectors() {
+  const currentBYear = new Date().getFullYear() + 543;
+
+  const selMonthYear = document.getElementById('exportSelectMonthYear');
+  const selQuarterYear = document.getElementById('exportSelectQuarterYear');
+
+  const years = [];
+  for (let y = currentBYear + 1; y >= currentBYear - 6; y--) {
+    years.push(y);
+  }
+
+  if (selMonthYear && selMonthYear.options.length === 0) {
+    selMonthYear.innerHTML = years.map(y => `<option value="${y}" ${y === currentBYear ? 'selected' : ''}>พ.ศ. ${y}</option>`).join('');
+  }
+  if (selQuarterYear && selQuarterYear.options.length === 0) {
+    selQuarterYear.innerHTML = years.map(y => `<option value="${y}" ${y === currentBYear ? 'selected' : ''}>พ.ศ. ${y}</option>`).join('');
+  }
+
+  updateExportQuarterOptions();
+}
+
+function updateExportQuarterOptions() {
+  const selQuarter = document.getElementById('exportSelectQuarter');
+  const selQuarterType = document.getElementById('exportQuarterType');
+  if (!selQuarter) return;
+
+  const isFiscal = !selQuarterType || selQuarterType.value === 'FISCAL';
+  if (isFiscal) {
+    selQuarter.innerHTML = `
+      <option value="1">ไตรมาส 1 (ต.ค. - ธ.ค.)</option>
+      <option value="2">ไตรมาส 2 (ม.ค. - มี.ค.)</option>
+      <option value="3">ไตรมาส 3 (เม.ย. - มิ.ย.)</option>
+      <option value="4">ไตรมาส 4 (ก.ค. - ก.ย.)</option>
+    `;
+  } else {
+    selQuarter.innerHTML = `
+      <option value="1">ไตรมาส 1 (ม.ค. - มี.ค.)</option>
+      <option value="2">ไตรมาส 2 (เม.ย. - มิ.ย.)</option>
+      <option value="3">ไตรมาส 3 (ก.ค. - ก.ย.)</option>
+      <option value="4">ไตรมาส 4 (ต.ค. - ธ.ค.)</option>
+    `;
+  }
+  if (ExportFilterState.selectedQuarter) {
+    selQuarter.value = ExportFilterState.selectedQuarter;
+  }
+}
+
+function handleExportTimeModeChange() {
+  const selMode = document.getElementById('exportTimeMode');
+  if (selMode) ExportFilterState.timeMode = selMode.value;
+
+  updateExportTimeInputsVisibility();
+  handleExportFilterChange();
+}
+
+function handleExportQuarterTypeChange() {
+  const selQuarterType = document.getElementById('exportQuarterType');
+  if (selQuarterType) ExportFilterState.quarterType = selQuarterType.value;
+  updateExportQuarterOptions();
+  handleExportFilterChange();
+}
+
+function updateExportTimeInputsVisibility() {
+  const groupRange = document.getElementById('timeInputsRange');
+  const groupMonth = document.getElementById('timeInputsMonth');
+  const groupQuarter = document.getElementById('timeInputsQuarter');
+  const groupAll = document.getElementById('timeInputsAll');
+
+  if (groupRange) groupRange.style.display = ExportFilterState.timeMode === 'RANGE' ? 'flex' : 'none';
+  if (groupMonth) groupMonth.style.display = ExportFilterState.timeMode === 'MONTH' ? 'flex' : 'none';
+  if (groupQuarter) groupQuarter.style.display = ExportFilterState.timeMode === 'QUARTER' ? 'flex' : 'none';
+  if (groupAll) groupAll.style.display = ExportFilterState.timeMode === 'ALL' ? 'flex' : 'none';
+
+  // Update date banner
+  const banner = document.getElementById('exportActiveDateRangeBanner');
+  const bannerText = document.getElementById('exportActiveDateRangeText');
+  const dateRange = getExportCalculatedDateRange();
+
+  if (banner && bannerText) {
+    if (dateRange) {
+      let critLabel = 'วันที่ฝ่ายได้ลงรับเรื่อง';
+      if (ExportFilterState.dateCriterion === 'APPROVE_DATE') critLabel = 'วันที่นายทะเบียน รับทราบ/เห็นชอบ/รับจดทะเบียน';
+      else if (ExportFilterState.dateCriterion === 'LAST_UPDATED') critLabel = 'วันที่ปรับปรุงข้อมูลล่าสุด';
+
+      bannerText.innerHTML = `<strong>เกณฑ์:</strong> ${critLabel} | <strong>ช่วงเวลา:</strong> ${escapeHtml(dateRange.label)}`;
+      banner.style.display = 'flex';
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+}
+
+function setExportTimePreset(presetKey) {
+  initExportTimeSelectors();
+  const now = new Date();
+  const curBYear = now.getFullYear() + 543;
+  const curMonth = now.getMonth() + 1;
+
+  if (presetKey === 'THIS_MONTH') {
+    ExportFilterState.timeMode = 'MONTH';
+    ExportFilterState.selectedMonth = curMonth;
+    ExportFilterState.selectedMonthYear = curBYear;
+  } else if (presetKey === 'LAST_MONTH') {
+    ExportFilterState.timeMode = 'MONTH';
+    if (curMonth === 1) {
+      ExportFilterState.selectedMonth = 12;
+      ExportFilterState.selectedMonthYear = curBYear - 1;
+    } else {
+      ExportFilterState.selectedMonth = curMonth - 1;
+      ExportFilterState.selectedMonthYear = curBYear;
+    }
+  } else if (presetKey === 'THIS_QUARTER') {
+    ExportFilterState.timeMode = 'QUARTER';
+    ExportFilterState.quarterType = 'FISCAL';
+    if (curMonth >= 10) {
+      ExportFilterState.selectedQuarter = 1;
+      ExportFilterState.selectedQuarterYear = curBYear + 1;
+    } else if (curMonth >= 7) {
+      ExportFilterState.selectedQuarter = 4;
+      ExportFilterState.selectedQuarterYear = curBYear;
+    } else if (curMonth >= 4) {
+      ExportFilterState.selectedQuarter = 3;
+      ExportFilterState.selectedQuarterYear = curBYear;
+    } else {
+      ExportFilterState.selectedQuarter = 2;
+      ExportFilterState.selectedQuarterYear = curBYear;
+    }
+  } else if (presetKey === 'THIS_FISCAL_YEAR') {
+    ExportFilterState.timeMode = 'RANGE';
+    const fiscalBYear = curMonth >= 10 ? curBYear + 1 : curBYear;
+    const ceFiscalYear = fiscalBYear - 543;
+    ExportFilterState.startDate = `${ceFiscalYear - 1}-10-01`;
+    ExportFilterState.endDate = `${ceFiscalYear}-09-30`;
+  } else if (presetKey === 'ALL') {
+    ExportFilterState.timeMode = 'ALL';
+    ExportFilterState.startDate = '';
+    ExportFilterState.endDate = '';
+  }
+
+  syncExportFilterInputs();
+  handleExportFilterChange();
+}
+
 function syncExportFilterInputs() {
+  initExportTimeSelectors();
+
+  // Basic filters
   const selScope = document.getElementById('exportFilterScope');
   const selModule = document.getElementById('exportFilterModule');
   const selCoop = document.getElementById('exportFilterCoopType');
@@ -4854,6 +5187,28 @@ function syncExportFilterInputs() {
   if (inputSearch) inputSearch.value = ExportFilterState.search || '';
   if (clearBtn) clearBtn.style.display = ExportFilterState.search ? 'block' : 'none';
 
+  // Time & Criterion filters
+  const selCriterion = document.getElementById('exportDateCriterion');
+  const selTimeMode = document.getElementById('exportTimeMode');
+  const inStartDate = document.getElementById('exportStartDate');
+  const inEndDate = document.getElementById('exportEndDate');
+  const selMonth = document.getElementById('exportSelectMonth');
+  const selMonthYear = document.getElementById('exportSelectMonthYear');
+  const selQuarterType = document.getElementById('exportQuarterType');
+  const selQuarter = document.getElementById('exportSelectQuarter');
+  const selQuarterYear = document.getElementById('exportSelectQuarterYear');
+
+  if (selCriterion) selCriterion.value = ExportFilterState.dateCriterion;
+  if (selTimeMode) selTimeMode.value = ExportFilterState.timeMode;
+  if (inStartDate) inStartDate.value = ExportFilterState.startDate || '';
+  if (inEndDate) inEndDate.value = ExportFilterState.endDate || '';
+  if (selMonth) selMonth.value = ExportFilterState.selectedMonth;
+  if (selMonthYear) selMonthYear.value = ExportFilterState.selectedMonthYear;
+  if (selQuarterType) selQuarterType.value = ExportFilterState.quarterType;
+  if (selQuarter) selQuarter.value = ExportFilterState.selectedQuarter;
+  if (selQuarterYear) selQuarterYear.value = ExportFilterState.selectedQuarterYear;
+
+  updateExportTimeInputsVisibility();
   updateExportPresetPills();
 }
 
@@ -4876,7 +5231,18 @@ function renderExportFilterTags() {
 
   const chips = [];
 
-  // Scope
+  // 1. Time & Date Criterion Tags
+  const dateRange = getExportCalculatedDateRange();
+  if (dateRange) {
+    let critLabel = 'วันที่ฝ่ายลงรับ';
+    if (ExportFilterState.dateCriterion === 'APPROVE_DATE') critLabel = 'วันที่นายทะเบียนเห็นชอบ/รับจด';
+    else if (ExportFilterState.dateCriterion === 'LAST_UPDATED') critLabel = 'วันที่อัพเดตล่าสุด';
+
+    chips.push({ key: 'dateCriterion', label: `🎯 เกณฑ์: ${critLabel}`, cls: 'tag-criterion' });
+    chips.push({ key: 'timeMode', label: `📅 ${dateRange.label}`, cls: 'tag-time' });
+  }
+
+  // 2. Scope
   if (ExportFilterState.scope === 'ACTIVE') {
     chips.push({ key: 'scope', label: 'สถานะ: กำลังดำเนินการ', cls: '' });
   } else if (ExportFilterState.scope === 'DONE') {
@@ -4885,14 +5251,14 @@ function renderExportFilterTags() {
     chips.push({ key: 'scope', label: 'สถานะ: ทุกสถานะ', cls: '' });
   }
 
-  // Module
+  // 3. Module
   if (ExportFilterState.module === 'CASES') chips.push({ key: 'module', label: 'หมวด: ชำระบัญชีเท่านั้น', cls: '' });
   else if (ExportFilterState.module === 'REGS') chips.push({ key: 'module', label: 'หมวด: ระเบียบข้อบังคับเท่านั้น', cls: '' });
 
-  // Coop Type
+  // 4. Coop Type
   if (ExportFilterState.coopType !== 'ALL') chips.push({ key: 'coopType', label: `สถาบัน: ${ExportFilterState.coopType}`, cls: '' });
 
-  // Steps
+  // 5. Steps
   if (ExportFilterState.caseStep !== 'ALL') {
     let stepLbl = ExportFilterState.caseStep;
     if (stepLbl === 'PHASE_1') stepLbl = 'ขั้น 1-3';
@@ -4904,15 +5270,15 @@ function renderExportFilterTags() {
   }
   if (ExportFilterState.regStep !== 'ALL') chips.push({ key: 'regStep', label: `ระเบียบ: ขั้น ${ExportFilterState.regStep}`, cls: '' });
 
-  // Doc Type
+  // 6. Doc Type
   if (ExportFilterState.docType !== 'ALL') chips.push({ key: 'docType', label: `เอกสาร: ${ExportFilterState.docType}`, cls: '' });
 
-  // Issues
+  // 7. Issues
   if (ExportFilterState.issue === 'ISSUES') chips.push({ key: 'issue', label: '⚠️ มีปัญหา/ส่งคืน', cls: 'tag-issue' });
   else if (ExportFilterState.issue === 'NORMAL') chips.push({ key: 'issue', label: '✅ สถานะปกติ', cls: 'tag-done' });
   else if (ExportFilterState.issue === 'OVERDUE') chips.push({ key: 'issue', label: '⏰ เกินกำหนด SLA', cls: 'tag-issue' });
 
-  // Search
+  // 8. Search
   if (ExportFilterState.search) chips.push({ key: 'search', label: `🔍 "${ExportFilterState.search}"`, cls: '' });
 
   if (chips.length === 0) {
@@ -4930,7 +5296,13 @@ function renderExportFilterTags() {
 }
 
 function removeExportFilterTag(key) {
-  if (key === 'scope') ExportFilterState.scope = 'ACTIVE';
+  if (key === 'timeMode') {
+    ExportFilterState.timeMode = 'ALL';
+    ExportFilterState.startDate = '';
+    ExportFilterState.endDate = '';
+  } else if (key === 'dateCriterion') {
+    ExportFilterState.dateCriterion = 'RECEIVE_DATE';
+  } else if (key === 'scope') ExportFilterState.scope = 'ACTIVE';
   else if (key === 'module') ExportFilterState.module = 'ALL';
   else if (key === 'coopType') ExportFilterState.coopType = 'ALL';
   else if (key === 'caseStep') ExportFilterState.caseStep = 'ALL';
@@ -4944,6 +5316,7 @@ function removeExportFilterTag(key) {
 }
 
 function handleExportFilterChange() {
+  // Read basic filters
   const selScope = document.getElementById('exportFilterScope');
   const selModule = document.getElementById('exportFilterModule');
   const selCoop = document.getElementById('exportFilterCoopType');
@@ -4966,7 +5339,29 @@ function handleExportFilterChange() {
     if (clearBtn) clearBtn.style.display = ExportFilterState.search ? 'block' : 'none';
   }
 
+  // Read Time & Criterion filters
+  const selCriterion = document.getElementById('exportDateCriterion');
+  const selTimeMode = document.getElementById('exportTimeMode');
+  const inStartDate = document.getElementById('exportStartDate');
+  const inEndDate = document.getElementById('exportEndDate');
+  const selMonth = document.getElementById('exportSelectMonth');
+  const selMonthYear = document.getElementById('exportSelectMonthYear');
+  const selQuarterType = document.getElementById('exportQuarterType');
+  const selQuarter = document.getElementById('exportSelectQuarter');
+  const selQuarterYear = document.getElementById('exportSelectQuarterYear');
+
+  if (selCriterion) ExportFilterState.dateCriterion = selCriterion.value;
+  if (selTimeMode) ExportFilterState.timeMode = selTimeMode.value;
+  if (inStartDate) ExportFilterState.startDate = inStartDate.value;
+  if (inEndDate) ExportFilterState.endDate = inEndDate.value;
+  if (selMonth) ExportFilterState.selectedMonth = parseInt(selMonth.value, 10);
+  if (selMonthYear) ExportFilterState.selectedMonthYear = parseInt(selMonthYear.value, 10);
+  if (selQuarterType) ExportFilterState.quarterType = selQuarterType.value;
+  if (selQuarter) ExportFilterState.selectedQuarter = parseInt(selQuarter.value, 10);
+  if (selQuarterYear) ExportFilterState.selectedQuarterYear = parseInt(selQuarterYear.value, 10);
+
   updateExportPresetPills();
+  updateExportTimeInputsVisibility();
 
   // Module contextual visibility
   const caseStepWrap = document.getElementById('exportFilterCaseStepWrap');
@@ -5007,6 +5402,12 @@ function resetExportFilters() {
   ExportFilterState.docType = 'ALL';
   ExportFilterState.issue = 'ALL';
   ExportFilterState.search = '';
+
+  // Reset Time filters
+  ExportFilterState.dateCriterion = 'RECEIVE_DATE';
+  ExportFilterState.timeMode = 'ALL';
+  ExportFilterState.startDate = '';
+  ExportFilterState.endDate = '';
 
   syncExportFilterInputs();
   handleExportFilterChange();
@@ -5577,6 +5978,9 @@ window.clearExportSearchInput = clearExportSearchInput;
 window.setExportScopePreset = setExportScopePreset;
 window.resetExportFilters = resetExportFilters;
 window.removeExportFilterTag = removeExportFilterTag;
+window.setExportTimePreset = setExportTimePreset;
+window.handleExportTimeModeChange = handleExportTimeModeChange;
+window.handleExportQuarterTypeChange = handleExportQuarterTypeChange;
 window.openUpdateRegMilestonesModal = openUpdateRegMilestonesModal;
 window.handleUpdateRegMilestonesSubmit = handleUpdateRegMilestonesSubmit;
 window.openUpdateRegStepModal = openUpdateRegStepModal;
