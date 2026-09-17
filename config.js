@@ -72,13 +72,49 @@ const CONFIG = {
     { number: 10, title: 'ส่งมอบบรรดาสมุด บัญชี และเอกสาร', desc: 'ส่งมอบเอกสารทั้งหมดให้แก่นายทะเบียนสหกรณ์เพื่อเก็บรักษา' }
   ],
 
-  // 5 ขั้นตอนมาตรฐานการพิจารณาระเบียบและข้อบังคับสหกรณ์
+  // 4 ขั้นตอนมาตรฐานการพิจารณาระเบียบและข้อบังคับสหกรณ์
   REGULATION_STEPS: [
-    { number: 1, title: 'ยื่นเรื่องและรับเอกสารคำขอ', desc: 'สหกรณ์ยื่นแบบคำขอพร้อมมติที่ประชุมและร่างระเบียบ/ข้อบังคับ' },
-    { number: 2, title: 'กลุ่มจัดตั้งฯ ตรวจสอบเบื้องต้น', desc: 'กลุ่มจัดตั้งและส่งเสริมสหกรณ์ตรวจสอบความถูกต้องของมติที่ประชุม คณะกรรมการ และเอกสารประกอบ' },
-    { number: 3, title: 'กลุ่มตรวจการสหกรณ์/นิติการตรวจร่าง', desc: 'ตรวจสอบความสอดคล้องกับ พ.ร.บ.สหกรณ์ และระเบียบนายทะเบียนสหกรณ์' },
-    { number: 4, title: 'เสนอนายทะเบียนสหกรณ์พิจารณา', desc: 'เสนอนายทะเบียนสหกรณ์/ผู้ได้รับมอบอำนาจลงนามรับจดทะเบียน / เห็นชอบ / รับทราบ' },
-    { number: 5, title: 'แจ้งผลและส่งมอบให้สหกรณ์ถือใช้', desc: 'ออกหนังสือแจ้งผล/ส่งมอบข้อบังคับหรือระเบียบที่รับจดทะเบียน/เห็นชอบ/รับทราบแล้วให้สหกรณ์ถือใช้' }
+    { number: 1, title: 'ฝ่ายบริหาร สำนักงานสหกรณ์จังหวัดรับเอกสาร', desc: 'ฝ่ายบริหาร สำนักงานสหกรณ์จังหวัดรับเอกสารคำขอและลงทะเบียนรับเรื่อง' },
+    { number: 2, title: 'กลุ่มจัดตั้งและส่งเสริมสหกรณ์ ตรวจสอบข้อมูล', desc: 'กลุ่มจัดตั้งและส่งเสริมสหกรณ์ตรวจสอบความถูกต้องครบถ้วนของข้อมูล เอกสาร และข้อกฎหมาย' },
+    { number: 3, title: 'เสนอนายทะเบียนสหกรณ์ พิจารณา', desc: 'เสนอนายทะเบียนสหกรณ์ หรือผู้ได้รับมอบอำนาจพิจารณาให้ความเห็นชอบ/รับจดทะเบียน' },
+    { number: 4, title: 'ส่งเอกสารให้สหกรณ์และหน่วยงานที่เกี่ยวข้อง', desc: 'ส่งเอกสารและหนังสือแจ้งผลให้แก่สหกรณ์และหน่วยงานที่เกี่ยวข้องถือใช้ปฏิบัติ' }
+  ],
+
+  // ประเภทระเบียบและข้อบังคับสหกรณ์ พร้อมกรอบเวลากำหนดพิจารณา (SLA)
+  REGULATION_DOC_TYPES: [
+    {
+      id: 'ข้อบังคับสหกรณ์',
+      label: 'ข้อบังคับสหกรณ์ (14 วัน)',
+      shortLabel: 'ข้อบังคับ',
+      category: 'ข้อบังคับ',
+      slaDays: 14,
+      actionWord: 'รับจดทะเบียน',
+      desc: 'นายทะเบียนสหกรณ์พิจารณารับจดทะเบียนข้อบังคับภายใน 14 วัน หลังจากฝ่ายลงรับหนังสือ',
+      badgeClass: 'reg-type-bylaw',
+      themeColor: '#0284c7'
+    },
+    {
+      id: 'ระเบียบสหกรณ์ (เห็นชอบ)',
+      label: 'ระเบียบสหกรณ์ - เห็นชอบ (7 วัน)',
+      shortLabel: 'ระเบียบ (เห็นชอบ)',
+      category: 'ระเบียบ',
+      slaDays: 7,
+      actionWord: 'เห็นชอบ',
+      desc: 'นายทะเบียนสหกรณ์จะต้องมีหนังสือเห็นชอบภายใน 7 วัน หลังจากฝ่ายลงรับหนังสือ',
+      badgeClass: 'reg-type-approval',
+      themeColor: '#0d9488'
+    },
+    {
+      id: 'ระเบียบสหกรณ์ (รับทราบ)',
+      label: 'ระเบียบสหกรณ์ - รับทราบ (30 วัน)',
+      shortLabel: 'ระเบียบ (รับทราบ)',
+      category: 'ระเบียบ',
+      slaDays: 30,
+      actionWord: 'รับทราบ',
+      desc: 'นายทะเบียนสหกรณ์พิจารณารับทราบภายใน 30 วัน หลังจากฝ่ายลงรับหนังสือ',
+      badgeClass: 'reg-type-ack',
+      themeColor: '#6366f1'
+    }
   ]
 };
 
@@ -407,3 +443,120 @@ const WorkingDaysUtil = {
     };
   }
 };
+
+/**
+ * ==============================================================================
+ * เครื่องมือจัดการกรอบเวลา SLA ระเบียบและข้อบังคับ (Regulation SLA Utility)
+ * ==============================================================================
+ */
+const RegSlaUtil = {
+  getDocTypeConfig(docType) {
+    if (!docType) return CONFIG.REGULATION_DOC_TYPES[0];
+    const cleanType = String(docType).trim();
+    // Exact match
+    const found = CONFIG.REGULATION_DOC_TYPES.find(t => t.id === cleanType);
+    if (found) return found;
+
+    // Fuzzy matching
+    if (cleanType.includes('เห็นชอบ')) {
+      return CONFIG.REGULATION_DOC_TYPES.find(t => t.id === 'ระเบียบสหกรณ์ (เห็นชอบ)');
+    }
+    if (cleanType.includes('รับทราบ')) {
+      return CONFIG.REGULATION_DOC_TYPES.find(t => t.id === 'ระเบียบสหกรณ์ (รับทราบ)');
+    }
+    if (cleanType.includes('ข้อบังคับ')) {
+      return CONFIG.REGULATION_DOC_TYPES.find(t => t.id === 'ข้อบังคับสหกรณ์');
+    }
+    // Default fallback for legacy "ระเบียบสหกรณ์" -> ให้เป็นรับทราบ (30 วัน)
+    if (cleanType.includes('ระเบียบ')) {
+      return CONFIG.REGULATION_DOC_TYPES.find(t => t.id === 'ระเบียบสหกรณ์ (รับทราบ)');
+    }
+    return CONFIG.REGULATION_DOC_TYPES[0];
+  },
+
+  calculateSla(docType, receiveDateInput, approveDateInput, isFinished) {
+    const conf = this.getDocTypeConfig(docType);
+    const slaDays = conf.slaDays;
+    const start = WorkingDaysUtil.parseDate(receiveDateInput);
+
+    if (!start) {
+      return {
+        hasData: false,
+        conf,
+        slaDays,
+        daysUsed: 0,
+        daysRemaining: slaDays,
+        dueDate: null,
+        status: 'no_date',
+        badgeClass: 'sla-badge-muted',
+        badgeText: `SLA ${slaDays} วัน`,
+        isOverdue: false
+      };
+    }
+
+    // คำนวณวันครบกำหนดตาม SLA (start + slaDays วัน)
+    const dueDate = new Date(start.getTime());
+    dueDate.setDate(dueDate.getDate() + slaDays);
+
+    // วันที่สิ้นสุดการคิดเวลา (ถ้านายทะเบียนรับจด/เห็นชอบ/รับทราบแล้ว ใช้ approveDate หรือถ้ายังไม่เสร็จใช้วันนี้)
+    let end = WorkingDaysUtil.parseDate(approveDateInput);
+    let isApproved = !!isFinished;
+    if (end) {
+      isApproved = true;
+    } else if (isFinished) {
+      end = new Date(start.getTime());
+    } else {
+      end = WorkingDaysUtil.parseDate(new Date());
+    }
+
+    // คำนวณจำนวนวันปฏิทินที่ใช้ไป (เริ่มนับตั้งแต่วันที่ฝ่ายลงรับหนังสือ)
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    const daysUsed = Math.max(0, Math.floor((end.getTime() - start.getTime()) / oneDayMs) + 1);
+    const daysRemaining = slaDays - daysUsed;
+    const isOverdue = daysUsed > slaDays;
+
+    let status = 'ontrack';
+    let badgeClass = 'sla-badge-ontrack';
+    let badgeText = '';
+
+    if (isApproved) {
+      if (isOverdue) {
+        status = 'completed_overdue';
+        badgeClass = 'sla-badge-overdue';
+        badgeText = `⚠️ เสร็จสิ้นเกิน SLA (${daysUsed}/${slaDays} วัน)`;
+      } else {
+        status = 'completed_ontime';
+        badgeClass = 'sla-badge-done';
+        badgeText = `✓ ทันกำหนด SLA (${daysUsed}/${slaDays} วัน)`;
+      }
+    } else {
+      if (isOverdue) {
+        status = 'overdue';
+        badgeClass = 'sla-badge-overdue';
+        badgeText = `🔴 เกิน SLA ${Math.abs(daysRemaining)} วัน`;
+      } else if (daysRemaining <= 2 || (daysUsed / slaDays) >= 0.75) {
+        status = 'neardue';
+        badgeClass = 'sla-badge-neardue';
+        badgeText = `🟡 ใกล้ครบกำหนด (เหลือ ${daysRemaining} วัน)`;
+      } else {
+        status = 'ontrack';
+        badgeClass = 'sla-badge-ontrack';
+        badgeText = `🟢 ทันกำหนด (เหลือ ${daysRemaining} วัน)`;
+      }
+    }
+
+    return {
+      hasData: true,
+      conf,
+      slaDays,
+      daysUsed,
+      daysRemaining,
+      dueDate,
+      status,
+      badgeClass,
+      badgeText,
+      isOverdue
+    };
+  }
+};
+

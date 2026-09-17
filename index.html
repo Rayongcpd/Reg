@@ -163,7 +163,7 @@
           </div>
           <h3 class="hub-card-title">ระบบติดตาม ระเบียบ / ข้อบังคับสหกรณ์</h3>
           <p class="hub-card-desc">
-            ตรวจสอบความคืบหน้าการยื่นขอความเห็นชอบ รับทราบ และรับจดทะเบียน ข้อบังคับและระเบียบสหกรณ์ 5 ขั้นตอน
+            ตรวจสอบความคืบหน้าการยื่นขอความเห็นชอบ รับทราบ และรับจดทะเบียน ข้อบังคับและระเบียบสหกรณ์ 4 ขั้นตอน
             สำหรับเจ้าหน้าที่ส่งเสริมและสหกรณ์
           </p>
 
@@ -464,7 +464,7 @@
         <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 0.5rem;">
           <span class="status-badge"
             style="background: rgba(255,255,255,0.2); color: #fff; font-size: 0.85rem;">โมดูลที่ 2</span>
-          <span style="color: rgba(255,255,255,0.8); font-size: 0.85rem;">• 5 ขั้นตอนการพิจารณาเห็นชอบ /
+          <span style="color: rgba(255,255,255,0.8); font-size: 0.85rem;">• 4 ขั้นตอนการพิจารณาเห็นชอบ /
             รับจดทะเบียน</span>
         </div>
         <h2 class="hero-title">ระบบติดตาม ระเบียบ และ ข้อบังคับสหกรณ์</h2>
@@ -549,7 +549,7 @@
         </div>
 
         <div id="regFilterBody" class="filter-panel-body collapsed">
-          <!-- Section 1: Progress / Steps (ความคืบหน้า 5 ขั้นตอน) -->
+          <!-- Section 1: Progress / Steps (ความคืบหน้า 4 ขั้นตอน) -->
           <div class="filter-section">
             <div class="filter-section-header">
               <span class="filter-section-label">🚀 ความคืบหน้า / ขั้นตอนการพิจารณา (Progress)</span>
@@ -559,19 +559,16 @@
                 <span class="chip-check">✓</span> ทั้งหมด
               </button>
               <button class="filter-chip step-chip" data-reg-step="1" onclick="setRegFilter('step', '1')">
-                <span class="chip-check">✓</span> ขั้น 1: ยื่นคำขอ (20%)
+                <span class="chip-check">✓</span> ขั้น 1: ฝ่ายบริหารรับเอกสาร (25%)
               </button>
               <button class="filter-chip step-chip" data-reg-step="2" onclick="setRegFilter('step', '2')">
-                <span class="chip-check">✓</span> ขั้น 2: ตรวจสอบเบื้องต้น (40%)
+                <span class="chip-check">✓</span> ขั้น 2: กลุ่มจัดตั้งฯ ตรวจสอบ (50%)
               </button>
               <button class="filter-chip step-chip" data-reg-step="3" onclick="setRegFilter('step', '3')">
-                <span class="chip-check">✓</span> ขั้น 3: ตรวจข้อกฎหมาย (60%)
+                <span class="chip-check">✓</span> ขั้น 3: เสนอนายทะเบียน (75%)
               </button>
               <button class="filter-chip step-chip" data-reg-step="4" onclick="setRegFilter('step', '4')">
-                <span class="chip-check">✓</span> ขั้น 4: เสนอนายทะเบียน (80%)
-              </button>
-              <button class="filter-chip step-chip" data-reg-step="5" onclick="setRegFilter('step', '5')">
-                <span class="chip-check">✓</span> ขั้น 5: แจ้งผล/ถือใช้ (100%)
+                <span class="chip-check">✓</span> ขั้น 4: ส่งเอกสารให้สหกรณ์/หน่วยงาน (100%)
               </button>
             </div>
           </div>
@@ -586,10 +583,13 @@
                 <span class="chip-check">✓</span> ทั้งหมด
               </button>
               <button class="filter-chip" data-reg-doc="ข้อบังคับสหกรณ์" onclick="setRegFilter('docType', 'ข้อบังคับสหกรณ์')">
-                <span class="chip-check">✓</span> 📘 ข้อบังคับสหกรณ์ / กลุ่มเกษตรกร
+                <span class="chip-check">✓</span> 📘 ข้อบังคับ (14 วัน)
               </button>
-              <button class="filter-chip" data-reg-doc="ระเบียบสหกรณ์" onclick="setRegFilter('docType', 'ระเบียบสหกรณ์')">
-                <span class="chip-check">✓</span> 📙 ระเบียบสหกรณ์ / กลุ่มเกษตรกร
+              <button class="filter-chip" data-reg-doc="ระเบียบสหกรณ์ (เห็นชอบ)" onclick="setRegFilter('docType', 'ระเบียบสหกรณ์ (เห็นชอบ)')">
+                <span class="chip-check">✓</span> 📗 ระเบียบ - เห็นชอบ (7 วัน)
+              </button>
+              <button class="filter-chip" data-reg-doc="ระเบียบสหกรณ์ (รับทราบ)" onclick="setRegFilter('docType', 'ระเบียบสหกรณ์ (รับทราบ)')">
+                <span class="chip-check">✓</span> 📙 ระเบียบ - รับทราบ (30 วัน)
               </button>
             </div>
           </div>
@@ -1300,7 +1300,7 @@
 
         <div class="modal-tabs">
           <div class="modal-tab active" data-tab="regTimeline" onclick="switchRegDetailTab('regTimeline')">
-            ⏱️ 5 ขั้นตอนการพิจารณา
+            ⏱️ 4 ขั้นตอนการพิจารณา
           </div>
           <div class="modal-tab" data-tab="regDocuments" onclick="switchRegDetailTab('regDocuments')">
             📁 เอกสารร่างและมติที่ประชุม
@@ -1319,6 +1319,9 @@
 
       <div class="modal-footer">
         <div id="detailRegAdminActions" style="display: none; gap: 8px;">
+          <button class="btn btn-primary btn-sm" onclick="openUpdateRegMilestonesModal()">
+            📅 บันทึกวันสำคัญ 3 ขั้นตอน
+          </button>
           <button class="btn btn-secondary btn-sm" onclick="openEditRegInfoModal()">
             📝 แก้ไขข้อมูลเรื่อง
           </button>
@@ -1435,55 +1438,94 @@
     </div>
   </div>
 
-  <!-- 10. Update Regulation Step Modal (Admin) -->
-  <div id="updateRegStepModal" class="modal-backdrop">
-    <div class="modal-container" style="max-width: 600px;">
+  <!-- 10. Update Regulation Milestones Modal (Admin) -->
+  <div id="updateRegMilestonesModal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 620px;">
       <div class="modal-header">
-        <h3 id="updateRegStepTitle">แก้ไขขั้นตอนการพิจารณา</h3>
-        <button class="modal-close-btn" onclick="closeModal('updateRegStepModal')">&times;</button>
+        <div>
+          <h3 id="updateRegMilestonesTitle" style="margin: 0; font-size: 1.15rem; color: var(--primary);">📅 บันทึกวันสำคัญในกระบวนการพิจารณา</h3>
+          <div id="updateRegMilestonesSub" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">สหกรณ์...</div>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('updateRegMilestonesModal')">&times;</button>
       </div>
-      <form id="updateRegStepForm">
-        <input type="hidden" id="updateRegStepNumber" name="stepNumber">
-        <div class="modal-body">
-          <div class="form-group">
-            <label>สถานะขั้นตอน <span style="color: red;">*</span></label>
-            <select id="updateRegStepStatus" name="status" class="form-control" required>
-              <option value="ยังไม่เริ่ม">⚪ ยังไม่เริ่ม</option>
-              <option value="กำลังดำเนินการ">🟡 กำลังดำเนินการ / อยู่ระหว่างตรวจ</option>
-              <option value="เสร็จสิ้น">🟢 เสร็จสิ้น / ผ่านการพิจารณาแล้ว</option>
-            </select>
-            <small style="color: var(--text-muted); font-size: 0.78rem; display: block; margin-top: 4px;">
-              💡 หากเลือก <strong>กำลังดำเนินการ</strong> หรือ <strong>เสร็จสิ้น</strong> ระบบจะปรับขั้นตอนก่อนหน้าทั้งหมดเป็น "เสร็จสิ้น" ให้อัตโนมัติ
+      <form id="updateRegMilestonesForm">
+        <input type="hidden" id="updateRegMilestonesRegId" name="regId">
+        <div class="modal-body" style="padding: 1.25rem;">
+          
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; margin-bottom: 1rem; font-size: 0.82rem; color: #166534; line-height: 1.5;">
+            ⏱️ <strong>การนับระยะเวลาพิจารณา (SLA):</strong> เริ่มนับจาก <strong>วันที่ฝ่ายบริหารลงรับหนังสือ</strong> จนถึง <strong>วันที่นายทะเบียนรับจดทะเบียน (ขั้นตอนที่ 3)</strong>
+          </div>
+
+          <!-- Milestone 1 -->
+          <div class="form-group" style="margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <label style="font-weight: 600; color: #0f766e; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+              <span>📥 1. วันที่ฝ่ายบริหารลงรับหนังสือ <span style="color: red;">*</span></span>
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(เริ่มกระบวนการ)</span>
+            </label>
+            <input type="text" id="regMilestoneReceiveDate" name="receiveDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10" required>
+            <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 3px;">
+              เมื่อกรอกวันที่นี้ ขั้นตอนที่ 1 (ฝ่ายบริหารรับเอกสาร) จะปรับเป็น "เสร็จสิ้น"
             </small>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>วันที่เริ่มต้น</label>
-              <input type="text" id="updateRegStepStartDate" name="startDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
+          <!-- Milestone 2 -->
+          <div class="form-group" style="margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <label style="font-weight: 600; color: #0284c7; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+              <span>📤 2. วันที่หนังสือออกจากกลุ่มจัดตั้ง</span>
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(ตรวจเสร็จ & ส่งเสนอนายทะเบียน)</span>
+            </label>
+            <input type="text" id="regMilestoneGroupExitDate" name="groupExitDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
+            <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 3px;">
+              เมื่อกรอกวันที่นี้ ขั้นตอนที่ 2 (กลุ่มจัดตั้งฯ ตรวจสอบ) จะปรับเป็น "เสร็จสิ้น"
+            </small>
+          </div>
+
+          <!-- Milestone 3 -->
+          <div class="form-group" style="margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <label style="font-weight: 600; color: #059669; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+              <span>✍️ 3. วันที่นายทะเบียนรับจดทะเบียน / พิจารณา</span>
+              <span style="font-size: 0.75rem; color: #059669; font-weight: 600; background: #dcfce7; padding: 1px 6px; border-radius: 4px;">🏁 สิ้นสุดการนับระยะเวลา</span>
+            </label>
+            <input type="text" id="regMilestoneApproveDate" name="regApproveDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
+            <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 3px;">
+              เมื่อกรอกวันที่นี้ ขั้นตอนที่ 3 จะ "เสร็จสิ้น" และระบบจะหยุดนับเวลาทันที สถานะหลักจะเปลี่ยนเป็น "รับจดทะเบียนแล้ว"
+            </small>
+          </div>
+
+          <!-- Step 4 Dispatch -->
+          <div class="form-group" style="margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <label style="font-weight: 600; color: #475569; margin-bottom: 6px; display: block;">
+              📦 4. การส่งเอกสารให้สหกรณ์และหน่วยงานที่เกี่ยวข้อง
+            </label>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <input type="checkbox" id="regMilestoneDocDispatched" name="docDispatched" style="width: 18px; height: 18px; cursor: pointer;">
+              <label for="regMilestoneDocDispatched" style="cursor: pointer; font-size: 0.85rem; margin: 0; font-weight: 500;">
+                ส่งมอบเอกสารให้สหกรณ์และหน่วยงานเรียบร้อยแล้ว
+              </label>
             </div>
-            <div class="form-group">
-              <label>วันที่แล้วเสร็จ</label>
-              <input type="text" id="updateRegStepEndDate" name="endDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
+            <div id="regMilestoneDispatchWrap" style="margin-top: 8px;">
+              <label style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 2px; display: block;">วันที่ส่งหนังสือออก (ถ้ามี):</label>
+              <input type="text" id="regMilestoneDispatchDate" name="dispatchDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
             </div>
           </div>
 
-          <div class="form-group">
-            <label>ข้อสังเกต / จุดที่ต้องแก้ไขปรับปรุง (ถ้ามี)</label>
-            <textarea id="updateRegStepIssue" name="issue" class="form-control" rows="2"
+          <!-- Issue & Note -->
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label style="font-size: 0.82rem;">ข้อสังเกต / จุดที่ต้องแก้ไขปรับปรุง (ถ้ามี - ใส่เมื่อต้องส่งคืนแก้ไข)</label>
+            <textarea id="regMilestoneIssue" name="issue" class="form-control" rows="2"
               placeholder="เช่น ข้อความในข้อ 14 ขัดต่อระเบียบนายทะเบียนฯ ต้องตัดวรรคสองออก..."></textarea>
           </div>
 
-          <div class="form-group">
-            <label>บันทึกเพิ่มเติม</label>
-            <textarea id="updateRegStepNote" name="note" class="form-control" rows="2"
-              placeholder="บันทึกการส่งหนังสือ หรือผลการตรวจ..."></textarea>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-size: 0.82rem;">บันทึกเพิ่มเติม</label>
+            <textarea id="regMilestoneNote" name="note" class="form-control" rows="2"
+              placeholder="บันทึกผลการตรวจ หรือรายละเอียดเพิ่มเติม..."></textarea>
           </div>
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" onclick="closeModal('updateRegStepModal')">ยกเลิก</button>
-          <button type="submit" class="btn btn-primary">บันทึกการอัพเดต</button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal('updateRegMilestonesModal')">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">💾 บันทึกวันสำคัญ</button>
         </div>
       </form>
     </div>
@@ -1532,8 +1574,9 @@
             <div class="form-group">
               <label>ประเภทรายการ</label>
               <select id="editRegDocType" name="docType" class="form-control">
-                <option value="ข้อบังคับสหกรณ์">ข้อบังคับสหกรณ์ / ข้อบังคับกลุ่มเกษตรกร</option>
-                <option value="ระเบียบสหกรณ์">ระเบียบสหกรณ์ / ระเบียบกลุ่มเกษตรกร</option>
+                <option value="ข้อบังคับสหกรณ์">📘 ข้อบังคับสหกรณ์ (14 วัน)</option>
+                <option value="ระเบียบสหกรณ์ (เห็นชอบ)">📗 ระเบียบสหกรณ์ - เห็นชอบ (7 วัน)</option>
+                <option value="ระเบียบสหกรณ์ (รับทราบ)">📙 ระเบียบสหกรณ์ - รับทราบ (30 วัน)</option>
               </select>
             </div>
             <div class="form-group">
@@ -1601,11 +1644,10 @@
             <label>ผูกกับขั้นตอน (ถ้ามี)</label>
             <select name="stepNumber" class="form-control">
               <option value="">-- เอกสารทั่วไป --</option>
-              <option value="1">ขั้นที่ 1: แบบคำขอและมติที่ประชุม</option>
-              <option value="2">ขั้นที่ 2: เอกสารการตรวจเบื้องต้น</option>
-              <option value="3">ขั้นที่ 3: ร่างระเบียบ/ข้อบังคับที่ตรวจแก้</option>
-              <option value="4">ขั้นที่ 4: หนังสือเสนอนายทะเบียน</option>
-              <option value="5">ขั้นที่ 5: ข้อบังคับที่ประทับตรารับจดทะเบียน/หนังสือแจ้ง</option>
+              <option value="1">ขั้นที่ 1: ฝ่ายบริหาร สำนักงานสหกรณ์จังหวัดรับเอกสาร</option>
+              <option value="2">ขั้นที่ 2: กลุ่มจัดตั้งและส่งเสริมสหกรณ์ ตรวจสอบข้อมูล</option>
+              <option value="3">ขั้นที่ 3: เสนอนายทะเบียนสหกรณ์ พิจารณา</option>
+              <option value="4">ขั้นที่ 4: ส่งเอกสารให้สหกรณ์และหน่วยงานที่เกี่ยวข้อง</option>
             </select>
           </div>
 

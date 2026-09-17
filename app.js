@@ -135,7 +135,7 @@ function updateHubStatsDisplay() {
   // Regulations Stats on Hub
   const regTotal = AppState.regulations.length;
   const regReview = AppState.regulations.filter(r => r.status === 'อยู่ระหว่างพิจารณา').length;
-  const regDone = AppState.regulations.filter(r => r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= 5).length;
+  const regDone = AppState.regulations.filter(r => r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= (CONFIG.REGULATION_STEPS?.length || 4)).length;
   const regIssues = AppState.regulations.filter(r => r.status === 'ส่งคืนแก้ไข').length;
 
   document.getElementById('hubStatRegTotal').innerText = regTotal;
@@ -1320,13 +1320,27 @@ function applyRegFilters() {
   }
 
   if (AppState.regFilterDocType !== 'ALL') {
-    list = list.filter(r => r.docType === AppState.regFilterDocType);
+    const target = AppState.regFilterDocType;
+    list = list.filter(r => {
+      const dt = r.docType || '';
+      if (dt === target) return true;
+      if (target === 'ข้อบังคับสหกรณ์') {
+        return dt.includes('ข้อบังคับ');
+      }
+      if (target === 'ระเบียบสหกรณ์ (เห็นชอบ)') {
+        return dt.includes('เห็นชอบ');
+      }
+      if (target === 'ระเบียบสหกรณ์ (รับทราบ)') {
+        return dt.includes('รับทราบ') || (dt.includes('ระเบียบ') && !dt.includes('เห็นชอบ'));
+      }
+      return false;
+    });
   }
 
   if (AppState.regFilterStatus === 'IN_REVIEW') {
     list = list.filter(r => r.status === 'อยู่ระหว่างพิจารณา');
   } else if (AppState.regFilterStatus === 'APPROVED') {
-    list = list.filter(r => r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= 5);
+    list = list.filter(r => r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= (CONFIG.REGULATION_STEPS?.length || 4));
   } else if (AppState.regFilterStatus === 'NEED_FIX') {
     list = list.filter(r => r.status === 'ส่งคืนแก้ไข');
   }
@@ -1336,6 +1350,34 @@ function applyRegFilters() {
   renderRegulationsList();
   updateHubStatsDisplay();
   updateRegFilterChipUI();
+}
+
+function getRegDuration(item) {
+  if (!item) return { hasData: false, workingDays: 0, sla: null };
+  const receiveDate = item.receiveDate || item.submitDate;
+  // Step 3 end date (approved by registrar)
+  const step3 = item.steps?.find(s => parseInt(s.stepNumber, 10) === 3);
+  const approveDate = item.regApproveDate || step3?.endDate || (item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' ? item.lastUpdated : null);
+  const isApproved = !!approveDate || item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว';
+
+  // Duration is counted strictly from receiveDate to approveDate (Step 3)!
+  const dur = WorkingDaysUtil.calculate(receiveDate, isApproved ? approveDate : null, isApproved ? 'เสร็จสิ้น' : 'กำลังดำเนินการ');
+
+  // SLA Calculation based on Document Type (By-law: 14d, Approval: 7d, Acknowledgment: 30d)
+  const sla = RegSlaUtil.calculateSla(item.docType, receiveDate, approveDate, isApproved);
+
+  return {
+    ...dur,
+    receiveDate,
+    approveDate,
+    isApproved,
+    sla
+  };
+}
+
+function getRegDocTypeBadge(docType) {
+  const conf = RegSlaUtil.getDocTypeConfig(docType);
+  return `<span class="case-type-badge ${conf.badgeClass}" title="${escapeHtml(conf.desc)}">${escapeHtml(conf.shortLabel || conf.id)}</span>`;
 }
 
 function setRegFilter(filterKey, value) {
@@ -1397,7 +1439,7 @@ function updateRegFilterChipUI() {
 function updateRegStatsDisplay() {
   const total = AppState.regulations.length;
   const inReview = AppState.regulations.filter(r => r.status === 'อยู่ระหว่างพิจารณา').length;
-  const approved = AppState.regulations.filter(r => r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= 5).length;
+  const approved = AppState.regulations.filter(r => r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= (CONFIG.REGULATION_STEPS?.length || 4)).length;
   const needFix = AppState.regulations.filter(r => r.status === 'ส่งคืนแก้ไข').length;
 
   document.getElementById('regStatTotal').innerText = total;
@@ -1470,12 +1512,15 @@ function renderRegCardIssuesHtml(item) {
 }
 
 function renderRegGrid(container, items = AppState.filteredRegulations) {
+  const maxRegSteps = CONFIG.REGULATION_STEPS?.length || 4;
   container.innerHTML = items.map(item => {
-    const isApproved = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || item.currentStep >= 5;
+    const isApproved = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || item.currentStep >= maxRegSteps;
     const isNeedFix = item.status === 'ส่งคืนแก้ไข';
-    const progressPercent = Math.min(100, Math.round((item.currentStep / 5) * 100));
+    const progressPercent = Math.min(100, Math.round((item.currentStep / maxRegSteps) * 100));
     const stepObj = CONFIG.REGULATION_STEPS.find(s => s.number === item.currentStep) || { title: `ขั้นตอนที่ ${item.currentStep}` };
     const isFarmerGroup = item.coopType && item.coopType.includes('กลุ่มเกษตรกร');
+    const dur = getRegDuration(item);
+    const sla = dur.sla;
 
     let statusBadgeClass = 'active';
     let statusText = '● อยู่ระหว่างพิจารณา';
@@ -1487,13 +1532,13 @@ function renderRegGrid(container, items = AppState.filteredRegulations) {
       statusText = '⚠️ ส่งคืนแก้ไข';
     }
 
-    const typeBadgeClass = item.docType === 'ข้อบังคับสหกรณ์' ? 'reg-type-bylaw' : 'reg-type-rule';
+    const docTypeBadgeHtml = getRegDocTypeBadge(item.docType);
 
     return `
       <div class="case-card">
         <div class="case-card-header">
           <div class="case-badge-group">
-            <span class="case-type-badge ${typeBadgeClass}">${escapeHtml(item.docType)}</span>
+            ${docTypeBadgeHtml}
             <span class="case-type-badge ${isFarmerGroup ? 'farmer-group' : 'coop-type-badge'}">${escapeHtml(item.coopType || 'สหกรณ์')}</span>
           </div>
           <span class="status-badge ${statusBadgeClass}">${statusText}</span>
@@ -1509,13 +1554,24 @@ function renderRegGrid(container, items = AppState.filteredRegulations) {
             <span>📄 เลขที่รับเรื่อง: ${escapeHtml(item.docNumber || '-')}</span>
           </div>
           <div class="case-meta-item">
-            <span>📅 ยื่นเมื่อ: ${formatThaiDate(item.submitDate)}</span>
+            <span>📅 ลงรับ: ${formatThaiDate(item.receiveDate || item.submitDate)}</span>
           </div>
+          ${item.regApproveDate ? `
+            <div class="case-meta-item" style="color: #059669; font-weight: 500;">
+              <span>✍️ รับจดทะเบียน/เห็นชอบ: ${formatThaiDate(item.regApproveDate)}</span>
+            </div>
+          ` : ''}
+          ${sla && sla.hasData ? `
+            <div class="case-meta-item" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--border-color);">
+              <span style="font-size: 0.78rem;">⏱️ SLA: <strong>${sla.slaDays} วัน</strong></span>
+              <span class="sla-badge ${sla.badgeClass}">${sla.badgeText}</span>
+            </div>
+          ` : ''}
         </div>
 
         <div class="case-progress-wrap">
           <div class="progress-header">
-            <span class="step-name">ขั้นที่ ${item.currentStep}/5: ${escapeHtml(stepObj.title)}</span>
+            <span class="step-name">ขั้นที่ ${item.currentStep}/${maxRegSteps}: ${escapeHtml(stepObj.title)}</span>
             <span>${progressPercent}%</span>
           </div>
           <div class="progress-bar-bg">
@@ -1532,7 +1588,7 @@ function renderRegGrid(container, items = AppState.filteredRegulations) {
 
         <div class="case-card-footer">
           <span style="font-size: 0.78rem; color: var(--text-muted);">
-            อัพเดต: ${formatThaiDate(item.lastUpdated)}
+            ${dur.hasData ? `ใช้ไป ${dur.workingDays} วันทำการ` : `อัพเดต: ${formatThaiDate(item.lastUpdated)}`}
           </span>
           <button class="btn btn-primary btn-sm" onclick="openRegDetail('${item.regId}')">
             ดูรายละเอียด ➔
@@ -1547,11 +1603,14 @@ function renderRegTable(container, items = AppState.filteredRegulations, startIn
   const tbody = document.getElementById('regTableBody');
   if (!tbody) return;
 
+  const maxRegSteps = CONFIG.REGULATION_STEPS?.length || 4;
   tbody.innerHTML = items.map((item, idx) => {
-    const isApproved = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || item.currentStep >= 5;
+    const isApproved = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || item.currentStep >= maxRegSteps;
     const isNeedFix = item.status === 'ส่งคืนแก้ไข';
-    const progressPercent = Math.min(100, Math.round((item.currentStep / 5) * 100));
+    const progressPercent = Math.min(100, Math.round((item.currentStep / maxRegSteps) * 100));
     const isFarmerGroup = item.coopType && item.coopType.includes('กลุ่มเกษตรกร');
+    const dur = getRegDuration(item);
+    const sla = dur.sla;
 
     let statusBadgeClass = 'active';
     let statusText = 'อยู่ระหว่างพิจารณา';
@@ -1563,7 +1622,7 @@ function renderRegTable(container, items = AppState.filteredRegulations, startIn
       statusText = 'ส่งคืนแก้ไข';
     }
 
-    const typeBadgeClass = item.docType === 'ข้อบังคับสหกรณ์' ? 'reg-type-bylaw' : 'reg-type-rule';
+    const docTypeBadgeHtml = getRegDocTypeBadge(item.docType);
 
     return `
       <tr>
@@ -1572,19 +1631,23 @@ function renderRegTable(container, items = AppState.filteredRegulations, startIn
           <strong style="color: var(--primary);">${escapeHtml(item.coopName)}</strong>
           <div style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(item.regNumber)} | <span class="case-type-badge ${isFarmerGroup ? 'farmer-group' : 'coop-type-badge'}" style="font-size: 0.7rem;">${escapeHtml(item.coopType || 'สหกรณ์')}</span></div>
         </td>
-        <td><span class="case-type-badge ${typeBadgeClass}">${escapeHtml(item.docType)}</span></td>
+        <td>
+          ${docTypeBadgeHtml}
+          ${sla && sla.hasData ? `<div style="margin-top: 4px;"><span class="sla-badge ${sla.badgeClass}">${sla.badgeText}</span></div>` : ''}
+        </td>
         <td>
           <div style="font-weight: 500; font-size: 0.9rem;">${escapeHtml(item.title)}</div>
         </td>
         <td>
           <div>${escapeHtml(item.docNumber || '-')}</div>
-          <div style="font-size: 0.78rem; color: var(--text-muted);">${formatThaiDate(item.submitDate)}</div>
+          <div style="font-size: 0.78rem; color: var(--text-muted);">${formatThaiDate(item.receiveDate || item.submitDate)}</div>
         </td>
         <td>
-          <div style="font-size: 0.85rem; font-weight: 500;">ขั้นที่ ${item.currentStep}/5 (${progressPercent}%)</div>
+          <div style="font-size: 0.85rem; font-weight: 500;">ขั้นที่ ${item.currentStep}/${maxRegSteps} (${progressPercent}%)</div>
           <div class="progress-bar-bg" style="height: 6px; width: 90px; margin-top: 4px;">
             <div class="progress-bar-fill" style="width: ${progressPercent}%; background: #0d9488;"></div>
           </div>
+          ${dur.hasData ? `<div style="font-size: 0.74rem; color: #0369a1; margin-top: 2px;">${dur.workingDays} วันทำการ</div>` : ''}
         </td>
         <td>${escapeHtml(item.officerName || '-')}</td>
         <td>
@@ -1611,17 +1674,22 @@ async function openRegDetail(regId) {
     const regData = await ApiClient.get('getRegDetail', { regId: regId });
     AppState.selectedReg = regData;
 
+    const dur = getRegDuration(regData);
+    const sla = dur.sla;
+
     document.getElementById('detailRegTitle').innerText = regData.title;
     document.getElementById('detailRegCoopName').innerText = `🏛️ ${regData.coopName} (${regData.regNumber || '-'}) [${regData.coopType || 'สหกรณ์'}]`;
 
     const docTypeBadge = document.getElementById('detailRegDocType');
-    docTypeBadge.innerText = regData.docType;
-    docTypeBadge.className = `case-type-badge ${regData.docType === 'ข้อบังคับสหกรณ์' ? 'reg-type-bylaw' : 'reg-type-rule'}`;
+    const docConf = RegSlaUtil.getDocTypeConfig(regData.docType);
+    docTypeBadge.innerText = docConf.label || regData.docType;
+    docTypeBadge.className = `case-type-badge ${docConf.badgeClass}`;
 
+    const maxRegSteps = CONFIG.REGULATION_STEPS?.length || 4;
     document.getElementById('detailRegDocNumber').innerText = regData.docNumber || '-';
-    const isApproved = regData.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || regData.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || regData.currentStep >= 5;
-    const subDur = WorkingDaysUtil.calculate(regData.submitDate, isApproved ? regData.lastUpdated : null, regData.status);
-    document.getElementById('detailRegSubmitDate').innerHTML = formatThaiDate(regData.submitDate) + (subDur.hasData ? ` <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);" title="${escapeHtml(subDur.tooltip)}">(${subDur.workingDays} วันทำการ)</span>` : '');
+    const isApproved = regData.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || regData.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || regData.currentStep >= maxRegSteps;
+    const subDur = WorkingDaysUtil.calculate(regData.receiveDate || regData.submitDate, isApproved ? (regData.regApproveDate || regData.lastUpdated) : null, regData.status);
+    document.getElementById('detailRegSubmitDate').innerHTML = formatThaiDate(regData.receiveDate || regData.submitDate) + (subDur.hasData ? ` <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);" title="${escapeHtml(subDur.tooltip)}">(${subDur.workingDays} วันทำการ)</span>` : '');
     document.getElementById('detailRegOfficer').innerText = regData.officerName || '-';
     document.getElementById('detailRegContact').innerText = regData.officerContact || '-';
     const statusBadge = document.getElementById('detailRegStatusBadge');
@@ -1633,7 +1701,7 @@ async function openRegDetail(regId) {
       statusBadge.innerText = '⚠️ ส่งคืนแก้ไขปรับปรุง';
     } else {
       statusBadge.className = 'status-badge active';
-      statusBadge.innerText = `● อยู่ระหว่างพิจารณา (ขั้นที่ ${regData.currentStep}/5)`;
+      statusBadge.innerText = `● อยู่ระหว่างพิจารณา (ขั้นที่ ${regData.currentStep}/${maxRegSteps})`;
     }
 
     const adminActions = document.getElementById('detailRegAdminActions');
@@ -1656,15 +1724,29 @@ function renderRegDetailTimeline() {
   const regData = AppState.selectedReg;
   if (!regData || !regData.steps || !container) return;
 
-  // คำนวณวันทำการรวมทุกขั้นตอน (ไม่รวมวันเสาร์-อาทิตย์ และวันหยุดราชการ)
-  let totalWorkingDays = 0;
-  const stepDurations = regData.steps.map(step => {
-    const dur = WorkingDaysUtil.calculate(step.startDate, step.endDate, step.status);
-    if (dur.hasData && (step.status === 'เสร็จสิ้น' || step.status === 'กำลังดำเนินการ')) {
-      totalWorkingDays += dur.workingDays;
-    }
-    return dur;
-  });
+  const s1 = regData.steps?.find(s => parseInt(s.stepNumber, 10) === 1);
+  const s2 = regData.steps?.find(s => parseInt(s.stepNumber, 10) === 2);
+  const s3 = regData.steps?.find(s => parseInt(s.stepNumber, 10) === 3);
+  const s4 = regData.steps?.find(s => parseInt(s.stepNumber, 10) === 4);
+
+  const receiveDate = regData.receiveDate || s1?.startDate || regData.submitDate;
+  const groupExitDate = regData.groupExitDate || s2?.endDate || '';
+  const regApproveDate = regData.regApproveDate || s3?.endDate || '';
+  const dispatchDate = regData.dispatchDate || s4?.endDate || '';
+  const isApproved = !!regApproveDate || regData.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || regData.status === 'รับจดทะเบียน/เห็นชอบแล้ว';
+
+  // SLA Timer stops at Step 3 (regApproveDate)!
+  const totalDur = WorkingDaysUtil.calculate(receiveDate, isApproved ? regApproveDate : null, isApproved ? 'เสร็จสิ้น' : 'กำลังดำเนินการ');
+  const totalWorkingDays = totalDur.hasData ? totalDur.workingDays : 0;
+
+  // Step 2 duration: from receiveDate to groupExitDate
+  const durStep2 = WorkingDaysUtil.calculate(receiveDate, groupExitDate, s2?.status);
+
+  // Step 3 duration: from groupExitDate to regApproveDate
+  const durStep3 = WorkingDaysUtil.calculate(groupExitDate, regApproveDate, s3?.status);
+
+  // SLA Calculation based on Document Type (By-law: 14d, Approval: 7d, Acknowledgment: 30d)
+  const sla = RegSlaUtil.calculateSla(regData.docType, receiveDate, regApproveDate, isApproved);
 
   const completedCount = regData.steps.filter(s => s.status === 'เสร็จสิ้น').length;
   const totalCount = regData.steps.length;
@@ -1677,35 +1759,84 @@ function renderRegDetailTimeline() {
         <div class="summary-title-wrap">
           <span class="summary-icon">⏱️</span>
           <div>
-            <div class="summary-title">สรุปภาพรวมระยะเวลาพิจารณา</div>
-            <div class="summary-subtitle">คำนวณเฉพาะวันทำการ (ไม่นับวันเสาร์-อาทิตย์ และวันหยุดราชการ)</div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span class="summary-title">สรุปภาพรวมระยะเวลาพิจารณา (นับถึงขั้นตอนที่ 3)</span>
+              ${sla && sla.hasData ? `<span class="sla-badge ${sla.badgeClass}" style="font-size: 0.8rem;">${sla.badgeText}</span>` : ''}
+            </div>
+            <div class="summary-subtitle">
+              ${escapeHtml(sla.conf.desc)}
+            </div>
           </div>
         </div>
         <div class="summary-total-badge reg-badge">
-          <span class="total-label">รวมระยะเวลาที่ใช้ไป:</span>
+          <span class="total-label">รวมระยะเวลาพิจารณา:</span>
           <span class="total-number">${totalWorkingDays}</span>
           <span class="total-unit">วันทำการ</span>
         </div>
       </div>
+
+      <!-- SLA Progress & Due Date Banner -->
+      ${sla && sla.hasData ? `
+        <div style="background: rgba(255, 255, 255, 0.7); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; border: 1px solid rgba(0, 0, 0, 0.05); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.1rem;">⚖️</span>
+            <div>
+              <div style="font-size: 0.82rem; font-weight: 600; color: var(--primary);">
+                กรอบเวลากำหนด: <strong>${sla.slaDays} วัน</strong> (${escapeHtml(sla.conf.actionWord)}) • ใช้ไปแล้ว ${sla.daysUsed} วัน
+              </div>
+              <div style="font-size: 0.76rem; color: var(--text-muted);">
+                วันที่ฝ่ายลงรับ: ${formatThaiDate(receiveDate)} ➔ ครบกำหนด: <strong>${formatThaiDate(sla.dueDate)}</strong>
+              </div>
+            </div>
+          </div>
+          <div>
+            <span class="case-type-badge ${sla.conf.badgeClass}" style="font-size: 0.8rem; padding: 4px 10px;">
+              ${escapeHtml(sla.conf.label)}
+            </span>
+          </div>
+        </div>
+      ` : ''}
+
       <div class="timeline-summary-grid">
         <div class="summary-grid-item">
-          <span class="item-label">📊 ขั้นตอนที่เสร็จสิ้น</span>
-          <strong class="item-val">${completedCount} จาก ${totalCount} ขั้นตอน (${progressPercent}%)</strong>
+          <span class="item-label">📥 1. วันที่ฝ่ายลงรับหนังสือ</span>
+          <strong class="item-val">${receiveDate ? formatThaiDate(receiveDate) : 'ยังไม่ระบุ'}</strong>
         </div>
         <div class="summary-grid-item">
-          <span class="item-label">🚀 ขั้นตอนปัจจุบัน</span>
-          <strong class="item-val">ขั้นที่ ${regData.currentStep}: ${escapeHtml(currentStepObj.stepName || '-')}</strong>
+          <span class="item-label">📤 2. วันที่ออกจากกลุ่มจัดตั้ง</span>
+          <strong class="item-val">${groupExitDate ? formatThaiDate(groupExitDate) + (durStep2.hasData ? ` (${durStep2.workingDays} วันทำการ)` : '') : 'อยู่ระหว่างตรวจสอบ'}</strong>
         </div>
         <div class="summary-grid-item">
-          <span class="item-label">📅 วันที่ยื่นเรื่องคำขอ</span>
-          <strong class="item-val">${formatThaiDate(regData.submitDate)}</strong>
+          <span class="item-label">✍️ 3. วันที่นายทะเบียนรับจดทะเบียน/เห็นชอบ</span>
+          <strong class="item-val" style="color: ${regApproveDate ? '#059669' : 'inherit'};">${regApproveDate ? formatThaiDate(regApproveDate) + (durStep3.hasData ? ` (${durStep3.workingDays} วันทำการ)` : '') : 'อยู่ระหว่างเสนอพิจารณา'}</strong>
+        </div>
+        <div class="summary-grid-item">
+          <span class="item-label">📦 4. การส่งมอบเอกสาร</span>
+          <strong class="item-val">${s4?.status === 'เสร็จสิ้น' ? '✓ ส่งให้สหกรณ์แล้ว' : 'รอดำเนินการส่งมอบ'}</strong>
         </div>
       </div>
     </div>
+    ${AppState.currentUser ? `
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+        <button class="btn btn-primary btn-sm" onclick="openUpdateRegMilestonesModal()" style="display: flex; align-items: center; gap: 6px; font-weight: 600;">
+          📅 บันทึกวันสำคัญ 3 ขั้นตอน / ปรับปรุงสถานะ
+        </button>
+      </div>
+    ` : ''}
   `;
 
   const stepsHtml = regData.steps.map((step, idx) => {
-    const dur = stepDurations[idx];
+    let dur = { hasData: false, workingDays: 0 };
+    if (step.stepNumber === 1) {
+      dur = WorkingDaysUtil.calculate(step.startDate, step.endDate, step.status);
+    } else if (step.stepNumber === 2) {
+      dur = durStep2;
+    } else if (step.stepNumber === 3) {
+      dur = durStep3;
+    } else if (step.stepNumber === 4) {
+      dur = WorkingDaysUtil.calculate(step.startDate, step.endDate, step.status);
+    }
+
     const isCompleted = step.status === 'เสร็จสิ้น';
     const isActive = step.status === 'กำลังดำเนินการ';
     const hasIssue = step.issue && step.issue.trim() !== '';
@@ -1732,7 +1863,7 @@ function renderRegDetailTimeline() {
                 ${escapeHtml(step.status)}
               </span>
               ${AppState.currentUser ? `
-                <button class="btn btn-secondary btn-sm" onclick="openUpdateRegStepModal(${step.stepNumber})" title="แก้ไขขั้นตอนนี้">
+                <button class="btn btn-secondary btn-sm" onclick="openUpdateRegMilestonesModal()" title="บันทึกวันสำคัญของขั้นตอนนี้">
                   ✏️ แก้ไข
                 </button>
               ` : ''}
@@ -1740,20 +1871,31 @@ function renderRegDetailTimeline() {
           </div>
 
           <div class="stepper-dates">
-            <span class="date-item">📅 เริ่ม: <strong>${formatThaiDate(step.startDate)}</strong></span>
-            <span class="date-sep">|</span>
-            <span class="date-item">🏁 เสร็จ: <strong>${formatThaiDate(step.endDate)}</strong></span>
+            ${step.stepNumber === 1 ? `
+              <span class="date-item">📥 วันที่ฝ่ายลงรับ: <strong>${step.startDate ? formatThaiDate(step.startDate) : '-'}</strong></span>
+            ` : step.stepNumber === 2 ? `
+              <span class="date-item">📅 วันที่เข้ากลุ่ม: <strong>${step.startDate ? formatThaiDate(step.startDate) : '-'}</strong></span>
+              <span class="date-sep">|</span>
+              <span class="date-item">📤 วันที่ออกจากกลุ่ม: <strong>${step.endDate ? formatThaiDate(step.endDate) : 'อยู่ระหว่างตรวจ'}</strong></span>
+            ` : step.stepNumber === 3 ? `
+              <span class="date-item">📅 วันที่เสนอ: <strong>${step.startDate ? formatThaiDate(step.startDate) : '-'}</strong></span>
+              <span class="date-sep">|</span>
+              <span class="date-item">✍️ วันที่รับจดทะเบียน: <strong>${step.endDate ? formatThaiDate(step.endDate) : 'อยู่ระหว่างพิจารณา'}</strong></span>
+            ` : `
+              <span class="date-item">📦 สถานะส่งมอบ: <strong>${isCompleted ? (step.endDate ? 'ส่งแล้วเมื่อ ' + formatThaiDate(step.endDate) : 'ส่งมอบเรียบร้อย') : 'รอดำเนินการส่งมอบ'}</strong></span>
+            `}
             ${dur.hasData ? `
               <span class="date-sep">|</span>
               <span class="stepper-duration-tag ${dur.isOngoing ? 'ongoing' : isCompleted ? 'done' : ''}" title="${escapeHtml(dur.tooltip)}">
                 ⏱️ ระยะเวลา: <strong>${dur.workingDays} วันทำการ</strong>${dur.isOngoing ? ' <span class="badge-subtext">(กำลังดำเนินการ)</span>' : ''}
               </span>
-            ` : `
-              <span class="date-sep">|</span>
-              <span class="stepper-duration-tag pending" title="ยังไม่มีข้อมูลวันที่">
-                ⏱️ ระยะเวลา: -
-              </span>
-            `}
+            ` : ''}
+            ${step.stepNumber === 3 && isCompleted ? `
+              <span class="badge" style="background: #dcfce7; color: #166534; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; font-weight: 600;">🏁 สิ้นสุดการนับระยะเวลา</span>
+            ` : ''}
+            ${step.stepNumber === 4 ? `
+              <span style="font-size: 0.72rem; color: var(--text-muted);">(ไม่นำมานับในระยะเวลาพิจารณา)</span>
+            ` : ''}
           </div>
 
           ${hasIssue ? `
@@ -1874,11 +2016,10 @@ function resetCreateRegItems() {
         <div class="form-group" style="margin-bottom: 0;">
           <label style="font-size: 0.82rem;">ขั้นตอนเริ่มต้น / อยู่ที่ขั้นตอน <span style="color: red;">*</span></label>
           <select name="itemStep" class="form-control" style="font-weight: 500;" required>
-            <option value="1" selected>🟡 ขั้นที่ 1: ยื่นเรื่องและรับเอกสารคำขอ</option>
-            <option value="2">🟡 ขั้นที่ 2: กลุ่มจัดตั้งฯ ตรวจสอบเบื้องต้น</option>
-            <option value="3">🟡 ขั้นที่ 3: กลุ่มตรวจการฯ/นิติการตรวจร่าง</option>
-            <option value="4">🟡 ขั้นที่ 4: เสนอนายทะเบียนสหกรณ์พิจารณา</option>
-            <option value="5">🟢 ขั้นที่ 5: แจ้งผลและส่งมอบให้ถือใช้ (เสร็จสิ้น)</option>
+            <option value="1" selected>🟡 ขั้นที่ 1: ฝ่ายบริหาร สำนักงานสหกรณ์จังหวัดรับเอกสาร</option>
+            <option value="2">🟡 ขั้นที่ 2: กลุ่มจัดตั้งและส่งเสริมสหกรณ์ ตรวจสอบข้อมูล</option>
+            <option value="3">🟡 ขั้นที่ 3: เสนอนายทะเบียนสหกรณ์ พิจารณา</option>
+            <option value="4">🟢 ขั้นที่ 4: ส่งเอกสารให้สหกรณ์และหน่วยงานที่เกี่ยวข้อง (เสร็จสิ้น)</option>
           </select>
         </div>
       </div>
@@ -1910,18 +2051,18 @@ function addRegulationRowToCreateForm() {
       <div class="form-group" style="margin-bottom: 0;">
         <label style="font-size: 0.82rem;">ประเภทรายการ <span style="color: red;">*</span></label>
         <select name="itemDocType" class="form-control" required>
-          <option value="ข้อบังคับสหกรณ์">ข้อบังคับสหกรณ์ / ข้อบังคับกลุ่มเกษตรกร</option>
-          <option value="ระเบียบสหกรณ์" selected>ระเบียบสหกรณ์ / ระเบียบกลุ่มเกษตรกร</option>
+          <option value="ข้อบังคับสหกรณ์">📘 ข้อบังคับสหกรณ์ (14 วัน)</option>
+          <option value="ระเบียบสหกรณ์ (เห็นชอบ)">📗 ระเบียบสหกรณ์ - เห็นชอบ (7 วัน)</option>
+          <option value="ระเบียบสหกรณ์ (รับทราบ)" selected>📙 ระเบียบสหกรณ์ - รับทราบ (30 วัน)</option>
         </select>
       </div>
       <div class="form-group" style="margin-bottom: 0;">
         <label style="font-size: 0.82rem;">ขั้นตอนเริ่มต้น / อยู่ที่ขั้นตอน <span style="color: red;">*</span></label>
         <select name="itemStep" class="form-control" style="font-weight: 500;" required>
-          <option value="1" selected>🟡 ขั้นที่ 1: ยื่นเรื่องและรับเอกสารคำขอ</option>
-          <option value="2">🟡 ขั้นที่ 2: กลุ่มจัดตั้งฯ ตรวจสอบเบื้องต้น</option>
-          <option value="3">🟡 ขั้นที่ 3: กลุ่มตรวจการฯ/นิติการตรวจร่าง</option>
-          <option value="4">🟡 ขั้นที่ 4: เสนอนายทะเบียนสหกรณ์พิจารณา</option>
-          <option value="5">🟢 ขั้นที่ 5: แจ้งผลและส่งมอบให้ถือใช้ (เสร็จสิ้น)</option>
+          <option value="1" selected>🟡 ขั้นที่ 1: ฝ่ายบริหาร สำนักงานสหกรณ์จังหวัดรับเอกสาร</option>
+          <option value="2">🟡 ขั้นที่ 2: กลุ่มจัดตั้งและส่งเสริมสหกรณ์ ตรวจสอบข้อมูล</option>
+          <option value="3">🟡 ขั้นที่ 3: เสนอนายทะเบียนสหกรณ์ พิจารณา</option>
+          <option value="4">🟢 ขั้นที่ 4: ส่งเอกสารให้สหกรณ์และหน่วยงานที่เกี่ยวข้อง (เสร็จสิ้น)</option>
         </select>
       </div>
     </div>
@@ -2012,51 +2153,108 @@ async function handleCreateRegSubmit(e) {
   }
 }
 
-function openUpdateRegStepModal(stepNumber) {
+function openUpdateRegMilestonesModal() {
   const regData = AppState.selectedReg;
   if (!regData) return;
-  const step = (regData.steps || []).find(s => parseInt(s.stepNumber, 10) === parseInt(stepNumber, 10));
-  if (!step) return;
 
-  document.getElementById('updateRegStepNumber').value = stepNumber;
-  document.getElementById('updateRegStepTitle').innerText = `แก้ไขขั้นตอนที่ ${stepNumber}: ${step.stepName}`;
-  document.getElementById('updateRegStepStatus').value = step.status || 'ยังไม่เริ่ม';
-  document.getElementById('updateRegStepStartDate').value = toThaiDateInput(step.startDate);
-  document.getElementById('updateRegStepEndDate').value = toThaiDateInput(step.endDate);
-  document.getElementById('updateRegStepIssue').value = step.issue || '';
-  document.getElementById('updateRegStepNote').value = step.note || '';
+  const regIdInput = document.getElementById('updateRegMilestonesRegId');
+  if (regIdInput) regIdInput.value = regData.regId || '';
 
-  openModal('updateRegStepModal');
+  const subTitle = document.getElementById('updateRegMilestonesSub');
+  if (subTitle) {
+    subTitle.innerText = `${regData.coopName || ''} • ${regData.title || ''}`;
+  }
+
+  // 1. วันที่ฝ่ายบริหารลงรับหนังสือ
+  const recInput = document.getElementById('regMilestoneReceiveDate');
+  if (recInput) {
+    recInput.value = toThaiDateInput(regData.receiveDate || regData.submitDate || '');
+  }
+
+  // 2. วันที่หนังสือออกจากกลุ่มจัดตั้ง
+  const exitInput = document.getElementById('regMilestoneGroupExitDate');
+  if (exitInput) {
+    exitInput.value = toThaiDateInput(regData.groupExitDate || '');
+  }
+
+  // 3. วันที่นายทะเบียนรับจดทะเบียน (จุดสิ้นสุดการนับวันทำการ)
+  const appInput = document.getElementById('regMilestoneApproveDate');
+  if (appInput) {
+    appInput.value = toThaiDateInput(regData.approveDate || regData.regApproveDate || '');
+  }
+
+  // 4. การส่งเอกสารให้สหกรณ์
+  const dispCheck = document.getElementById('regMilestoneDocDispatched');
+  const dispDateInput = document.getElementById('regMilestoneDispatchDate');
+  const isDispatched = !!(regData.dispatchDate || (regData.steps && regData.steps.some(s => parseInt(s.stepNumber, 10) === 4 && s.status === 'เสร็จสิ้น')));
+  if (dispCheck) {
+    dispCheck.checked = isDispatched;
+  }
+  if (dispDateInput) {
+    dispDateInput.value = toThaiDateInput(regData.dispatchDate || '');
+  }
+
+  // ข้อสังเกต / จุดที่ต้องแก้ไข
+  const issueInput = document.getElementById('regMilestoneIssue');
+  if (issueInput) {
+    let issueVal = regData.issue || '';
+    if (!issueVal && Array.isArray(regData.steps)) {
+      const s3 = regData.steps.find(s => parseInt(s.stepNumber, 10) === 3);
+      const s2 = regData.steps.find(s => parseInt(s.stepNumber, 10) === 2);
+      issueVal = (s3 && s3.issue) || (s2 && s2.issue) || '';
+    }
+    issueInput.value = issueVal;
+  }
+
+  // หมายเหตุ
+  const noteInput = document.getElementById('regMilestoneNote');
+  if (noteInput) {
+    noteInput.value = regData.note || '';
+  }
+
+  openModal('updateRegMilestonesModal');
 }
 
-async function handleUpdateRegStepSubmit(e) {
-  e.preventDefault();
-  const regData = AppState.selectedReg;
-  if (!regData) return;
+function openUpdateRegStepModal(stepNumber) {
+  openUpdateRegMilestonesModal();
+}
 
+async function handleUpdateRegMilestonesSubmit(e) {
+  e.preventDefault();
   const form = e.target;
+  const regId = form.regId ? form.regId.value : (AppState.selectedReg ? AppState.selectedReg.regId : null);
+  if (!regId) {
+    showToast('ไม่พบรหัสระเบียบ/ข้อบังคับ', 'error');
+    return;
+  }
+
   const payload = {
-    regId: regData.regId,
-    stepNumber: parseInt(form.stepNumber.value, 10),
-    status: form.status.value,
-    startDate: fromThaiDateInput(form.startDate.value),
-    endDate: fromThaiDateInput(form.endDate.value),
-    issue: form.issue.value.trim(),
-    note: form.note.value.trim()
+    regId: regId,
+    receiveDate: fromThaiDateInput(form.receiveDate ? form.receiveDate.value : ''),
+    groupExitDate: fromThaiDateInput(form.groupExitDate ? form.groupExitDate.value : ''),
+    regApproveDate: fromThaiDateInput(form.regApproveDate ? form.regApproveDate.value : ''),
+    docDispatched: form.docDispatched ? form.docDispatched.checked : false,
+    dispatchDate: fromThaiDateInput(form.dispatchDate ? form.dispatchDate.value : ''),
+    issue: form.issue ? form.issue.value.trim() : '',
+    note: form.note ? form.note.value.trim() : ''
   };
 
   setLoading(true);
   try {
-    await ApiClient.post('updateRegStep', payload);
-    showToast('อัพเดตขั้นตอนการพิจารณาเรียบร้อย', 'success');
-    closeModal('updateRegStepModal');
-    await openRegDetail(regData.regId);
+    await ApiClient.post('updateRegMilestones', payload);
+    showToast('บันทึกวันสำคัญและอัพเดตขั้นตอนการพิจารณาเรียบร้อย', 'success');
+    closeModal('updateRegMilestonesModal');
+    await openRegDetail(regId);
     await loadRegulationsData();
   } catch (err) {
     showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
   } finally {
     setLoading(false);
   }
+}
+
+async function handleUpdateRegStepSubmit(e) {
+  return handleUpdateRegMilestonesSubmit(e);
 }
 
 function openEditRegInfoModal() {
@@ -2321,7 +2519,7 @@ function logout() {
   // Close any admin-only modals that may be open
   const adminModals = [
     'createCaseModal', 'updateStepModal', 'addLiquidatorModal', 'editLiquidatorModal',
-    'editCaseModal', 'uploadDocModal', 'createRegModal', 'updateRegStepModal',
+    'editCaseModal', 'uploadDocModal', 'createRegModal', 'updateRegStepModal', 'updateRegMilestonesModal',
     'editRegModal', 'uploadRegDocModal', 'auditLogModal', 'loginModal'
   ];
   adminModals.forEach(modalId => closeModal(modalId));
@@ -2456,9 +2654,23 @@ function setupEventListeners() {
   document.getElementById('uploadDocForm')?.addEventListener('submit', handleUploadDocSubmit);
 
   document.getElementById('createRegForm')?.addEventListener('submit', handleCreateRegSubmit);
+  document.getElementById('updateRegMilestonesForm')?.addEventListener('submit', handleUpdateRegMilestonesSubmit);
   document.getElementById('updateRegStepForm')?.addEventListener('submit', handleUpdateRegStepSubmit);
   document.getElementById('editRegForm')?.addEventListener('submit', handleEditRegSubmit);
   document.getElementById('uploadRegDocForm')?.addEventListener('submit', handleUploadRegDocSubmit);
+
+  // Auto set dispatch date when checkbox is checked
+  const milestoneDocDispatchedCheck = document.getElementById('regMilestoneDocDispatched');
+  if (milestoneDocDispatchedCheck) {
+    milestoneDocDispatchedCheck.addEventListener('change', (e) => {
+      const dispatchInput = document.getElementById('regMilestoneDispatchDate');
+      if (dispatchInput) {
+        if (e.target.checked && !dispatchInput.value.trim()) {
+          dispatchInput.value = todayThaiDate();
+        }
+      }
+    });
+  }
 
   setupDropzones();
 }
@@ -3087,19 +3299,14 @@ function exportCurrentRegPdf() {
     return;
   }
 
-  const isApproved = regData.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || regData.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || regData.currentStep >= 5;
+  const maxRegSteps = CONFIG.REGULATION_STEPS?.length || 4;
+  const isApproved = regData.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || regData.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || regData.currentStep >= maxRegSteps;
   const printDateStr = formatThaiDateTime(new Date());
 
-  // Calculate working days
-  let totalWorkingDays = 0;
-  if (Array.isArray(regData.steps)) {
-    regData.steps.forEach(step => {
-      const dur = WorkingDaysUtil.calculate(step.startDate, step.endDate, step.status);
-      if (dur.hasData && (step.status === 'เสร็จสิ้น' || step.status === 'กำลังดำเนินการ')) {
-        totalWorkingDays += dur.workingDays;
-      }
-    });
-  }
+  // Calculate working days (SLA counts strictly up to Step 3: Registrar Approval)
+  const regDur = getRegDuration(regData);
+  const totalWorkingDays = regDur.hasData ? regDur.workingDays : 0;
+  const regSla = regDur.sla;
 
   // Steps rows
   const stepsRows = (regData.steps || []).map((step, idx) => {
@@ -3188,7 +3395,7 @@ function exportCurrentRegPdf() {
         </div>
         <div class="report-info-item">
           <span class="report-info-label">ประเภทเอกสาร</span>
-          <span class="report-info-value">${escapeHtml(regData.docType || 'ข้อบังคับสหกรณ์')}</span>
+          <span class="report-info-value">${escapeHtml((regSla && regSla.conf && regSla.conf.label) || regData.docType || 'ข้อบังคับสหกรณ์')}</span>
         </div>
         <div class="report-info-item">
           <span class="report-info-label">สหกรณ์ / สถาบันเกษตรกร</span>
@@ -3203,8 +3410,8 @@ function exportCurrentRegPdf() {
           <span class="report-info-value">${escapeHtml(regData.docNumber || '-')}</span>
         </div>
         <div class="report-info-item">
-          <span class="report-info-label">วันที่ยื่นเรื่อง</span>
-          <span class="report-info-value">${formatThaiDate(regData.submitDate)}</span>
+          <span class="report-info-label">วันที่ฝ่ายลงรับหนังสือ</span>
+          <span class="report-info-value">${formatThaiDate(regData.receiveDate || regData.submitDate)}</span>
         </div>
         <div class="report-info-item">
           <span class="report-info-label">เจ้าหน้าที่ผู้รับผิดชอบ</span>
@@ -3219,16 +3426,22 @@ function exportCurrentRegPdf() {
           </span>
         </div>
         <div class="report-info-item">
-          <span class="report-info-label">ระยะเวลาดำเนินการรวม (วันทำการ)</span>
-          <span class="report-info-value" style="color: #0e3760; font-weight: 700;">${totalWorkingDays} วันทำการ (ไม่รวมวันหยุดราชการ)</span>
+          <span class="report-info-label">กรอบเวลากำหนดตามระเบียบ/กฎหมาย (SLA)</span>
+          <span class="report-info-value" style="color: #0e3760; font-weight: 600;">
+            ${regSla && regSla.hasData ? `${regSla.slaDays} วัน (${escapeHtml(regSla.conf.actionWord)}) • ${regSla.badgeText} (ครบกำหนด: ${formatThaiDate(regSla.dueDate)})` : '-'}
+          </span>
+        </div>
+        <div class="report-info-item">
+          <span class="report-info-label">ระยะเวลาพิจารณาจริงสะสม (วันทำการ)</span>
+          <span class="report-info-value" style="color: #0e3760; font-weight: 700;">${totalWorkingDays} วันทำการ (นับถึงขั้นตอนที่ 3: นายทะเบียนรับจดทะเบียน)</span>
         </div>
       </div>
     </div>
 
-    <!-- Section 2: 5 Steps Progress -->
+    <!-- Section 2: 4 Steps Progress -->
     <div class="report-section">
       <div class="report-section-header">
-        <h4 class="report-section-title">2. ผลการดำเนินงาน 5 ขั้นตอนการพิจารณา</h4>
+        <h4 class="report-section-title">2. ผลการดำเนินงาน 4 ขั้นตอนการพิจารณา</h4>
       </div>
       <table class="report-table">
         <thead>
@@ -3427,14 +3640,15 @@ function exportRegulationsListPdf() {
   // Statistics
   const totalCount = items.length;
   const bylawCount = items.filter(r => r.docType === 'ข้อบังคับสหกรณ์').length;
+  const maxRegSteps = CONFIG.REGULATION_STEPS?.length || 4;
   const ruleCount = items.filter(r => r.docType === 'ระเบียบสหกรณ์').length;
-  const doneCount = items.filter(r => r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= 5).length;
-  const pendingCount = items.filter(r => r.status !== 'รับจดทะเบียน/เห็นชอบ/รับทราบ' && r.status !== 'รับจดทะเบียน/เห็นชอบแล้ว' && r.currentStep < 5).length;
+  const doneCount = items.filter(r => r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= maxRegSteps).length;
+  const pendingCount = items.filter(r => r.status !== 'รับจดทะเบียน/เห็นชอบ/รับทราบ' && r.status !== 'รับจดทะเบียน/เห็นชอบแล้ว' && r.currentStep < maxRegSteps).length;
 
   const filterDesc = `ตัวกรอง: ประเภทเอกสาร [${AppState.regFilterDocType}] | ขั้นตอน [${AppState.regFilterStep}] | สถานะ [${AppState.regFilterStatus}] ${AppState.regSearchTerm ? '| ค้นหา: "' + AppState.regSearchTerm + '"' : ''}`;
 
   const rows = items.map((item, idx) => {
-    const isDone = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || item.currentStep >= 5;
+    const isDone = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || item.currentStep >= maxRegSteps;
 
     return `
       <tr>
@@ -3451,7 +3665,7 @@ function exportRegulationsListPdf() {
         <td style="font-size: 0.76rem;">${escapeHtml(item.docNumber || '-')}</td>
         <td style="font-size: 0.76rem; text-align: center;">${formatThaiDate(item.submitDate)}</td>
         <td style="text-align: center; font-size: 0.76rem;">
-          <div style="font-weight: 600;">ขั้นที่ ${item.currentStep || 1}/5</div>
+          <div style="font-weight: 600;">ขั้นที่ ${item.currentStep || 1}/${maxRegSteps}</div>
         </td>
         <td style="font-size: 0.76rem;">${escapeHtml(item.officerName || '-')}</td>
         <td style="text-align: center;">
@@ -3790,7 +4004,7 @@ async function exportAllActiveOperationsPdf() {
   // Render Regulations Table Rows
   const regRows = activeRegs.length > 0 ? activeRegs.map((item, idx) => {
     const curStepNum = parseInt(item.currentStep, 10) || 1;
-    const dur = WorkingDaysUtil.calculate(item.submitDate, null, 'อยู่ระหว่างพิจารณา');
+    const dur = getRegDuration(item);
     const isReturned = item.status === 'ส่งคืนแก้ไข';
 
     return `
@@ -3801,16 +4015,17 @@ async function exportAllActiveOperationsPdf() {
           <div style="font-size: 0.72rem; color: #64748b;">${escapeHtml(item.coopName)} (${escapeHtml(item.regNumber || '-')})</div>
         </td>
         <td style="text-align: center; font-size: 0.74rem;">
-          <span class="report-badge ${item.docType === 'ข้อบังคับสหกรณ์' ? 'report-badge-active' : 'report-badge-pending'}">
-            ${escapeHtml(item.docType || 'ข้อบังคับ')}
+          <span class="report-badge ${dur.sla?.conf?.badgeClass || 'report-badge-active'}">
+            ${escapeHtml(dur.sla?.conf?.shortLabel || item.docType || 'ข้อบังคับ')}
           </span>
+          <div style="font-size: 0.68rem; color: #64748b; margin-top: 2px;">SLA: ${dur.sla?.slaDays || 14} วัน</div>
         </td>
         <td style="font-size: 0.74rem;">
           <div>${escapeHtml(item.docNumber || '-')}</div>
-          <div style="color: #64748b;">ยื่น: ${formatThaiDate(item.submitDate)}</div>
+          <div style="color: #64748b;">ลงรับ: ${formatThaiDate(item.receiveDate || item.submitDate)}</div>
         </td>
         <td style="text-align: center; font-size: 0.74rem;">
-          <div style="font-weight: 600; color: #0d9488;">ขั้นที่ ${curStepNum}/5</div>
+          <div style="font-weight: 600; color: #0d9488;">ขั้นที่ ${curStepNum}/${CONFIG.REGULATION_STEPS?.length || 4}</div>
           <div style="font-size: 0.7rem; color: #64748b;">${escapeHtml(CONFIG.REGULATION_STEPS[curStepNum - 1]?.title || '')}</div>
         </td>
         <td style="font-size: 0.74rem;">
@@ -3819,6 +4034,7 @@ async function exportAllActiveOperationsPdf() {
         </td>
         <td style="text-align: center; font-size: 0.74rem; font-weight: 600; color: #0e3760;">
           ${dur.hasData ? `${dur.workingDays} วันทำการ` : '-'}
+          ${dur.sla && dur.sla.hasData ? `<div style="margin-top: 3px;"><span class="sla-badge ${dur.sla.badgeClass}" style="font-size: 0.65rem;">${dur.sla.badgeText}</span></div>` : ''}
         </td>
         <td style="text-align: center;">
           <span class="report-badge ${isReturned ? 'report-badge-issue' : 'report-badge-active'}">
@@ -4087,7 +4303,7 @@ function exportActiveRegulationsOnlyPdf() {
 
   const rows = activeRegs.map((item, idx) => {
     const curStepNum = parseInt(item.currentStep, 10) || 1;
-    const dur = WorkingDaysUtil.calculate(item.submitDate, null, 'อยู่ระหว่างพิจารณา');
+    const dur = getRegDuration(item);
     const isReturned = item.status === 'ส่งคืนแก้ไข';
 
     return `
@@ -4098,16 +4314,17 @@ function exportActiveRegulationsOnlyPdf() {
           <div style="font-size: 0.74rem; color: #64748b;">${escapeHtml(item.coopName)} (${escapeHtml(item.regNumber || '-')})</div>
         </td>
         <td style="text-align: center; font-size: 0.76rem;">
-          <span class="report-badge ${item.docType === 'ข้อบังคับสหกรณ์' ? 'report-badge-active' : 'report-badge-pending'}">
-            ${escapeHtml(item.docType || 'ข้อบังคับ')}
+          <span class="report-badge ${dur.sla?.conf?.badgeClass || 'report-badge-active'}">
+            ${escapeHtml(dur.sla?.conf?.shortLabel || item.docType || 'ข้อบังคับ')}
           </span>
+          <div style="font-size: 0.68rem; color: #64748b; margin-top: 2px;">SLA: ${dur.sla?.slaDays || 14} วัน</div>
         </td>
         <td style="font-size: 0.76rem;">
           <div>${escapeHtml(item.docNumber || '-')}</div>
-          <div style="color: #64748b;">ยื่น: ${formatThaiDate(item.submitDate)}</div>
+          <div style="color: #64748b;">ลงรับ: ${formatThaiDate(item.receiveDate || item.submitDate)}</div>
         </td>
         <td style="text-align: center; font-size: 0.76rem;">
-          <div style="font-weight: 600; color: #0d9488;">ขั้นที่ ${curStepNum}/5</div>
+          <div style="font-weight: 600; color: #0d9488;">ขั้นที่ ${curStepNum}/${CONFIG.REGULATION_STEPS?.length || 4}</div>
           <div style="font-size: 0.7rem; color: #64748b;">${escapeHtml(CONFIG.REGULATION_STEPS[curStepNum - 1]?.title || '')}</div>
         </td>
         <td style="font-size: 0.76rem;">
@@ -4116,6 +4333,7 @@ function exportActiveRegulationsOnlyPdf() {
         </td>
         <td style="text-align: center; font-size: 0.76rem; font-weight: 600; color: #0e3760;">
           ${dur.hasData ? `${dur.workingDays} วันทำการ` : '-'}
+          ${dur.sla && dur.sla.hasData ? `<div style="margin-top: 3px;"><span class="sla-badge ${dur.sla.badgeClass}" style="font-size: 0.65rem;">${dur.sla.badgeText}</span></div>` : ''}
         </td>
         <td style="text-align: center;">
           <span class="report-badge ${isReturned ? 'report-badge-issue' : 'report-badge-active'}">
@@ -4143,7 +4361,7 @@ function exportActiveRegulationsOnlyPdf() {
 
     <div class="report-title-banner">
       <h3>รายงานสรุปการพิจารณาระเบียบและข้อบังคับ (เฉพาะเรื่องที่อยู่ระหว่างพิจารณา)</h3>
-      <div class="report-subtitle">ติดตาม 5 ขั้นตอนการพิจารณา ระยะเวลาสะสม และเจ้าหน้าที่ผู้รับผิดชอบ</div>
+      <div class="report-subtitle">ติดตาม 4 ขั้นตอนการพิจารณา ระยะเวลาสะสม และเจ้าหน้าที่ผู้รับผิดชอบ</div>
     </div>
 
     <div class="report-kpi-row">
@@ -4310,7 +4528,7 @@ function renderActiveExportTables(casesToRender, regsToRender) {
     } else {
       tbodyRegs.innerHTML = regsToRender.map((item, idx) => {
         const curStepNum = parseInt(item.currentStep, 10) || 1;
-        const dur = WorkingDaysUtil.calculate(item.submitDate, null, 'อยู่ระหว่างพิจารณา');
+        const dur = getRegDuration(item);
         const isReturned = item.status === 'ส่งคืนแก้ไข';
         const typeBadgeClass = item.docType === 'ข้อบังคับสหกรณ์' ? 'reg-type-bylaw' : 'reg-type-rule';
 
@@ -4327,7 +4545,7 @@ function renderActiveExportTables(casesToRender, regsToRender) {
               <div style="font-size: 0.75rem; color: var(--text-muted);">ยื่น: ${formatThaiDate(item.submitDate)}</div>
             </td>
             <td>
-              <div style="font-weight: 600; color: #0d9488; font-size: 0.8rem;">ขั้นที่ ${curStepNum}/5</div>
+              <div style="font-weight: 600; color: #0d9488; font-size: 0.8rem;">ขั้นที่ ${curStepNum}/${CONFIG.REGULATION_STEPS?.length || 4}</div>
               <div style="font-size: 0.72rem; color: var(--text-muted);">${escapeHtml(CONFIG.REGULATION_STEPS[curStepNum - 1]?.title || '')}</div>
             </td>
             <td style="font-size: 0.78rem;">
@@ -4519,8 +4737,10 @@ async function exportCombinedActiveExcel() {
       "ชื่อสหกรณ์ / สถาบันเกษตรกร",
       "เลขทะเบียนสหกรณ์",
       "ประเภทเอกสาร",
+      "กรอบเวลา SLA (วัน)",
+      "สถานะ SLA",
       "เลขที่หนังสือยื่น",
-      "วันที่ยื่นเรื่อง",
+      "วันที่ฝ่ายลงรับหนังสือ",
       "ขั้นตอนปัจจุบัน",
       "ชื่อขั้นตอนการพิจารณา",
       "เจ้าหน้าที่ผู้รับผิดชอบ",
@@ -4534,18 +4754,21 @@ async function exportCombinedActiveExcel() {
 
   const regRows = activeRegs.map((item, idx) => {
     const curStepNum = parseInt(item.currentStep, 10) || 1;
-    const dur = WorkingDaysUtil.calculate(item.submitDate, null, 'อยู่ระหว่างพิจารณา');
+    const dur = getRegDuration(item);
     const stepTitle = CONFIG.REGULATION_STEPS[curStepNum - 1]?.title || `ขั้นที่ ${curStepNum}`;
+    const sla = dur.sla;
 
     return [
       idx + 1,
       item.title || '-',
       item.coopName || '-',
       item.regNumber || '-',
-      item.docType || 'ข้อบังคับ',
+      (sla && sla.conf && sla.conf.label) || item.docType || 'ข้อบังคับ',
+      sla ? sla.slaDays : 14,
+      sla ? sla.badgeText : '-',
       item.docNumber || '-',
-      formatThaiDate(item.submitDate),
-      `ขั้นที่ ${curStepNum}/5`,
+      formatThaiDate(item.receiveDate || item.submitDate),
+      `ขั้นที่ ${curStepNum}/${CONFIG.REGULATION_STEPS?.length || 4}`,
       stepTitle,
       item.officerName || '-',
       item.officerContact || '-',
@@ -4652,21 +4875,24 @@ function exportCombinedActiveCsv() {
   });
 
   csvContent += "\r\n=== หมวดที่ 2: รายการระเบียบและข้อบังคับสหกรณ์ที่อยู่ระหว่างการพิจารณา ===\r\n";
-  csvContent += "ลำดับ,ชื่อเรื่องระเบียบ/ข้อบังคับ,ชื่อสหกรณ์,เลขทะเบียน,ประเภทเอกสาร,เลขที่ยื่น,วันที่ยื่นเรื่อง,ขั้นตอนปัจจุบัน,จนท.ผู้รับผิดชอบ,เบอร์ติดต่อ,วันทำการสะสม,สถานะ,ข้อตรวจพบ/หมายเหตุ\r\n";
+  csvContent += "ลำดับ,ชื่อเรื่องระเบียบ/ข้อบังคับ,ชื่อสหกรณ์,เลขทะเบียน,ประเภทเอกสาร,กรอบเวลา SLA (วัน),สถานะ SLA,เลขที่ยื่น,วันที่ฝ่ายลงรับหนังสือ,ขั้นตอนปัจจุบัน,จนท.ผู้รับผิดชอบ,เบอร์ติดต่อ,วันทำการสะสม,สถานะ,ข้อตรวจพบ/หมายเหตุ\r\n";
 
   activeRegs.forEach((item, idx) => {
     const curStepNum = parseInt(item.currentStep, 10) || 1;
-    const dur = WorkingDaysUtil.calculate(item.submitDate, null, 'อยู่ระหว่างพิจารณา');
+    const dur = getRegDuration(item);
+    const sla = dur.sla;
 
     const row = [
       idx + 1,
       `"${(item.title || '').replace(/"/g, '""')}"`,
       `"${(item.coopName || '').replace(/"/g, '""')}"`,
       `"${(item.regNumber || '').replace(/"/g, '""')}"`,
-      `"${item.docType || 'ข้อบังคับ'}"`,
+      `"${(sla && sla.conf && sla.conf.label) || item.docType || 'ข้อบังคับ'}"`,
+      sla ? sla.slaDays : 14,
+      `"${(sla ? sla.badgeText : '-').replace(/"/g, '""')}"`,
       `"${(item.docNumber || '').replace(/"/g, '""')}"`,
-      `"${formatThaiDate(item.submitDate)}"`,
-      `"ขั้นที่ ${curStepNum}/5"`,
+      `"${formatThaiDate(item.receiveDate || item.submitDate)}"`,
+      `"ขั้นที่ ${curStepNum}/${CONFIG.REGULATION_STEPS?.length || 4}"`,
       `"${(item.officerName || '').replace(/"/g, '""')}"`,
       `"${(item.officerContact || '').replace(/"/g, '""')}"`,
       dur.hasData ? dur.workingDays : 0,
@@ -4714,6 +4940,10 @@ window.switchActiveExportTab = switchActiveExportTab;
 window.filterActiveExportPreview = filterActiveExportPreview;
 window.exportCombinedActiveExcel = exportCombinedActiveExcel;
 window.exportCombinedActiveCsv = exportCombinedActiveCsv;
+window.openUpdateRegMilestonesModal = openUpdateRegMilestonesModal;
+window.handleUpdateRegMilestonesSubmit = handleUpdateRegMilestonesSubmit;
+window.openUpdateRegStepModal = openUpdateRegStepModal;
+window.handleUpdateRegStepSubmit = handleUpdateRegStepSubmit;
 window.triggerActiveExportDirectPrint = triggerActiveExportDirectPrint;
 
 // Startup
