@@ -1997,32 +1997,53 @@ function switchRegDetailTab(tab) {
   document.getElementById('tabRegDocuments').style.display = tab === 'regDocuments' ? 'block' : 'none';
 }
 
-function resetCreateRegItems() {
-  const container = document.getElementById('createRegItemsList');
-  if (!container) return;
-  container.innerHTML = `
-    <div class="reg-input-row" style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px;">
+function renderRegulationRowHtml(num, hasRemoveBtn = false) {
+  return `
+    <div class="reg-input-row" style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px; margin-bottom: 8px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <span class="reg-row-title" style="font-weight: 600; font-size: 0.85rem; color: var(--primary);">📜 รายการระเบียบ / ข้อบังคับที่ 1</span>
+        <span class="reg-row-title" style="font-weight: 600; font-size: 0.85rem; color: var(--primary);">📜 รายการระเบียบ / ข้อบังคับที่ ${num}</span>
+        ${hasRemoveBtn ? `
+          <button type="button" class="btn btn-danger btn-sm" onclick="removeRegulationRow(this)" style="padding: 2px 8px; font-size: 0.75rem;">
+            ✕ ลบออก
+          </button>
+        ` : ''}
       </div>
+
       <div class="form-row" style="margin-bottom: 8px;">
-        <div class="form-group" style="margin-bottom: 0;">
+        <div class="form-group" style="margin-bottom: 0; flex: 1;">
           <label style="font-size: 0.82rem;">ประเภทรายการ <span style="color: red;">*</span></label>
-          <select name="itemDocType" class="form-control" required>
-            <option value="ข้อบังคับสหกรณ์">ข้อบังคับสหกรณ์ / ข้อบังคับกลุ่มเกษตรกร</option>
-            <option value="ระเบียบสหกรณ์" selected>ระเบียบสหกรณ์ / ระเบียบกลุ่มเกษตรกร</option>
+          <select name="itemDocCategory" class="form-control" onchange="onRegCategoryChange(this)" required>
+            <option value="ระเบียบสหกรณ์" selected>📙 ระเบียบสหกรณ์</option>
+            <option value="ข้อบังคับสหกรณ์">📘 ข้อบังคับสหกรณ์</option>
           </select>
         </div>
-        <div class="form-group" style="margin-bottom: 0;">
-          <label style="font-size: 0.82rem;">ขั้นตอนเริ่มต้น / อยู่ที่ขั้นตอน <span style="color: red;">*</span></label>
+
+        <div class="form-group reg-sub-type-wrap" style="margin-bottom: 0; flex: 1.2;">
+          <label style="font-size: 0.82rem;">ลักษณะระเบียบ / กำหนดเวลา <span style="color: red;">*</span></label>
+          <select name="itemDocSubType" class="form-control" style="font-weight: 500;">
+            <option value="ระเบียบสหกรณ์ (รับทราบ)" selected>📙 ระเบียบรับทราบ (กำหนด 30 วัน)</option>
+            <option value="ระเบียบสหกรณ์ (เห็นชอบ)">📗 ระเบียบเห็นชอบ (กำหนด 7 วัน)</option>
+          </select>
+        </div>
+
+        <div class="form-group reg-bylaw-hint" style="margin-bottom: 0; flex: 1.2; display: none;">
+          <label style="font-size: 0.82rem;">กรอบเวลาพิจารณา (SLA)</label>
+          <div style="padding: 8px 12px; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 6px; color: #0369a1; font-size: 0.82rem; font-weight: 600;">
+            ⏱️ ข้อบังคับกำหนดรับจดทะเบียนใน 14 วัน
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0; flex: 1.1;">
+          <label style="font-size: 0.82rem;">ขั้นตอนเริ่มต้น <span style="color: red;">*</span></label>
           <select name="itemStep" class="form-control" style="font-weight: 500;" required>
-            <option value="1" selected>🟡 ขั้นที่ 1: ฝ่ายบริหาร สำนักงานสหกรณ์จังหวัดรับเอกสาร</option>
-            <option value="2">🟡 ขั้นที่ 2: กลุ่มจัดตั้งและส่งเสริมสหกรณ์ ตรวจสอบข้อมูล</option>
-            <option value="3">🟡 ขั้นที่ 3: เสนอนายทะเบียนสหกรณ์ พิจารณา</option>
-            <option value="4">🟢 ขั้นที่ 4: ส่งเอกสารให้สหกรณ์และหน่วยงานที่เกี่ยวข้อง (เสร็จสิ้น)</option>
+            <option value="1" selected>🟡 ขั้นที่ 1: ฝ่ายบริหารลงรับ</option>
+            <option value="2">🟡 ขั้นที่ 2: กลุ่มจัดตั้งฯตรวจ</option>
+            <option value="3">🟡 ขั้นที่ 3: เสนอนายทะเบียน</option>
+            <option value="4">🟢 ขั้นที่ 4: ส่งเอกสาร (เสร็จ)</option>
           </select>
         </div>
       </div>
+
       <div class="form-group" style="margin-bottom: 0;">
         <label style="font-size: 0.82rem;">ชื่อระเบียบ / ข้อบังคับ <span style="color: red;">*</span></label>
         <input type="text" name="itemTitle" class="form-control" placeholder="เช่น ระเบียบว่าด้วยการให้เงินกู้แก่สมาชิก พ.ศ. 2567" required>
@@ -2031,47 +2052,45 @@ function resetCreateRegItems() {
   `;
 }
 
+function onRegCategoryChange(selectEl) {
+  const row = selectEl.closest('.reg-input-row');
+  if (!row) return;
+  const isRule = selectEl.value === 'ระเบียบสหกรณ์';
+  const subWrap = row.querySelector('.reg-sub-type-wrap');
+  const bLawHint = row.querySelector('.reg-bylaw-hint');
+  if (subWrap) subWrap.style.display = isRule ? 'block' : 'none';
+  if (bLawHint) bLawHint.style.display = isRule ? 'none' : 'block';
+}
+
+function onEditRegCategoryChange() {
+  const mainCatEl = document.getElementById('editRegMainCategory');
+  if (!mainCatEl) return;
+  const isRule = mainCatEl.value === 'ระเบียบสหกรณ์';
+  const subWrap = document.getElementById('editRegSubTypeWrap');
+  const bLawHint = document.getElementById('editRegBylawHint');
+  if (subWrap) subWrap.style.display = isRule ? 'block' : 'none';
+  if (bLawHint) bLawHint.style.display = isRule ? 'none' : 'block';
+}
+
+function resetCreateRegItems() {
+  const container = document.getElementById('createRegItemsList');
+  if (!container) return;
+  container.innerHTML = renderRegulationRowHtml(1, false);
+}
+
 function addRegulationRowToCreateForm() {
   const container = document.getElementById('createRegItemsList');
   if (!container) return;
   const currentCount = container.querySelectorAll('.reg-input-row').length;
   const nextNum = currentCount + 1;
 
-  const newRow = document.createElement('div');
-  newRow.className = 'reg-input-row';
-  newRow.style.cssText = 'background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px; position: relative; animation: fadeIn 0.2s ease-in;';
-  newRow.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-      <span class="reg-row-title" style="font-weight: 600; font-size: 0.85rem; color: var(--primary);">📜 รายการระเบียบ / ข้อบังคับที่ ${nextNum}</span>
-      <button type="button" class="btn btn-danger btn-sm" onclick="removeRegulationRow(this)" style="padding: 2px 8px; font-size: 0.75rem;">
-        ✕ ลบออก
-      </button>
-    </div>
-    <div class="form-row" style="margin-bottom: 8px;">
-      <div class="form-group" style="margin-bottom: 0;">
-        <label style="font-size: 0.82rem;">ประเภทรายการ <span style="color: red;">*</span></label>
-        <select name="itemDocType" class="form-control" required>
-          <option value="ข้อบังคับสหกรณ์">📘 ข้อบังคับสหกรณ์ (14 วัน)</option>
-          <option value="ระเบียบสหกรณ์ (เห็นชอบ)">📗 ระเบียบสหกรณ์ - เห็นชอบ (7 วัน)</option>
-          <option value="ระเบียบสหกรณ์ (รับทราบ)" selected>📙 ระเบียบสหกรณ์ - รับทราบ (30 วัน)</option>
-        </select>
-      </div>
-      <div class="form-group" style="margin-bottom: 0;">
-        <label style="font-size: 0.82rem;">ขั้นตอนเริ่มต้น / อยู่ที่ขั้นตอน <span style="color: red;">*</span></label>
-        <select name="itemStep" class="form-control" style="font-weight: 500;" required>
-          <option value="1" selected>🟡 ขั้นที่ 1: ฝ่ายบริหาร สำนักงานสหกรณ์จังหวัดรับเอกสาร</option>
-          <option value="2">🟡 ขั้นที่ 2: กลุ่มจัดตั้งและส่งเสริมสหกรณ์ ตรวจสอบข้อมูล</option>
-          <option value="3">🟡 ขั้นที่ 3: เสนอนายทะเบียนสหกรณ์ พิจารณา</option>
-          <option value="4">🟢 ขั้นที่ 4: ส่งเอกสารให้สหกรณ์และหน่วยงานที่เกี่ยวข้อง (เสร็จสิ้น)</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-group" style="margin-bottom: 0;">
-      <label style="font-size: 0.82rem;">ชื่อระเบียบ / ข้อบังคับ <span style="color: red;">*</span></label>
-      <input type="text" name="itemTitle" class="form-control" placeholder="เช่น ระเบียบว่าด้วยการรับฝากเงิน พ.ศ. 2567" required>
-    </div>
-  `;
-  container.appendChild(newRow);
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = renderRegulationRowHtml(nextNum, true);
+  const newRow = wrapper.firstElementChild;
+  if (newRow) {
+    newRow.style.animation = 'fadeIn 0.2s ease-in';
+    container.appendChild(newRow);
+  }
 }
 
 function removeRegulationRow(btn) {
@@ -2105,12 +2124,26 @@ async function handleCreateRegSubmit(e) {
   const itemRows = document.querySelectorAll('#createRegItemsList .reg-input-row');
   const items = [];
   itemRows.forEach(row => {
-    const docTypeSelect = row.querySelector('select[name="itemDocType"]');
+    const catSelect = row.querySelector('select[name="itemDocCategory"]');
+    const subSelect = row.querySelector('select[name="itemDocSubType"]');
+    const legacyTypeSelect = row.querySelector('select[name="itemDocType"]');
     const stepSelect = row.querySelector('select[name="itemStep"]');
     const titleInput = row.querySelector('input[name="itemTitle"]');
+
+    let resolvedDocType = 'ข้อบังคับสหกรณ์';
+    if (catSelect) {
+      if (catSelect.value === 'ระเบียบสหกรณ์') {
+        resolvedDocType = subSelect ? subSelect.value : 'ระเบียบสหกรณ์ (รับทราบ)';
+      } else {
+        resolvedDocType = 'ข้อบังคับสหกรณ์';
+      }
+    } else if (legacyTypeSelect) {
+      resolvedDocType = legacyTypeSelect.value;
+    }
+
     if (titleInput && titleInput.value.trim() !== '') {
       items.push({
-        docType: docTypeSelect ? docTypeSelect.value : 'ระเบียบสหกรณ์',
+        docType: resolvedDocType,
         title: titleInput.value.trim(),
         initialStep: stepSelect ? parseInt(stepSelect.value, 10) : 1
       });

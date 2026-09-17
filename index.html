@@ -1571,18 +1571,31 @@
           </div>
 
           <div class="form-row">
-            <div class="form-group">
-              <label>ประเภทรายการ</label>
-              <select id="editRegDocType" name="docType" class="form-control">
-                <option value="ข้อบังคับสหกรณ์">📘 ข้อบังคับสหกรณ์ (14 วัน)</option>
-                <option value="ระเบียบสหกรณ์ (เห็นชอบ)">📗 ระเบียบสหกรณ์ - เห็นชอบ (7 วัน)</option>
-                <option value="ระเบียบสหกรณ์ (รับทราบ)">📙 ระเบียบสหกรณ์ - รับทราบ (30 วัน)</option>
+            <div class="form-group" style="flex: 1;">
+              <label>ประเภทรายการ <span style="color: red;">*</span></label>
+              <select id="editRegMainCategory" name="mainCategory" class="form-control" onchange="onEditRegCategoryChange()">
+                <option value="ระเบียบสหกรณ์" selected>📙 ระเบียบสหกรณ์</option>
+                <option value="ข้อบังคับสหกรณ์">📘 ข้อบังคับสหกรณ์</option>
               </select>
             </div>
-            <div class="form-group">
-              <label>ชื่อระเบียบ / ข้อบังคับ <span style="color: red;">*</span></label>
-              <input type="text" id="editRegTitle" name="title" class="form-control" required>
+            <div id="editRegSubTypeWrap" class="form-group" style="flex: 1.2;">
+              <label>ลักษณะระเบียบ / กำหนดเวลา <span style="color: red;">*</span></label>
+              <select id="editRegSubType" name="subType" class="form-control" style="font-weight: 500;">
+                <option value="ระเบียบสหกรณ์ (รับทราบ)" selected>📙 ระเบียบรับทราบ (กำหนด 30 วัน)</option>
+                <option value="ระเบียบสหกรณ์ (เห็นชอบ)">📗 ระเบียบเห็นชอบ (กำหนด 7 วัน)</option>
+              </select>
             </div>
+            <div id="editRegBylawHint" class="form-group" style="flex: 1.2; display: none;">
+              <label>กรอบเวลาพิจารณา (SLA)</label>
+              <div style="padding: 8px 12px; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 6px; color: #0369a1; font-size: 0.82rem; font-weight: 600;">
+                ⏱️ ข้อบังคับกำหนดรับจดทะเบียนใน 14 วัน
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>ชื่อระเบียบ / ข้อบังคับ <span style="color: red;">*</span></label>
+            <input type="text" id="editRegTitle" name="title" class="form-control" required>
           </div>
 
           <div class="form-row">
