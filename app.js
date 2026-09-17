@@ -24,6 +24,7 @@ const AppState = {
   filterType: 'ALL',
   filterStatus: 'ALL',
   filterStep: 'ALL',
+  filterGroup: 'ALL', // 'ALL' | 'กลุ่มส่งเสริมสหกรณ์ 1' | 'กลุ่มส่งเสริมสหกรณ์ 2' | 'กลุ่มส่งเสริมสหกรณ์ 3' | 'นิคมสหกรณ์ชะแวะ'
 
   // Module 2: Regulations & Bylaws State
   regulations: [],
@@ -37,6 +38,10 @@ const AppState = {
   regFilterDocType: 'ALL',
   regFilterStatus: 'ALL',
   regFilterStep: 'ALL',
+  regFilterGroup: 'ALL', // 'ALL' | 'กลุ่มส่งเสริมสหกรณ์ 1' | 'กลุ่มส่งเสริมสหกรณ์ 2' | 'กลุ่มส่งเสริมสหกรณ์ 3' | 'นิคมสหกรณ์ชะแวะ'
+
+  // Cooperative Directory State
+  coopDirGroupFilter: 'ALL',
 
   // System State
   currentUser: null, // { email, name, role, token }
@@ -142,6 +147,45 @@ const ApiClient = {
     }
   }
 };
+
+// ------------------------------------------------------------------------------
+// 3. Helper Utilities & Cooperative Helpers
+// ------------------------------------------------------------------------------
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.toString()
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function getResolvedGroup(item) {
+  if (!item) return '';
+  if (item.promotionGroup && item.promotionGroup.trim() !== '') return item.promotionGroup.trim();
+  if (item.group && item.group.trim() !== '') return item.group.trim();
+  if (typeof CoopDatabaseUtil !== 'undefined' && item.coopName) {
+    const matched = CoopDatabaseUtil.findByName(item.coopName);
+    if (matched && matched.group) return matched.group;
+  }
+  return '';
+}
+
+function getGroupBadgeClass(groupName) {
+  if (!groupName) return 'group-badge-default';
+  if (groupName.includes('1')) return 'group-badge-1';
+  if (groupName.includes('2')) return 'group-badge-2';
+  if (groupName.includes('3')) return 'group-badge-3';
+  if (groupName.includes('ชะแวะ')) return 'group-badge-chawoe';
+  return 'group-badge-default';
+}
+
+function getGroupBadgeHtml(groupName) {
+  if (!groupName || groupName === '-' || groupName === 'ไม่ระบุ') return '';
+  const badgeClass = getGroupBadgeClass(groupName);
+  return `<span class="group-badge ${badgeClass}" title="กลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ">${escapeHtml(groupName)}</span>`;
+}
 
 // ------------------------------------------------------------------------------
 // 5. View Switcher & Global Hub
@@ -294,8 +338,17 @@ function applyFilters() {
       (c.regNumber && c.regNumber.toLowerCase().includes(q)) ||
       (c.orderNumber && c.orderNumber.toLowerCase().includes(q)) ||
       (c.liquidators && c.liquidators.toLowerCase().includes(q)) ||
-      (c.location && c.location.toLowerCase().includes(q))
+      (c.location && c.location.toLowerCase().includes(q)) ||
+      (getResolvedGroup(c).toLowerCase().includes(q))
     );
+  }
+
+  // Filter by Group (กลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ)
+  if (AppState.filterGroup && AppState.filterGroup !== 'ALL') {
+    list = list.filter(c => {
+      const g = getResolvedGroup(c);
+      return g === AppState.filterGroup || g.includes(AppState.filterGroup);
+    });
   }
 
   // Filter by Step / Progress
@@ -345,6 +398,7 @@ function setCaseFilter(filterKey, value) {
   if (filterKey === 'step') AppState.filterStep = value;
   if (filterKey === 'status') AppState.filterStatus = value;
   if (filterKey === 'type') AppState.filterType = value;
+  if (filterKey === 'group') AppState.filterGroup = value;
   applyFilters();
 }
 
@@ -352,6 +406,7 @@ function resetCaseFilters() {
   AppState.filterStep = 'ALL';
   AppState.filterStatus = 'ALL';
   AppState.filterType = 'ALL';
+  AppState.filterGroup = 'ALL';
   AppState.searchTerm = '';
   const searchInput = document.getElementById('heroSearchInput');
   if (searchInput) searchInput.value = '';
@@ -368,11 +423,15 @@ function updateCaseFilterChipUI() {
   document.querySelectorAll('[data-case-type]').forEach(chip => {
     chip.classList.toggle('active', chip.dataset.caseType === AppState.filterType);
   });
+  document.querySelectorAll('[data-case-group]').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.caseGroup === AppState.filterGroup);
+  });
 
   let activeCount = 0;
   if (AppState.filterStep !== 'ALL') activeCount++;
   if (AppState.filterStatus !== 'ALL') activeCount++;
   if (AppState.filterType !== 'ALL') activeCount++;
+  if (AppState.filterGroup !== 'ALL') activeCount++;
   if (AppState.searchTerm.trim() !== '') activeCount++;
 
   const countEl = document.getElementById('caseFilterCount');
@@ -506,12 +565,14 @@ function renderGrid(container, items = AppState.filteredCases) {
     const stepObj = CONFIG.LIQUIDATION_STEPS.find(s => s.number === item.currentStep) || { title: `ขั้นตอนที่ ${item.currentStep}` };
     const dissolutionType = item.dissolutionType || (item.orderNumber && item.orderNumber.includes('ประกาศ') ? 'ประกาศเลิก' : 'คำสั่งเลิก');
     const isFarmerGroup = item.coopType && item.coopType.includes('กลุ่มเกษตรกร');
+    const groupBadgeHtml = getGroupBadgeHtml(getResolvedGroup(item));
 
     return `
       <div class="case-card">
         <div class="case-card-header">
           <div class="case-badge-group">
             <span class="case-type-badge ${isFarmerGroup ? 'farmer-group' : 'coop-type-badge'}">${escapeHtml(item.coopType)}</span>
+            ${groupBadgeHtml}
           </div>
           <span class="status-badge ${isDone ? 'completed' : 'active'}">
             ${isDone ? '✓ เสร็จสิ้นแล้ว' : '● กำลังชำระบัญชี'}
@@ -570,6 +631,7 @@ function renderTable(container, items = AppState.filteredCases, startIndex = 0) 
     const progressPercent = Math.min(100, Math.round((item.currentStep / 10) * 100));
     const dissolutionType = item.dissolutionType || (item.orderNumber && item.orderNumber.includes('ประกาศ') ? 'ประกาศเลิก' : 'คำสั่งเลิก');
     const isFarmerGroup = item.coopType && item.coopType.includes('กลุ่มเกษตรกร');
+    const groupBadgeHtml = getGroupBadgeHtml(getResolvedGroup(item));
 
     let issuesTooltip = '';
     if (item.hasIssues && item.issues) {
@@ -581,7 +643,10 @@ function renderTable(container, items = AppState.filteredCases, startIndex = 0) 
         <td style="text-align: center; color: var(--text-muted);">${startIndex + idx + 1}</td>
         <td>
           <strong style="color: var(--primary);">${escapeHtml(item.coopName)}</strong>
-          <div style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(item.regNumber)} | ${escapeHtml(item.location)}</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 2px;">
+            <span>${escapeHtml(item.regNumber)}</span> | <span>${escapeHtml(item.location)}</span>
+            ${groupBadgeHtml}
+          </div>
         </td>
         <td><span class="case-type-badge ${isFarmerGroup ? 'farmer-group' : 'coop-type-badge'}">${escapeHtml(item.coopType)}</span></td>
         <td>
@@ -624,6 +689,18 @@ async function openCaseDetail(caseId) {
     document.getElementById('detailRegNumber').innerText = caseData.regNumber || '-';
     document.getElementById('detailCoopType').innerText = caseData.coopType || '-';
     document.getElementById('detailLocation').innerText = caseData.location || '-';
+
+    const caseGroup = getResolvedGroup(caseData);
+    const groupBadgeEl = document.getElementById('detailCasePromotionGroupBadge');
+    if (groupBadgeEl) {
+      if (caseGroup) {
+        groupBadgeEl.style.display = 'inline-flex';
+        groupBadgeEl.className = `group-badge ${getGroupBadgeClass(caseGroup)}`;
+        groupBadgeEl.innerText = caseGroup;
+      } else {
+        groupBadgeEl.style.display = 'none';
+      }
+    }
 
     const dissolutionType = caseData.dissolutionType || (caseData.orderNumber && caseData.orderNumber.includes('ประกาศ') ? 'ประกาศเลิก' : 'คำสั่งเลิก');
     const dissolutionLabelEl = document.getElementById('detailDissolutionLabel');
@@ -1045,6 +1122,7 @@ async function handleCreateCaseSubmit(e) {
     coopName: form.coopName.value.trim(),
     regNumber: form.regNumber.value.trim(),
     coopType: form.coopType.value,
+    promotionGroup: form.promotionGroup ? form.promotionGroup.value : '',
     location: form.location.value.trim(),
     dissolutionType: form.dissolutionType ? form.dissolutionType.value : 'คำสั่งเลิก',
     orderNumber: form.orderNumber.value.trim(),
@@ -1220,6 +1298,9 @@ function openEditCaseInfoModal() {
   document.getElementById('editCaseCoopName').value = caseData.coopName || '';
   document.getElementById('editCaseRegNumber').value = caseData.regNumber || '';
   document.getElementById('editCaseCoopType').value = caseData.coopType || 'สหกรณ์การเกษตร';
+  if (document.getElementById('editCasePromotionGroup')) {
+    document.getElementById('editCasePromotionGroup').value = caseData.promotionGroup || getResolvedGroup(caseData) || '';
+  }
   document.getElementById('editCaseLocation').value = caseData.location || '';
   document.getElementById('editCaseDissolutionType').value = caseData.dissolutionType || 'คำสั่งเลิก';
   document.getElementById('editCaseOrderNumber').value = caseData.orderNumber || '';
@@ -1241,6 +1322,7 @@ async function handleEditCaseSubmit(e) {
     coopName: form.coopName.value.trim(),
     regNumber: form.regNumber.value.trim(),
     coopType: form.coopType.value,
+    promotionGroup: form.promotionGroup ? form.promotionGroup.value : '',
     location: form.location.value.trim(),
     dissolutionType: form.dissolutionType.value,
     orderNumber: form.orderNumber.value.trim(),
@@ -1356,13 +1438,20 @@ function applyRegFilters() {
 
   if (AppState.regSearchTerm.trim() !== '') {
     const q = AppState.regSearchTerm.toLowerCase().trim();
-    list = list.filter(r =>
-      (r.coopName && r.coopName.toLowerCase().includes(q)) ||
-      (r.title && r.title.toLowerCase().includes(q)) ||
-      (r.docNumber && r.docNumber.toLowerCase().includes(q)) ||
-      (r.officerName && r.officerName.toLowerCase().includes(q)) ||
-      (r.regNumber && r.regNumber.toLowerCase().includes(q))
-    );
+    list = list.filter(r => {
+      const g = getResolvedGroup(r);
+      return (r.coopName && r.coopName.toLowerCase().includes(q)) ||
+        (r.title && r.title.toLowerCase().includes(q)) ||
+        (r.docNumber && r.docNumber.toLowerCase().includes(q)) ||
+        (r.officerName && r.officerName.toLowerCase().includes(q)) ||
+        (r.regNumber && r.regNumber.toLowerCase().includes(q)) ||
+        (g && g.toLowerCase().includes(q));
+    });
+  }
+
+  // Filter by Promotion Group
+  if (AppState.regFilterGroup && AppState.regFilterGroup !== 'ALL') {
+    list = list.filter(r => getResolvedGroup(r) === AppState.regFilterGroup);
   }
 
   // Filter by Step / Progress
@@ -1447,6 +1536,7 @@ function setRegFilter(filterKey, value) {
   if (filterKey === 'docType') AppState.regFilterDocType = value;
   if (filterKey === 'status') AppState.regFilterStatus = value;
   if (filterKey === 'type') AppState.regFilterCoopType = value;
+  if (filterKey === 'group') AppState.regFilterGroup = value;
   applyRegFilters();
 }
 
@@ -1455,6 +1545,7 @@ function resetRegFilters() {
   AppState.regFilterDocType = 'ALL';
   AppState.regFilterStatus = 'ALL';
   AppState.regFilterCoopType = 'ALL';
+  AppState.regFilterGroup = 'ALL';
   AppState.regSearchTerm = '';
   const searchInput = document.getElementById('regSearchInput');
   if (searchInput) searchInput.value = '';
@@ -1462,6 +1553,9 @@ function resetRegFilters() {
 }
 
 function updateRegFilterChipUI() {
+  document.querySelectorAll('[data-reg-group]').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.regGroup === AppState.regFilterGroup);
+  });
   document.querySelectorAll('[data-reg-step]').forEach(chip => {
     chip.classList.toggle('active', chip.dataset.regStep === AppState.regFilterStep);
   });
@@ -1476,6 +1570,7 @@ function updateRegFilterChipUI() {
   });
 
   let activeCount = 0;
+  if (AppState.regFilterGroup && AppState.regFilterGroup !== 'ALL') activeCount++;
   if (AppState.regFilterStep !== 'ALL') activeCount++;
   if (AppState.regFilterDocType !== 'ALL') activeCount++;
   if (AppState.regFilterStatus !== 'ALL') activeCount++;
@@ -1607,8 +1702,9 @@ function renderRegGrid(container, items = AppState.filteredRegulations) {
         </div>
 
         <h3 class="case-title" style="font-size: 1.05rem; line-height: 1.4;">${escapeHtml(item.title)}</h3>
-        <div style="font-size: 0.88rem; font-weight: 600; color: var(--primary); margin-bottom: 8px;">
-          🏛️ ${escapeHtml(item.coopName)}
+        <div style="font-size: 0.88rem; font-weight: 600; color: var(--primary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <span>🏛️ ${escapeHtml(item.coopName)}</span>
+          ${getGroupBadgeHtml(getResolvedGroup(item))}
         </div>
 
         <div class="case-meta">
@@ -1691,7 +1787,12 @@ function renderRegTable(container, items = AppState.filteredRegulations, startIn
         <td style="text-align: center; color: var(--text-muted);">${startIndex + idx + 1}</td>
         <td>
           <strong style="color: var(--primary);">${escapeHtml(item.coopName)}</strong>
-          <div style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(item.regNumber)} | <span class="case-type-badge ${isFarmerGroup ? 'farmer-group' : 'coop-type-badge'}" style="font-size: 0.7rem;">${escapeHtml(item.coopType || 'สหกรณ์')}</span></div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 2px;">
+            <span>${escapeHtml(item.regNumber)}</span>
+            <span>|</span>
+            <span class="case-type-badge ${isFarmerGroup ? 'farmer-group' : 'coop-type-badge'}" style="font-size: 0.7rem;">${escapeHtml(item.coopType || 'สหกรณ์')}</span>
+            ${getGroupBadgeHtml(getResolvedGroup(item))}
+          </div>
         </td>
         <td>
           ${docTypeBadgeHtml}
@@ -1741,6 +1842,18 @@ async function openRegDetail(regId) {
 
     document.getElementById('detailRegTitle').innerText = regData.title;
     document.getElementById('detailRegCoopName').innerText = `🏛️ ${regData.coopName} (${regData.regNumber || '-'}) [${regData.coopType || 'สหกรณ์'}]`;
+
+    const regGroup = getResolvedGroup(regData);
+    const groupBadgeEl = document.getElementById('detailRegPromotionGroupBadge');
+    if (groupBadgeEl) {
+      if (regGroup) {
+        groupBadgeEl.style.display = 'inline-flex';
+        groupBadgeEl.className = `group-badge ${getGroupBadgeClass(regGroup)}`;
+        groupBadgeEl.innerText = regGroup;
+      } else {
+        groupBadgeEl.style.display = 'none';
+      }
+    }
 
     const docTypeBadge = document.getElementById('detailRegDocType');
     const docConf = RegSlaUtil.getDocTypeConfig(regData.docType);
@@ -2222,6 +2335,7 @@ async function handleCreateRegSubmit(e) {
     coopName: coopName,
     regNumber: form.regNumber ? form.regNumber.value.trim() : '',
     coopType: form.coopType ? form.coopType.value : 'สหกรณ์การเกษตร',
+    promotionGroup: form.promotionGroup ? form.promotionGroup.value : '',
     docNumber: form.docNumber ? form.docNumber.value.trim() : '',
     submitDate: fromThaiDateInput(form.submitDate.value),
     officerName: form.officerName ? form.officerName.value.trim() : '',
@@ -2360,6 +2474,9 @@ function openEditRegInfoModal() {
   if (document.getElementById('editRegCoopType')) {
     document.getElementById('editRegCoopType').value = regData.coopType || 'สหกรณ์การเกษตร';
   }
+  if (document.getElementById('editRegPromotionGroup')) {
+    document.getElementById('editRegPromotionGroup').value = regData.promotionGroup || getResolvedGroup(regData) || '';
+  }
   document.getElementById('editRegDocType').value = regData.docType || 'ข้อบังคับสหกรณ์';
   document.getElementById('editRegTitle').value = regData.title || '';
   document.getElementById('editRegDocNumber').value = regData.docNumber || '';
@@ -2383,6 +2500,7 @@ async function handleEditRegSubmit(e) {
     regId: regData.regId,
     coopName: form.coopName.value.trim(),
     coopType: form.coopType ? form.coopType.value : (regData.coopType || 'สหกรณ์การเกษตร'),
+    promotionGroup: form.promotionGroup ? form.promotionGroup.value : '',
     docType: form.docType.value,
     title: form.title.value.trim(),
     docNumber: form.docNumber.value.trim(),
@@ -2769,6 +2887,7 @@ function setupEventListeners() {
   }
 
   setupDropzones();
+  setupCooperativeAutocompletes();
 }
 
 function setupDropzones() {
@@ -5458,6 +5577,541 @@ window.handleUpdateRegMilestonesSubmit = handleUpdateRegMilestonesSubmit;
 window.openUpdateRegStepModal = openUpdateRegStepModal;
 window.handleUpdateRegStepSubmit = handleUpdateRegStepSubmit;
 window.triggerActiveExportDirectPrint = triggerActiveExportDirectPrint;
+
+// ------------------------------------------------------------------------------
+// 15. Cooperative Directory & Smart Autocomplete Module
+// ------------------------------------------------------------------------------
+
+/**
+ * Highlight matching text portions with <span class="coop-item-highlight">
+ */
+function highlightCoopMatch(text, query) {
+  if (!text) return '';
+  if (!query || !query.trim()) return escapeHtml(text);
+  const q = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(${q})`, 'gi');
+  return escapeHtml(text).replace(regex, '<span class="coop-item-highlight">$1</span>');
+}
+
+/**
+ * Setup smart autocomplete dropdown for a cooperative input
+ */
+function setupCoopAutocomplete(inputId, dropdownId, onSelect) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  if (!input || !dropdown) return;
+
+  let activeIndex = -1;
+  let currentResults = [];
+
+  function closeDropdown() {
+    dropdown.style.display = 'none';
+    dropdown.innerHTML = '';
+    activeIndex = -1;
+    currentResults = [];
+  }
+
+  function renderResults(results, query) {
+    currentResults = results;
+    activeIndex = -1;
+    if (!results || results.length === 0) {
+      if (query.trim().length > 0) {
+        dropdown.innerHTML = `
+          <div style="padding: 10px 14px; color: var(--text-muted); font-size: 0.84rem; text-align: center;">
+            🔍 ไม่พบสหกรณ์ที่ตรงกับ "<strong>${escapeHtml(query)}</strong>"
+            <div style="margin-top: 4px;">
+              <a href="javascript:void(0)" onclick="openCoopDirectoryModal(); toggleBatchImportForm(true);" style="color: var(--primary); font-weight: 500; text-decoration: underline;">
+                📥 คลิกที่นี่เพื่อนำเข้ารายชื่อสหกรณ์เข้ากลุ่มส่งเสริมฯ
+              </a>
+            </div>
+          </div>
+        `;
+        dropdown.style.display = 'block';
+      } else {
+        closeDropdown();
+      }
+      return;
+    }
+
+    const itemsHtml = results.slice(0, 10).map((coop, idx) => {
+      const groupBadge = getGroupBadgeHtml(coop.group);
+      const isFarmer = coop.type && coop.type.includes('กลุ่มเกษตรกร');
+      const typeBadge = `<span class="case-type-badge ${isFarmer ? 'farmer-group' : 'coop-type-badge'}" style="font-size: 0.68rem; padding: 1px 6px;">${escapeHtml(coop.type || 'สหกรณ์')}</span>`;
+      const highlightedName = highlightCoopMatch(coop.name, query);
+      const districtText = coop.district ? `📍 ${escapeHtml(coop.district)}` : '';
+      const regText = coop.regNumber ? ` | 📄 เลขทะเบียน ${escapeHtml(coop.regNumber)}` : '';
+
+      return `
+        <div class="coop-autocomplete-item" data-index="${idx}">
+          <div class="coop-item-main">
+            <div class="coop-item-name">${highlightedName}</div>
+            <div class="coop-item-badges">
+              ${groupBadge}
+              ${typeBadge}
+            </div>
+          </div>
+          <div class="coop-item-sub">
+            ${districtText}${regText}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    dropdown.innerHTML = itemsHtml;
+    dropdown.style.display = 'block';
+
+    // Bind click events on items
+    dropdown.querySelectorAll('.coop-autocomplete-item').forEach(itemEl => {
+      itemEl.addEventListener('mousedown', (e) => {
+        e.preventDefault(); // prevent blur before click completes
+        const idx = parseInt(itemEl.dataset.index, 10);
+        if (currentResults[idx]) {
+          onSelect(currentResults[idx]);
+          closeDropdown();
+        }
+      });
+    });
+  }
+
+  function updateItemHighlight() {
+    const items = dropdown.querySelectorAll('.coop-autocomplete-item');
+    items.forEach((item, idx) => {
+      item.classList.toggle('selected', idx === activeIndex);
+      if (idx === activeIndex) {
+        item.scrollIntoView({ block: 'nearest' });
+      }
+    });
+  }
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim();
+    if (q.length === 0) {
+      // Show top cooperatives as suggestions
+      const all = CoopDatabaseUtil.getAll();
+      renderResults(all.slice(0, 8), '');
+      return;
+    }
+    const results = CoopDatabaseUtil.search(q);
+    renderResults(results, q);
+  });
+
+  input.addEventListener('focus', () => {
+    const q = input.value.trim();
+    if (q.length === 0) {
+      const all = CoopDatabaseUtil.getAll();
+      renderResults(all.slice(0, 8), '');
+    } else {
+      const results = CoopDatabaseUtil.search(q);
+      renderResults(results, q);
+    }
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (dropdown.style.display !== 'block') return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (currentResults.length > 0) {
+        activeIndex = (activeIndex + 1) % Math.min(currentResults.length, 10);
+        updateItemHighlight();
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (currentResults.length > 0) {
+        activeIndex = (activeIndex - 1 + Math.min(currentResults.length, 10)) % Math.min(currentResults.length, 10);
+        updateItemHighlight();
+      }
+    } else if (e.key === 'Enter') {
+      if (activeIndex >= 0 && currentResults[activeIndex]) {
+        e.preventDefault();
+        onSelect(currentResults[activeIndex]);
+        closeDropdown();
+      }
+    } else if (e.key === 'Escape') {
+      closeDropdown();
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+      closeDropdown();
+    }
+  });
+}
+
+/**
+ * Initialize autocompletes on all creation and editing modals
+ */
+function setupCooperativeAutocompletes() {
+  // 1. Create Regulation Modal
+  setupCoopAutocomplete('createRegCoopName', 'createRegCoopDropdown', (coop) => {
+    const nameInput = document.getElementById('createRegCoopName');
+    if (nameInput) nameInput.value = coop.name;
+
+    const typeSelect = document.getElementById('createRegCoopType');
+    if (typeSelect && coop.type) typeSelect.value = coop.type;
+
+    const groupSelect = document.getElementById('createRegPromotionGroup');
+    if (groupSelect && coop.group) groupSelect.value = coop.group;
+
+    const regNumInput = document.getElementById('createRegNumber');
+    if (regNumInput && coop.regNumber) regNumInput.value = coop.regNumber;
+  });
+
+  // 2. Edit Regulation Modal
+  setupCoopAutocomplete('editRegCoopName', 'editRegCoopDropdown', (coop) => {
+    const nameInput = document.getElementById('editRegCoopName');
+    if (nameInput) nameInput.value = coop.name;
+
+    const typeSelect = document.getElementById('editRegCoopType');
+    if (typeSelect && coop.type) typeSelect.value = coop.type;
+
+    const groupSelect = document.getElementById('editRegPromotionGroup');
+    if (groupSelect && coop.group) groupSelect.value = coop.group;
+  });
+
+  // 3. Create Case Modal (Liquidation)
+  setupCoopAutocomplete('createCaseCoopName', 'createCaseCoopDropdown', (coop) => {
+    const nameInput = document.getElementById('createCaseCoopName');
+    if (nameInput) nameInput.value = coop.name;
+
+    const regNumInput = document.getElementById('createCaseRegNumber');
+    if (regNumInput && coop.regNumber) regNumInput.value = coop.regNumber;
+
+    const typeSelect = document.getElementById('createCaseCoopType');
+    if (typeSelect && coop.type) typeSelect.value = coop.type;
+
+    const locationInput = document.getElementById('createCaseLocation');
+    if (locationInput && coop.district) locationInput.value = coop.district;
+
+    const groupSelect = document.getElementById('createCasePromotionGroup');
+    if (groupSelect && coop.group) groupSelect.value = coop.group;
+  });
+
+  // 4. Edit Case Modal (Liquidation)
+  setupCoopAutocomplete('editCaseCoopName', 'editCaseCoopDropdown', (coop) => {
+    const nameInput = document.getElementById('editCaseCoopName');
+    if (nameInput) nameInput.value = coop.name;
+
+    const regNumInput = document.getElementById('editCaseRegNumber');
+    if (regNumInput && coop.regNumber) regNumInput.value = coop.regNumber;
+
+    const typeSelect = document.getElementById('editCaseCoopType');
+    if (typeSelect && coop.type) typeSelect.value = coop.type;
+
+    const locationInput = document.getElementById('editCaseLocation');
+    if (locationInput && coop.district) locationInput.value = coop.district;
+
+    const groupSelect = document.getElementById('editCasePromotionGroup');
+    if (groupSelect && coop.group) groupSelect.value = coop.group;
+  });
+}
+
+/**
+ * Open Cooperative Directory Modal
+ */
+function openCoopDirectoryModal() {
+  AppState.coopDirGroupFilter = 'ALL';
+  const searchInput = document.getElementById('coopDirectorySearchInput');
+  if (searchInput) searchInput.value = '';
+  
+  const allCoops = CoopDatabaseUtil.getAll();
+  updateCoopDirChipUI();
+  renderCoopDirectoryList();
+  
+  // If database is empty, automatically open the batch import form
+  if (allCoops.length === 0) {
+    toggleBatchImportForm(true);
+  } else {
+    toggleBatchImportForm(false);
+  }
+  
+  openModal('coopDirectoryModal');
+}
+
+/**
+ * Set Group filter in directory modal
+ */
+function setCoopDirectoryGroupFilter(group) {
+  AppState.coopDirGroupFilter = group;
+  updateCoopDirChipUI();
+  renderCoopDirectoryList();
+  
+  // Also sync the target group in the batch import form if currently visible
+  const targetGroupSelect = document.getElementById('batchImportTargetGroup');
+  if (targetGroupSelect && group !== 'ALL') {
+    targetGroupSelect.value = group;
+  }
+}
+
+/**
+ * Update active state for directory filter chips
+ */
+function updateCoopDirChipUI() {
+  document.querySelectorAll('#coopDirectoryGroupChips [data-dir-group]').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.dirGroup === AppState.coopDirGroupFilter);
+  });
+}
+
+/**
+ * Toggle batch import form card
+ */
+function toggleBatchImportForm(force) {
+  const card = document.getElementById('batchImportCoopCard');
+  if (!card) return;
+  const isVisible = card.style.display !== 'none';
+  const show = typeof force === 'boolean' ? force : !isVisible;
+  card.style.display = show ? 'block' : 'none';
+  
+  if (show) {
+    // If a specific group filter is active, pre-select it
+    if (AppState.coopDirGroupFilter && AppState.coopDirGroupFilter !== 'ALL') {
+      const select = document.getElementById('batchImportTargetGroup');
+      if (select) select.value = AppState.coopDirGroupFilter;
+    }
+    const textarea = document.getElementById('batchCoopNamesInput');
+    if (textarea) setTimeout(() => textarea.focus(), 50);
+  }
+}
+
+/**
+ * Real-time count preview of batch cooperative names
+ */
+function updateBatchNamesCountPreview() {
+  const val = document.getElementById('batchCoopNamesInput')?.value || '';
+  const lines = val.split('\n')
+    .map(s => s.trim().replace(/^(\d+[\.\)]|\-|\•|\*)\s*/, ''))
+    .filter(Boolean);
+  const countEl = document.getElementById('batchNamesCountPreview');
+  if (countEl) {
+    countEl.innerText = `${lines.length} รายชื่อ`;
+  }
+}
+
+/**
+ * Handle Batch Import Submission
+ */
+function handleBatchImportCoops(e) {
+  e.preventDefault();
+  const group = document.getElementById('batchImportTargetGroup')?.value;
+  const defaultType = document.getElementById('batchImportDefaultType')?.value || 'สหกรณ์การเกษตร';
+  const rawText = document.getElementById('batchCoopNamesInput')?.value || '';
+
+  const lines = rawText.split('\n')
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  if (!group) {
+    showToast('กรุณาเลือกกลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ', 'warning');
+    return;
+  }
+
+  if (lines.length === 0) {
+    showToast('กรุณาใส่ชื่อสหกรณ์อย่างน้อย 1 รายชื่อ', 'warning');
+    return;
+  }
+
+  const result = CoopDatabaseUtil.batchAdd(group, lines, defaultType);
+
+  showToast(`นำเข้ารายชื่อสหกรณ์เข้า "${group}" สำเร็จ ${result.added} รายชื่อ (รวมทั้งหมด ${result.total} สหกรณ์)`, 'success');
+  
+  // Reset textarea
+  const textarea = document.getElementById('batchCoopNamesInput');
+  if (textarea) textarea.value = '';
+  updateBatchNamesCountPreview();
+
+  toggleBatchImportForm(false);
+  renderCoopDirectoryList();
+}
+
+/**
+ * Delete a single cooperative from database
+ */
+function handleDeleteCoop(coopName) {
+  if (!coopName) return;
+  if (!confirm(`คุณต้องการลบ "${coopName}" ออกจากฐานข้อมูลหรือไม่?`)) return;
+
+  CoopDatabaseUtil.deleteCoop(coopName);
+  showToast(`ลบ "${coopName}" เรียบร้อยแล้ว`, 'info');
+  renderCoopDirectoryList();
+}
+
+/**
+ * Clear all cooperatives from database
+ */
+function handleClearAllCoops() {
+  const allCoops = CoopDatabaseUtil.getAll();
+  if (allCoops.length === 0) {
+    showToast('ไม่มีข้อมูลสหกรณ์ในฐานข้อมูลอยู่แล้ว', 'info');
+    return;
+  }
+
+  if (!confirm(`คุณต้องการล้างรายชื่อสหกรณ์ทั้งหมด ${allCoops.length} รายการออกจากระบบหรือไม่?`)) return;
+
+  CoopDatabaseUtil.clearAll();
+  showToast('ล้างรายชื่อสหกรณ์ทั้งหมดออกจากฐานข้อมูลเรียบร้อยแล้ว', 'info');
+  renderCoopDirectoryList();
+  toggleBatchImportForm(true);
+}
+
+/**
+ * Render Cooperative Directory Table and Counts
+ */
+function renderCoopDirectoryList() {
+  const allCoops = CoopDatabaseUtil.getAll();
+
+  // Update counts
+  const totalCount = allCoops.length;
+  const g1Count = allCoops.filter(c => c.group === 'กลุ่มส่งเสริมสหกรณ์ 1').length;
+  const g2Count = allCoops.filter(c => c.group === 'กลุ่มส่งเสริมสหกรณ์ 2').length;
+  const g3Count = allCoops.filter(c => c.group === 'กลุ่มส่งเสริมสหกรณ์ 3').length;
+  const gChawoeCount = allCoops.filter(c => c.group === 'นิคมสหกรณ์ชะแวะ').length;
+
+  if (document.getElementById('coopDirTotalCount')) document.getElementById('coopDirTotalCount').innerText = totalCount;
+  if (document.getElementById('coopDirG1Count')) document.getElementById('coopDirG1Count').innerText = g1Count;
+  if (document.getElementById('coopDirG2Count')) document.getElementById('coopDirG2Count').innerText = g2Count;
+  if (document.getElementById('coopDirG3Count')) document.getElementById('coopDirG3Count').innerText = g3Count;
+  if (document.getElementById('coopDirGChawoeCount')) document.getElementById('coopDirGChawoeCount').innerText = gChawoeCount;
+
+  // Filter
+  let list = [...allCoops];
+  if (AppState.coopDirGroupFilter && AppState.coopDirGroupFilter !== 'ALL') {
+    list = list.filter(c => c.group === AppState.coopDirGroupFilter);
+  }
+
+  const searchInput = document.getElementById('coopDirectorySearchInput');
+  const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+  if (query) {
+    list = list.filter(c =>
+      (c.name && c.name.toLowerCase().includes(query)) ||
+      (c.type && c.type.toLowerCase().includes(query)) ||
+      (c.group && c.group.toLowerCase().includes(query))
+    );
+  }
+
+  const tbody = document.getElementById('coopDirectoryTableBody');
+  if (!tbody) return;
+
+  if (list.length === 0) {
+    const isTotalEmpty = allCoops.length === 0;
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+          <div style="font-size: 2rem; margin-bottom: 0.5rem;">📂</div>
+          <div style="font-size: 1rem; font-weight: 600; color: var(--primary); margin-bottom: 0.25rem;">
+            ${isTotalEmpty ? 'ยังไม่มีรายชื่อสหกรณ์ในฐานข้อมูล' : 'ไม่พบข้อมูลสหกรณ์ที่ตรงกับเงื่อนไขการค้นหา'}
+          </div>
+          <p style="margin: 0 0 1rem; font-size: 0.85rem;">
+            ${isTotalEmpty ? 'คุณสามารถเลือกกลุ่มส่งเสริมฯ และวางรายชื่อสหกรณ์ทีละหลายชื่อเพื่อนำเข้าสู่ระบบได้ทันที' : 'ลองปรับคำค้นหาหรือเลือกกลุ่มส่งเสริมสหกรณ์อื่น'}
+          </p>
+          ${isTotalEmpty ? `
+            <button class="btn btn-primary btn-sm" onclick="toggleBatchImportForm(true)">
+              📥 เริ่มนำเข้ารายชื่อสหกรณ์ (แบบชุด)
+            </button>
+          ` : ''}
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = list.map((c, idx) => {
+    const groupBadge = getGroupBadgeHtml(c.group);
+    const isFarmer = c.type && c.type.includes('กลุ่มเกษตรกร');
+    const typeBadge = `<span class="case-type-badge ${isFarmer ? 'farmer-group' : 'coop-type-badge'}" style="font-size: 0.72rem;">${escapeHtml(c.type || 'สหกรณ์')}</span>`;
+    const escapedName = escapeHtml(c.name);
+    const encodedName = escapedName.replace(/'/g, "\\'");
+
+    return `
+      <tr>
+        <td style="text-align: center; color: var(--text-muted); font-size: 0.8rem;">${idx + 1}</td>
+        <td>
+          <strong style="color: var(--primary); font-size: 0.92rem;">${escapedName}</strong>
+        </td>
+        <td>${groupBadge}</td>
+        <td>${typeBadge}</td>
+        <td style="text-align: right; white-space: nowrap;">
+          <button class="btn btn-outline-primary btn-sm" onclick="useCoopFromDirectory('${encodedName}')" style="padding: 2px 8px; font-size: 0.75rem; margin-right: 4px;" title="นำข้อมูลสหกรณ์นี้ไปกรอกในแบบฟอร์ม">
+            นำไปใช้ ➔
+          </button>
+          <button class="btn btn-outline-danger btn-sm" onclick="handleDeleteCoop('${encodedName}')" style="padding: 2px 6px; font-size: 0.75rem; border-color: #fca5a5; color: #dc2626;" title="ลบสหกรณ์นี้">
+            🗑️
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+/**
+ * Use cooperative from directory into active or new form
+ */
+function useCoopFromDirectory(coopName) {
+  const coop = CoopDatabaseUtil.findByName(coopName);
+  if (!coop) return;
+
+  // Check which module or modal is currently visible
+  const regModal = document.getElementById('createRegModal');
+  const caseModal = document.getElementById('createCaseModal');
+  const editRegModal = document.getElementById('editRegModal');
+  const editCaseModal = document.getElementById('editCaseModal');
+
+  if (regModal && regModal.classList.contains('active')) {
+    if (document.getElementById('createRegCoopName')) document.getElementById('createRegCoopName').value = coop.name;
+    if (document.getElementById('createRegCoopType') && coop.type) document.getElementById('createRegCoopType').value = coop.type;
+    if (document.getElementById('createRegPromotionGroup') && coop.group) document.getElementById('createRegPromotionGroup').value = coop.group;
+  } else if (caseModal && caseModal.classList.contains('active')) {
+    if (document.getElementById('createCaseCoopName')) document.getElementById('createCaseCoopName').value = coop.name;
+    if (document.getElementById('createCaseCoopType') && coop.type) document.getElementById('createCaseCoopType').value = coop.type;
+    if (document.getElementById('createCasePromotionGroup') && coop.group) document.getElementById('createCasePromotionGroup').value = coop.group;
+  } else if (editRegModal && editRegModal.classList.contains('active')) {
+    if (document.getElementById('editRegCoopName')) document.getElementById('editRegCoopName').value = coop.name;
+    if (document.getElementById('editRegCoopType') && coop.type) document.getElementById('editRegCoopType').value = coop.type;
+    if (document.getElementById('editRegPromotionGroup') && coop.group) document.getElementById('editRegPromotionGroup').value = coop.group;
+  } else if (editCaseModal && editCaseModal.classList.contains('active')) {
+    if (document.getElementById('editCaseCoopName')) document.getElementById('editCaseCoopName').value = coop.name;
+    if (document.getElementById('editCaseCoopType') && coop.type) document.getElementById('editCaseCoopType').value = coop.type;
+    if (document.getElementById('editCasePromotionGroup') && coop.group) document.getElementById('editCasePromotionGroup').value = coop.group;
+  } else {
+    closeModal('coopDirectoryModal');
+    if (AppState.currentModule === 'regulations') {
+      openCreateRegModal();
+      setTimeout(() => {
+        if (document.getElementById('createRegCoopName')) document.getElementById('createRegCoopName').value = coop.name;
+        if (document.getElementById('createRegCoopType') && coop.type) document.getElementById('createRegCoopType').value = coop.type;
+        if (document.getElementById('createRegPromotionGroup') && coop.group) document.getElementById('createRegPromotionGroup').value = coop.group;
+      }, 100);
+    } else {
+      openCreateCaseModal();
+      setTimeout(() => {
+        if (document.getElementById('createCaseCoopName')) document.getElementById('createCaseCoopName').value = coop.name;
+        if (document.getElementById('createCaseCoopType') && coop.type) document.getElementById('createCaseCoopType').value = coop.type;
+        if (document.getElementById('createCasePromotionGroup') && coop.group) document.getElementById('createCasePromotionGroup').value = coop.group;
+      }, 100);
+    }
+    showToast(`นำข้อมูล "${coop.name}" เข้าสู่แบบฟอร์มแล้ว`, 'success');
+    return;
+  }
+
+  closeModal('coopDirectoryModal');
+  showToast(`นำข้อมูล "${coop.name}" เข้าสู่แบบฟอร์มแล้ว`, 'success');
+}
+
+// Clean any legacy mock storage on startup
+try {
+  localStorage.removeItem('cpd_custom_cooperatives');
+} catch (e) {}
+
+// Expose directory functions to global window scope
+window.openCoopDirectoryModal = openCoopDirectoryModal;
+window.setCoopDirectoryGroupFilter = setCoopDirectoryGroupFilter;
+window.renderCoopDirectoryList = renderCoopDirectoryList;
+window.toggleBatchImportForm = toggleBatchImportForm;
+window.updateBatchNamesCountPreview = updateBatchNamesCountPreview;
+window.handleBatchImportCoops = handleBatchImportCoops;
+window.handleDeleteCoop = handleDeleteCoop;
+window.handleClearAllCoops = handleClearAllCoops;
+window.useCoopFromDirectory = useCoopFromDirectory;
 
 // Startup
 if (document.readyState === 'loading') {

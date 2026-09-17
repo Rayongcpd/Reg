@@ -41,6 +41,17 @@ const CONFIG = {
     'กลุ่มเกษตรกรอื่นๆ'
   ],
 
+  // กลุ่มส่งเสริมสหกรณ์ / หน่วยงานกำกับดูแลที่รับผิดชอบ (Rayong CPD)
+  PROMOTION_GROUPS: [
+    'กลุ่มส่งเสริมสหกรณ์ 1',
+    'กลุ่มส่งเสริมสหกรณ์ 2',
+    'กลุ่มส่งเสริมสหกรณ์ 3',
+    'นิคมสหกรณ์ชะแวะ'
+  ],
+
+  // ฐานข้อมูลสหกรณ์และกลุ่มเกษตรกร (เริ่มต้นว่าง ให้ผู้ใช้นำเข้าตามกลุ่มที่ต้องการ)
+  COOPERATIVES: [],
+
   // รายการรวมสถาบันทั้งหมด
   ALL_INSTITUTION_TYPES: [
     'สหกรณ์การเกษตร',
@@ -559,4 +570,183 @@ const RegSlaUtil = {
     };
   }
 };
+
+/**
+ * ==============================================================================
+ * เครื่องมือจัดการฐานข้อมูลสหกรณ์และกลุ่มส่งเสริมสหกรณ์ (Cooperative Database Utility)
+ * ==============================================================================
+ */
+const CoopDatabaseUtil = {
+  STORAGE_KEY: 'cpd_cooperative_directory_v2',
+
+  // ดึงรายชื่อสหกรณ์ทั้งหมดจาก LocalStorage
+  getAll() {
+    try {
+      const stored = localStorage.getItem(this.STORAGE_KEY);
+      if (stored) {
+        const list = JSON.parse(stored);
+        if (Array.isArray(list)) return list;
+      }
+    } catch (e) {
+      console.warn('Cannot read cooperatives from storage:', e);
+    }
+    return [];
+  },
+
+  // ตรวจจับประเภทสถาบัน/สหกรณ์จากชื่ออัตโนมัติ 100%
+  detectType(name) {
+    if (!name) return 'สหกรณ์การเกษตร';
+    const n = String(name).trim();
+
+    // 1. กลุ่มเกษตรกร (แยกประเภทตามสายอาชีพ)
+    if (n.includes('กลุ่มเกษตรกร')) {
+      if (n.includes('ทำสวน') || n.includes('สวน')) return 'กลุ่มเกษตรกรทำสวน';
+      if (n.includes('ทำไร่') || n.includes('ไร่')) return 'กลุ่มเกษตรกรทำไร่';
+      if (n.includes('ทำนา') || n.includes('นา')) return 'กลุ่มเกษตรกรทำนา';
+      if (n.includes('ประมง') || n.includes('สัตว์น้ำ')) return 'กลุ่มเกษตรกรประมง';
+      if (n.includes('เลี้ยงสัตว์') || n.includes('สัตว์') || n.includes('โคนม') || n.includes('โคเนื้อ') || n.includes('สุกร')) return 'กลุ่มเกษตรกรเลี้ยงสัตว์';
+      return 'กลุ่มเกษตรกร';
+    }
+
+    // 2. สหกรณ์ 7 ประเภท
+    if (n.includes('ออมทรัพย์') || n.startsWith('สอ.')) {
+      return 'สหกรณ์ออมทรัพย์';
+    }
+    if (n.includes('เครดิตยูเนี่ยน') || n.startsWith('คส.') || n.includes('ยูเนี่ยน')) {
+      return 'สหกรณ์เครดิตยูเนี่ยน';
+    }
+    if (n.includes('ประมง')) {
+      return 'สหกรณ์ประมง';
+    }
+    if (n.includes('สหกรณ์นิคม') || (n.includes('นิคม') && !n.includes('นิคมพัฒนา'))) {
+      return 'สหกรณ์นิคม';
+    }
+    if (n.includes('ร้านค้า')) {
+      return 'สหกรณ์ร้านค้า';
+    }
+    if (n.includes('บริการ') || n.includes('เดินรถ') || n.includes('แท็กซี่') || n.includes('ผู้ใช้น้ำ') || n.includes('ส่งเสริมอาชีพ')) {
+      return 'สหกรณ์บริการ';
+    }
+    if (n.includes('การเกษตร') || n.startsWith('สกก.') || n.includes('เพื่อการเกษตร') || n.includes('สวนปาล์ม') || n.includes('ผู้ปลูก') || n.includes('แปรรูป') || n.includes('ผู้เลี้ยง') || n.includes('เกษตร') || n.includes('สกต.')) {
+      return 'สหกรณ์การเกษตร';
+    }
+
+    // สหกรณ์ทั่วไปที่ไม่มีคำเฉพาะ ให้จัดเป็น สหกรณ์การเกษตร
+    if (n.includes('สหกรณ์')) {
+      return 'สหกรณ์การเกษตร';
+    }
+
+    return 'สหกรณ์การเกษตร';
+  },
+
+  // บันทึกรายชื่อสหกรณ์แบบกลุ่ม (Batch Import by Group)
+  batchAdd(group, namesList) {
+    if (!group || !Array.isArray(namesList)) return { added: 0, total: 0 };
+    const current = this.getAll();
+    let addedCount = 0;
+
+    namesList.forEach(rawName => {
+      let name = String(rawName || '').trim();
+      // ตัดเลขลำดับข้างหน้า เช่น 1. หรือ 1) หรือ - หรือ bullet ออก
+      name = name.replace(/^(\d+[\.\)]|\-|\•|\*)\s*/, '').trim();
+      if (!name) return;
+
+      // ตรวจหาประเภทอัตโนมัติจากชื่อสหกรณ์ 100%
+      const detectedType = this.detectType(name);
+
+      const existingIndex = current.findIndex(c => c.name === name);
+      if (existingIndex >= 0) {
+        current[existingIndex].group = group;
+        current[existingIndex].type = detectedType;
+      } else {
+        current.push({
+          name: name,
+          shortName: '',
+          group: group,
+          type: detectedType,
+          district: '',
+          regNumber: ''
+        });
+        addedCount++;
+      }
+    });
+
+    try {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(current));
+    } catch (e) {
+      console.warn('Cannot save cooperatives to storage:', e);
+    }
+
+    return { added: addedCount, total: current.length };
+  },
+
+  // ลบสหกรณ์ทีละราย
+  deleteCoop(name) {
+    if (!name) return false;
+    let list = this.getAll();
+    const prevLen = list.length;
+    list = list.filter(c => c.name !== name);
+    try {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(list));
+      return list.length < prevLen;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  // ล้างฐานข้อมูลทั้งหมด
+  clearAll() {
+    try {
+      localStorage.removeItem(this.STORAGE_KEY);
+      localStorage.removeItem('cpd_custom_cooperatives'); // clean legacy key
+      return true;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  // ค้นหาสหกรณ์ตาม Keyword (ชื่อ, กลุ่มส่งเสริม, อำเภอ, ประเภท)
+  search(keyword = '', limit = 10) {
+    const all = this.getAll();
+    if (!keyword || !keyword.trim()) {
+      return all.slice(0, limit);
+    }
+    const q = keyword.toLowerCase().trim();
+    const matches = all.filter(c => {
+      const name = (c.name || '').toLowerCase();
+      const short = (c.shortName || '').toLowerCase();
+      const group = (c.group || '').toLowerCase();
+      const dist = (c.district || '').toLowerCase();
+      const type = (c.type || '').toLowerCase();
+      const reg = (c.regNumber || '').toLowerCase();
+      return name.includes(q) || short.includes(q) || group.includes(q) || dist.includes(q) || type.includes(q) || reg.includes(q);
+    });
+
+    // เรียงลำดับ: คำที่ขึ้นต้นตรงกันมาก่อน
+    matches.sort((a, b) => {
+      const aStarts = (a.name || '').toLowerCase().startsWith(q) ? 1 : 0;
+      const bStarts = (b.name || '').toLowerCase().startsWith(q) ? 1 : 0;
+      return bStarts - aStarts;
+    });
+
+    return matches.slice(0, limit);
+  },
+
+  // ค้นหาแบบตรงชื่อหรือใกล้เคียงที่สุด
+  findByName(name) {
+    if (!name) return null;
+    const clean = name.trim().toLowerCase();
+    const all = this.getAll();
+    return all.find(c => (c.name || '').trim().toLowerCase() === clean) ||
+           all.find(c => (c.shortName || '').trim().toLowerCase() === clean) ||
+           all.find(c => (c.name || '').toLowerCase().includes(clean)) || null;
+  },
+
+  // บันทึกสหกรณ์รายเดี่ยว (ใช้งานร่วมกับ batchAdd)
+  saveCoop(coopData) {
+    if (!coopData || !coopData.name) return null;
+    return this.batchAdd(coopData.group, [coopData.name], coopData.type);
+  }
+};
+
 

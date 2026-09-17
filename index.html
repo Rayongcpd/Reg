@@ -78,6 +78,11 @@
           + ยื่นเรื่องระเบียบใหม่
         </button>
 
+        <!-- Cooperative Directory Button -->
+        <button class="btn btn-outline-primary btn-sm" onclick="openCoopDirectoryModal()" title="ดูทำเนียบสหกรณ์และกลุ่มส่งเสริมฯ ในจังหวัดระยอง">
+          🏛️ ฐานข้อมูลสหกรณ์
+        </button>
+
         <!-- Login Button -->
         <button id="navLoginBtn" class="btn btn-primary btn-sm" onclick="openModal('loginModal')">
           🔑 เข้าสู่ระบบ Admin
@@ -364,6 +369,30 @@
             </div>
           </div>
 
+          <!-- Section 2.5: Promotion Groups (กลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ) -->
+          <div class="filter-section">
+            <div class="filter-section-header">
+              <span class="filter-section-label">🏢 กลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ (Promotion Group)</span>
+            </div>
+            <div class="filter-chip-group">
+              <button class="filter-chip active" data-case-group="ALL" onclick="setCaseFilter('group', 'ALL')">
+                <span class="chip-check">✓</span> ทั้งหมด
+              </button>
+              <button class="filter-chip group-chip" data-case-group="กลุ่มส่งเสริมสหกรณ์ 1" onclick="setCaseFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 1')">
+                <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 1
+              </button>
+              <button class="filter-chip group-chip" data-case-group="กลุ่มส่งเสริมสหกรณ์ 2" onclick="setCaseFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 2')">
+                <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 2
+              </button>
+              <button class="filter-chip group-chip" data-case-group="กลุ่มส่งเสริมสหกรณ์ 3" onclick="setCaseFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 3')">
+                <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 3
+              </button>
+              <button class="filter-chip group-chip" data-case-group="นิคมสหกรณ์ชะแวะ" onclick="setCaseFilter('group', 'นิคมสหกรณ์ชะแวะ')">
+                <span class="chip-check">✓</span> 🌾 นิคมสหกรณ์ชะแวะ
+              </button>
+            </div>
+          </div>
+
           <!-- Section 3: Cooperatives (สหกรณ์ 7 ประเภท) -->
           <div class="filter-section">
             <div class="filter-section-header">
@@ -639,6 +668,30 @@
             </div>
           </div>
 
+          <!-- Section 3.5: Promotion Groups (กลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ) -->
+          <div class="filter-section">
+            <div class="filter-section-header">
+              <span class="filter-section-label">🏢 กลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ (Promotion Group)</span>
+            </div>
+            <div class="filter-chip-group">
+              <button class="filter-chip active" data-reg-group="ALL" onclick="setRegFilter('group', 'ALL')">
+                <span class="chip-check">✓</span> ทั้งหมด
+              </button>
+              <button class="filter-chip group-chip" data-reg-group="กลุ่มส่งเสริมสหกรณ์ 1" onclick="setRegFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 1')">
+                <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 1
+              </button>
+              <button class="filter-chip group-chip" data-reg-group="กลุ่มส่งเสริมสหกรณ์ 2" onclick="setRegFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 2')">
+                <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 2
+              </button>
+              <button class="filter-chip group-chip" data-reg-group="กลุ่มส่งเสริมสหกรณ์ 3" onclick="setRegFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 3')">
+                <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 3
+              </button>
+              <button class="filter-chip group-chip" data-reg-group="นิคมสหกรณ์ชะแวะ" onclick="setRegFilter('group', 'นิคมสหกรณ์ชะแวะ')">
+                <span class="chip-check">✓</span> 🌾 นิคมสหกรณ์ชะแวะ
+              </button>
+            </div>
+          </div>
+
           <!-- Section 4: Cooperatives (สหกรณ์ 7 ประเภท) -->
           <div class="filter-section">
             <div class="filter-section-header">
@@ -765,6 +818,7 @@
       <div class="modal-header">
         <div>
           <span class="case-type-badge" id="detailCoopType">สหกรณ์การเกษตร</span>
+          <span id="detailCasePromotionGroupBadge" class="group-badge group-badge-1" style="display: none; margin-left: 6px;"></span>
           <h3 id="detailCoopName" style="margin-top: 4px; font-size: 1.3rem;">ชื่อสหกรณ์</h3>
         </div>
         <button class="modal-close-btn" onclick="closeModal('caseDetailModal')">&times;</button>
@@ -855,20 +909,27 @@
       </div>
       <form id="createCaseForm">
         <div class="modal-body">
-          <div class="form-group">
+          <div class="form-group coop-autocomplete-wrapper">
             <label>ชื่อสหกรณ์ที่เลิก <span style="color: red;">*</span></label>
-            <input type="text" name="coopName" class="form-control" placeholder="เช่น สหกรณ์การเกษตรพัฒนา จำกัด"
-              required>
+            <input type="text" id="createCaseCoopName" name="coopName" class="form-control" placeholder="พิมพ์ชื่อสหกรณ์ หรือคลิกเพื่อค้นหา..."
+              autocomplete="off" required>
+            <div id="createCaseCoopDropdown" class="coop-autocomplete-dropdown"></div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label>เลขทะเบียนสหกรณ์</label>
-              <input type="text" name="regNumber" class="form-control" placeholder="เช่น ก.0123/2545">
+              <label>กลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ</label>
+              <select id="createCasePromotionGroup" name="promotionGroup" class="form-control">
+                <option value="">-- ไม่ระบุ / นอกพื้นที่ --</option>
+                <option value="กลุ่มส่งเสริมสหกรณ์ 1">กลุ่มส่งเสริมสหกรณ์ 1 (อ.เมืองระยอง, อ.บ้านฉาง)</option>
+                <option value="กลุ่มส่งเสริมสหกรณ์ 2">กลุ่มส่งเสริมสหกรณ์ 2 (อ.แกลง, อ.เขาชะเมา)</option>
+                <option value="กลุ่มส่งเสริมสหกรณ์ 3">กลุ่มส่งเสริมสหกรณ์ 3 (อ.บ้านค่าย, อ.ปลวกแดง, อ.นิคมพัฒนา)</option>
+                <option value="นิคมสหกรณ์ชะแวะ">นิคมสหกรณ์ชะแวะ (อ.วังจันทร์)</option>
+              </select>
             </div>
             <div class="form-group">
               <label>ประเภทสถาบัน</label>
-              <select name="coopType" class="form-control">
+              <select id="createCaseCoopType" name="coopType" class="form-control">
                 <optgroup label="🏛️ สหกรณ์ (7 ประเภท)">
                   <option value="สหกรณ์การเกษตร">สหกรณ์การเกษตร</option>
                   <option value="สหกรณ์ประมง">สหกรณ์ประมง</option>
@@ -890,9 +951,15 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label>ที่ตั้ง / อำเภอ / จังหวัด</label>
-            <input type="text" name="location" class="form-control" placeholder="เช่น อ.เมือง จ.อุดรธานี">
+          <div class="form-row">
+            <div class="form-group">
+              <label>เลขทะเบียนสหกรณ์</label>
+              <input type="text" id="createCaseRegNumber" name="regNumber" class="form-control" placeholder="เช่น ก.0123/2545">
+            </div>
+            <div class="form-group">
+              <label>ที่ตั้ง / อำเภอ / จังหวัด</label>
+              <input type="text" id="createCaseLocation" name="location" class="form-control" placeholder="เช่น อ.เมือง จ.ระยอง">
+            </div>
           </div>
 
           <div class="form-row">
@@ -1159,15 +1226,22 @@
       </div>
       <form id="editCaseForm">
         <div class="modal-body">
-          <div class="form-group">
+          <div class="form-group coop-autocomplete-wrapper">
             <label>ชื่อสหกรณ์ <span style="color: red;">*</span></label>
-            <input type="text" id="editCaseCoopName" name="coopName" class="form-control" required>
+            <input type="text" id="editCaseCoopName" name="coopName" class="form-control" autocomplete="off" required>
+            <div id="editCaseCoopDropdown" class="coop-autocomplete-dropdown"></div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label>เลขทะเบียนสหกรณ์</label>
-              <input type="text" id="editCaseRegNumber" name="regNumber" class="form-control">
+              <label>กลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ</label>
+              <select id="editCasePromotionGroup" name="promotionGroup" class="form-control">
+                <option value="">-- ไม่ระบุ / นอกพื้นที่ --</option>
+                <option value="กลุ่มส่งเสริมสหกรณ์ 1">กลุ่มส่งเสริมสหกรณ์ 1 (อ.เมืองระยอง, อ.บ้านฉาง)</option>
+                <option value="กลุ่มส่งเสริมสหกรณ์ 2">กลุ่มส่งเสริมสหกรณ์ 2 (อ.แกลง, อ.เขาชะเมา)</option>
+                <option value="กลุ่มส่งเสริมสหกรณ์ 3">กลุ่มส่งเสริมสหกรณ์ 3 (อ.บ้านค่าย, อ.ปลวกแดง, อ.นิคมพัฒนา)</option>
+                <option value="นิคมสหกรณ์ชะแวะ">นิคมสหกรณ์ชะแวะ (อ.วังจันทร์)</option>
+              </select>
             </div>
             <div class="form-group">
               <label>ประเภทสถาบัน</label>
@@ -1194,9 +1268,15 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label>ที่ตั้ง / อำเภอ / จังหวัด</label>
-            <input type="text" id="editCaseLocation" name="location" class="form-control">
+          <div class="form-row">
+            <div class="form-group">
+              <label>เลขทะเบียนสหกรณ์</label>
+              <input type="text" id="editCaseRegNumber" name="regNumber" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>ที่ตั้ง / อำเภอ / จังหวัด</label>
+              <input type="text" id="editCaseLocation" name="location" class="form-control">
+            </div>
           </div>
 
           <div class="form-row">
@@ -1310,6 +1390,7 @@
       <div class="modal-header">
         <div>
           <span class="case-type-badge reg-type-bylaw" id="detailRegDocType">ข้อบังคับสหกรณ์</span>
+          <span id="detailRegPromotionGroupBadge" class="group-badge group-badge-1" style="display: none; margin-left: 6px;"></span>
           <h3 id="detailRegTitle" style="margin-top: 4px; font-size: 1.3rem;">ชื่อระเบียบ/ข้อบังคับ</h3>
           <span id="detailRegCoopName" style="font-size: 0.9rem; color: var(--text-muted);">ชื่อสหกรณ์</span>
         </div>
@@ -1392,14 +1473,15 @@
       <form id="createRegForm">
         <div class="modal-body">
           <div class="form-row">
-            <div class="form-group">
+            <div class="form-group coop-autocomplete-wrapper">
               <label>ชื่อสหกรณ์ที่ยื่นเรื่อง <span style="color: red;">*</span></label>
-              <input type="text" name="coopName" class="form-control" placeholder="เช่น สหกรณ์ออมทรัพย์... จำกัด"
-                required>
+              <input type="text" id="createRegCoopName" name="coopName" class="form-control" placeholder="พิมพ์ชื่อสหกรณ์ หรือคลิกเพื่อค้นหา..."
+                autocomplete="off" required>
+              <div id="createRegCoopDropdown" class="coop-autocomplete-dropdown"></div>
             </div>
             <div class="form-group">
               <label>ประเภทสถาบัน</label>
-              <select name="coopType" class="form-control">
+              <select id="createRegCoopType" name="coopType" class="form-control">
                 <optgroup label="🏛️ สหกรณ์ (7 ประเภท)">
                   <option value="สหกรณ์การเกษตร">สหกรณ์การเกษตร</option>
                   <option value="สหกรณ์ประมง">สหกรณ์ประมง</option>
@@ -1423,21 +1505,33 @@
 
           <div class="form-row">
             <div class="form-group">
+              <label>กลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ</label>
+              <select id="createRegPromotionGroup" name="promotionGroup" class="form-control">
+                <option value="">-- ไม่ระบุ / นอกพื้นที่ --</option>
+                <option value="กลุ่มส่งเสริมสหกรณ์ 1">กลุ่มส่งเสริมสหกรณ์ 1 (อ.เมืองระยอง, อ.บ้านฉาง)</option>
+                <option value="กลุ่มส่งเสริมสหกรณ์ 2">กลุ่มส่งเสริมสหกรณ์ 2 (อ.แกลง, อ.เขาชะเมา)</option>
+                <option value="กลุ่มส่งเสริมสหกรณ์ 3">กลุ่มส่งเสริมสหกรณ์ 3 (อ.บ้านค่าย, อ.ปลวกแดง, อ.นิคมพัฒนา)</option>
+                <option value="นิคมสหกรณ์ชะแวะ">นิคมสหกรณ์ชะแวะ (อ.วังจันทร์)</option>
+              </select>
+            </div>
+            <div class="form-group">
               <label>เลขที่รับเรื่อง / หนังสือส่ง</label>
               <input type="text" name="docNumber" class="form-control"
                 placeholder="เช่น สห.ขก 01/2567 หรือ รับที่ 124/67">
             </div>
+          </div>
+
+          <div class="form-row">
             <div class="form-group">
               <label>วันที่ยื่นเรื่อง / รับเรื่อง</label>
               <input type="text" id="createRegSubmitDate" name="submitDate" class="form-control thai-date-input"
                 placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
             </div>
-          </div>
-
-          <div class="form-group">
-            <label>เจ้าหน้าที่กลุ่มจัดตั้งฯผู้รับผิดชอบ <span style="color: red;">*</span></label>
-            <input type="text" name="officerName" class="form-control" placeholder="เช่น นายสมเกียรติ สหกรณ์ดี"
-              required>
+            <div class="form-group">
+              <label>เจ้าหน้าที่กลุ่มจัดตั้งฯผู้รับผิดชอบ <span style="color: red;">*</span></label>
+              <input type="text" name="officerName" class="form-control" placeholder="เช่น นายสมเกียรติ สหกรณ์ดี"
+                required>
+            </div>
           </div>
 
           <div class="form-group">
@@ -1601,9 +1695,10 @@
       <form id="editRegForm">
         <div class="modal-body">
           <div class="form-row">
-            <div class="form-group">
+            <div class="form-group coop-autocomplete-wrapper">
               <label>ชื่อสหกรณ์ / กลุ่มเกษตรกร <span style="color: red;">*</span></label>
-              <input type="text" id="editRegCoopName" name="coopName" class="form-control" required>
+              <input type="text" id="editRegCoopName" name="coopName" class="form-control" autocomplete="off" required>
+              <div id="editRegCoopDropdown" class="coop-autocomplete-dropdown"></div>
             </div>
             <div class="form-group">
               <label>ประเภทสถาบัน</label>
@@ -1628,6 +1723,17 @@
                 </optgroup>
               </select>
             </div>
+          </div>
+
+          <div class="form-group">
+            <label>กลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ</label>
+            <select id="editRegPromotionGroup" name="promotionGroup" class="form-control">
+              <option value="">-- ไม่ระบุ / นอกพื้นที่ --</option>
+              <option value="กลุ่มส่งเสริมสหกรณ์ 1">กลุ่มส่งเสริมสหกรณ์ 1 (อ.เมืองระยอง, อ.บ้านฉาง)</option>
+              <option value="กลุ่มส่งเสริมสหกรณ์ 2">กลุ่มส่งเสริมสหกรณ์ 2 (อ.แกลง, อ.เขาชะเมา)</option>
+              <option value="กลุ่มส่งเสริมสหกรณ์ 3">กลุ่มส่งเสริมสหกรณ์ 3 (อ.บ้านค่าย, อ.ปลวกแดง, อ.นิคมพัฒนา)</option>
+              <option value="นิคมสหกรณ์ชะแวะ">นิคมสหกรณ์ชะแวะ (อ.วังจันทร์)</option>
+            </select>
           </div>
 
           <div class="form-row">
@@ -2190,6 +2296,156 @@
             🖨️ พิมพ์ / บันทึก PDF (Print)
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 15. Cooperative Directory Modal -->
+  <div id="coopDirectoryModal" class="modal-backdrop">
+    <div class="modal-container" style="max-width: 960px; max-height: 90vh;">
+      <div class="modal-header" style="border-bottom: 1px solid var(--border-color); background: #f8fafc;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.6rem;">🏛️</span>
+          <div>
+            <h3 style="margin: 0; font-size: 1.15rem; color: var(--primary);">
+              ฐานข้อมูลสหกรณ์ตามกลุ่มส่งเสริมสหกรณ์ (จังหวัดระยอง)
+            </h3>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">
+              เลือกกลุ่มส่งเสริมฯ และนำเข้ารายชื่อสหกรณ์ทีละหลายชื่อ เพื่อง่ายต่อการค้นหาและเติมข้อมูลอัตโนมัติ
+            </span>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('coopDirectoryModal')">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 1.25rem;">
+        <!-- Top Action Bar: Search & Batch Import Button -->
+        <div style="display: flex; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+          <div style="display: flex; gap: 10px; flex: 1; min-width: 260px;">
+            <input type="text" id="coopDirectorySearchInput" class="form-control"
+              placeholder="🔍 ค้นหารายชื่อสหกรณ์ในระบบ..."
+              oninput="renderCoopDirectoryList()">
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-primary" onclick="toggleBatchImportForm(true)">
+              📥 นำเข้ารายชื่อสหกรณ์ (แบบชุด)
+            </button>
+            <button class="btn btn-outline-danger btn-sm" onclick="handleClearAllCoops()" title="ล้างรายชื่อสหกรณ์ทั้งหมดออกจากระบบ" style="border-color: #fca5a5; color: #dc2626;">
+              🗑️ ล้างทั้งหมด
+            </button>
+          </div>
+        </div>
+
+        <!-- Group Filter Tabs -->
+        <div class="filter-chip-group" style="margin-bottom: 1rem; flex-wrap: wrap;" id="coopDirectoryGroupChips">
+          <button class="filter-chip active" data-dir-group="ALL" onclick="setCoopDirectoryGroupFilter('ALL')">
+            <span class="chip-check">✓</span> ทั้งหมด (<span id="coopDirTotalCount">0</span>)
+          </button>
+          <button class="filter-chip group-chip" data-dir-group="กลุ่มส่งเสริมสหกรณ์ 1" onclick="setCoopDirectoryGroupFilter('กลุ่มส่งเสริมสหกรณ์ 1')">
+            <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 1 (<span id="coopDirG1Count">0</span>)
+          </button>
+          <button class="filter-chip group-chip" data-dir-group="กลุ่มส่งเสริมสหกรณ์ 2" onclick="setCoopDirectoryGroupFilter('กลุ่มส่งเสริมสหกรณ์ 2')">
+            <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 2 (<span id="coopDirG2Count">0</span>)
+          </button>
+          <button class="filter-chip group-chip" data-dir-group="กลุ่มส่งเสริมสหกรณ์ 3" onclick="setCoopDirectoryGroupFilter('กลุ่มส่งเสริมสหกรณ์ 3')">
+            <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 3 (<span id="coopDirG3Count">0</span>)
+          </button>
+          <button class="filter-chip group-chip" data-dir-group="นิคมสหกรณ์ชะแวะ" onclick="setCoopDirectoryGroupFilter('นิคมสหกรณ์ชะแวะ')">
+            <span class="chip-check">✓</span> 🌾 นิคมสหกรณ์ชะแวะ (<span id="coopDirGChawoeCount">0</span>)
+          </button>
+        </div>
+
+        <!-- Batch Import Card (Prominent & Simple) -->
+        <div id="batchImportCoopCard" style="display: none; background: #f0fdfa; border: 1.5px solid #0d9488; border-radius: 10px; padding: 1.25rem; margin-bottom: 1.25rem; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.08);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+            <div>
+              <h4 style="margin: 0; font-size: 1.05rem; color: #0f766e; display: flex; align-items: center; gap: 6px;">
+                <span>📥</span> นำเข้ารายชื่อสหกรณ์เข้ากลุ่มส่งเสริมฯ (ใส่ได้พร้อมกันหลายชื่อ)
+              </h4>
+              <p style="margin: 4px 0 0; font-size: 0.82rem; color: var(--text-muted);">
+                ขั้นตอนที่ 1: เลือกกลุ่มส่งเสริมสหกรณ์ ➔ ขั้นตอนที่ 2: วางหรือพิมพ์รายชื่อสหกรณ์ (บรรทัดละ 1 ชื่อ) แล้วกดปุ่มนำเข้า
+              </p>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="toggleBatchImportForm(false)">✕ ปิด</button>
+          </div>
+
+          <form id="batchImportCoopForm" onsubmit="handleBatchImportCoops(event)">
+            <div class="form-row" style="margin-bottom: 0.75rem;">
+              <div class="form-group" style="flex: 1;">
+                <label style="font-weight: 600; color: #0f766e;">1. เลือกกลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ <span style="color: red;">*</span></label>
+                <select id="batchImportTargetGroup" class="form-control" required style="font-weight: 600; font-size: 0.95rem; border: 1.5px solid #0d9488;">
+                  <option value="กลุ่มส่งเสริมสหกรณ์ 1">🏢 กลุ่มส่งเสริมสหกรณ์ 1 (อ.เมืองระยอง, อ.บ้านฉาง)</option>
+                  <option value="กลุ่มส่งเสริมสหกรณ์ 2">🏢 กลุ่มส่งเสริมสหกรณ์ 2 (อ.แกลง, อ.เขาชะเมา)</option>
+                  <option value="กลุ่มส่งเสริมสหกรณ์ 3">🏢 กลุ่มส่งเสริมสหกรณ์ 3 (อ.บ้านค่าย, อ.ปลวกแดง, อ.นิคมพัฒนา)</option>
+                  <option value="นิคมสหกรณ์ชะแวะ">🌾 นิคมสหกรณ์ชะแวะ (อ.วังจันทร์)</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex: 1;">
+                <label style="font-size: 0.82rem; color: var(--text-muted);">ประเภทสถาบันตั้งต้น (ระบบจะตรวจจับอัตโนมัติจากชื่อ)</label>
+                <select id="batchImportDefaultType" class="form-control">
+                  <option value="สหกรณ์การเกษตร">สหกรณ์การเกษตร (ค่าเริ่มต้น)</option>
+                  <option value="สหกรณ์ออมทรัพย์">สหกรณ์ออมทรัพย์</option>
+                  <option value="สหกรณ์ประมง">สหกรณ์ประมง</option>
+                  <option value="สหกรณ์นิคม">สหกรณ์นิคม</option>
+                  <option value="สหกรณ์บริการ">สหกรณ์บริการ</option>
+                  <option value="สหกรณ์ร้านค้า">สหกรณ์ร้านค้า</option>
+                  <option value="สหกรณ์เครดิตยูเนี่ยน">สหกรณ์เครดิตยูเนี่ยน</option>
+                  <option value="กลุ่มเกษตรกร">กลุ่มเกษตรกร</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label style="font-weight: 600; color: #0f766e;">2. รายชื่อสหกรณ์ / สถาบัน (วางหรือพิมพ์ได้พร้อมกันหลายชื่อ) <span style="color: red;">*</span></label>
+                <span id="batchNamesCountPreview" style="font-size: 0.82rem; font-weight: 600; color: #0d9488;">0 รายชื่อ</span>
+              </div>
+              <textarea id="batchCoopNamesInput" class="form-control" rows="6" required
+                placeholder="วางรายชื่อสหกรณ์ที่นี่ (บรรทัดละ 1 ชื่อ) เช่น:
+สหกรณ์การเกษตรเมืองระยอง จำกัด
+สหกรณ์ประมงปากน้ำระยอง จำกัด
+สหกรณ์ออมทรัพย์ครูระยอง จำกัด
+กลุ่มเกษตรกรทำสวนเมืองระยอง"
+                style="font-family: inherit; font-size: 0.9rem; line-height: 1.5; resize: vertical;"
+                oninput="updateBatchNamesCountPreview()"></textarea>
+              <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 4px;">
+                💡 เคล็ดลับ: สามารถคัดลอกจาก Excel หรือเอกสารมาวางได้ทันที ระบบจะตัดเลขข้อ (1., 2.) และบรรทัดว่างออกให้อัตโนมัติ
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="toggleBatchImportForm(false)">ยกเลิก</button>
+              <button type="submit" id="btnSubmitBatchImport" class="btn btn-primary">
+                📥 บันทึกนำเข้ารายชื่อเข้ากลุ่มนี้
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Table of Cooperatives -->
+        <div class="table-responsive" style="max-height: 460px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+          <table class="data-table" style="width: 100%; font-size: 0.83rem;">
+            <thead style="position: sticky; top: 0; z-index: 2; background: #f8fafc;">
+              <tr>
+                <th style="width: 45px; text-align: center;">ลำดับ</th>
+                <th>ชื่อสหกรณ์ / สถาบัน</th>
+                <th>กลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ</th>
+                <th>ประเภทสถาบัน</th>
+                <th style="text-align: right; width: 130px;">การจัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="coopDirectoryTableBody">
+              <!-- Rendered via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="background: #f8fafc; justify-content: space-between;">
+        <div style="font-size: 0.8rem; color: var(--text-muted);">
+          💡 สหกรณ์ที่นำเข้าจะปรากฏในระบบพิมพ์แนะนำ (Autocomplete) ทันทีที่พิมพ์ชื่อในแบบฟอร์ม
+        </div>
+        <button class="btn btn-secondary" onclick="closeModal('coopDirectoryModal')">ปิดหน้าต่าง</button>
       </div>
     </div>
   </div>
