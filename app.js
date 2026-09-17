@@ -2220,13 +2220,13 @@ async function handleCreateRegSubmit(e) {
 
   const payload = {
     coopName: coopName,
-    regNumber: form.regNumber.value.trim(),
+    regNumber: form.regNumber ? form.regNumber.value.trim() : '',
     coopType: form.coopType ? form.coopType.value : 'สหกรณ์การเกษตร',
-    docNumber: form.docNumber.value.trim(),
+    docNumber: form.docNumber ? form.docNumber.value.trim() : '',
     submitDate: fromThaiDateInput(form.submitDate.value),
-    officerName: form.officerName.value.trim(),
-    officerContact: form.officerContact.value.trim(),
-    note: form.note.value.trim(),
+    officerName: form.officerName ? form.officerName.value.trim() : '',
+    officerContact: form.officerContact ? form.officerContact.value.trim() : '',
+    note: form.note ? form.note.value.trim() : '',
     items: items,
     // ponytail: fallback single fields for backward compatibility
     docType: items[0].docType,
@@ -2364,8 +2364,9 @@ function openEditRegInfoModal() {
   document.getElementById('editRegTitle').value = regData.title || '';
   document.getElementById('editRegDocNumber').value = regData.docNumber || '';
   document.getElementById('editRegSubmitDate').value = toThaiDateInput(regData.submitDate);
-  document.getElementById('editRegOfficerName').value = regData.officerName || '';
-  document.getElementById('editRegOfficerContact').value = regData.officerContact || '';
+  if (document.getElementById('editRegOfficerContact')) {
+    document.getElementById('editRegOfficerContact').value = regData.officerContact || '';
+  }
   document.getElementById('editRegOverallStatus').value = regData.status || 'อยู่ระหว่างพิจารณา';
   document.getElementById('editRegNote').value = regData.note || '';
 
@@ -2387,7 +2388,7 @@ async function handleEditRegSubmit(e) {
     docNumber: form.docNumber.value.trim(),
     submitDate: fromThaiDateInput(form.submitDate.value),
     officerName: form.officerName.value.trim(),
-    officerContact: form.officerContact.value.trim(),
+    officerContact: form.officerContact ? form.officerContact.value.trim() : (regData.officerContact || ''),
     status: form.status.value,
     note: form.note.value.trim()
   };

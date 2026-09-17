@@ -57,12 +57,14 @@
 
       <div class="navbar-actions">
         <!-- Export Summary Modal Button -->
-        <button id="btnNavExportActivePdf" class="btn btn-outline-primary btn-sm" onclick="openActiveExportModal()" title="ส่งออกสรุปข้อมูลงานชำระบัญชี และระเบียบข้อบังคับ สามารถเลือกกรองข้อมูลได้ทุกเงื่อนไข (Excel / PDF / CSV)">
+        <button id="btnNavExportActivePdf" class="btn btn-outline-primary btn-sm" onclick="openActiveExportModal()"
+          title="ส่งออกสรุปข้อมูลงานชำระบัญชี และระเบียบข้อบังคับ สามารถเลือกกรองข้อมูลได้ทุกเงื่อนไข (Excel / PDF / CSV)">
           📑 ส่งออกสรุปข้อมูล
         </button>
 
         <!-- Audit Log Button -->
-        <button id="adminAuditLogBtn" class="btn btn-secondary btn-sm" onclick="openAuditLogModal()" title="ดูประวัติการบันทึกข้อมูล" style="display: none;">
+        <button id="adminAuditLogBtn" class="btn btn-secondary btn-sm" onclick="openAuditLogModal()"
+          title="ดูประวัติการบันทึกข้อมูล" style="display: none;">
           📋 Audit Log
         </button>
 
@@ -197,14 +199,17 @@
         <div class="hub-announcement-content">
           <span style="font-size: 2.5rem;">💡</span>
           <div>
-            <h4 style="margin: 0; color: var(--primary); font-size: 1.05rem;">คำแนะนำสำหรับเจ้าหน้าที่ส่งเสริมสหกรณ์</h4>
+            <h4 style="margin: 0; color: var(--primary); font-size: 1.05rem;">คำแนะนำสำหรับเจ้าหน้าที่ส่งเสริมสหกรณ์
+            </h4>
             <p style="margin: 4px 0 0; font-size: 0.88rem; color: var(--text-muted);">
               ท่านสามารถใช้ระบบนี้ในการกำกับดูแลสหกรณ์ในความรับผิดชอบได้ทั้ง 2 ด้าน โดยข้อมูลจะถูกแยกส่วนกันอย่างชัดเจน
             </p>
           </div>
         </div>
         <div class="hub-announcement-actions">
-          <button class="btn btn-primary btn-sm" onclick="openActiveExportModal()" title="ส่งออกสรุปข้อมูลแบบกำหนดตัวกรองได้ทุกข้อมูล (Excel / PDF / CSV)" style="background: linear-gradient(135deg, #0e3760 0%, #0284c7 100%); font-weight: 600;">
+          <button class="btn btn-primary btn-sm" onclick="openActiveExportModal()"
+            title="ส่งออกสรุปข้อมูลแบบกำหนดตัวกรองได้ทุกข้อมูล (Excel / PDF / CSV)"
+            style="background: linear-gradient(135deg, #0e3760 0%, #0284c7 100%); font-weight: 600;">
             📑 ส่งออกสรุปข้อมูล (Excel / PDF / CSV)
           </button>
           <button class="btn btn-secondary btn-sm" onclick="switchAppView('liquidation')">
@@ -289,11 +294,13 @@
           <div class="filter-panel-title">
             <span>🏷️ ตัวกรองข้อมูล</span>
             <span id="caseFilterCount" class="filter-active-count">ทั้งหมด</span>
-            <span id="caseFilterResultCount" style="font-size: 0.82rem; font-weight: 500; color: var(--text-muted); margin-left: 6px;"></span>
+            <span id="caseFilterResultCount"
+              style="font-size: 0.82rem; font-weight: 500; color: var(--text-muted); margin-left: 6px;"></span>
           </div>
 
           <div class="filter-panel-actions">
-            <button id="btnToggleCaseFilter" class="filter-toggle-btn" onclick="toggleFilterPanel('caseFilter')" title="เปิด/ปิด แผงตัวกรอง">
+            <button id="btnToggleCaseFilter" class="filter-toggle-btn" onclick="toggleFilterPanel('caseFilter')"
+              title="เปิด/ปิด แผงตัวกรอง">
               <span class="toggle-icon">▼</span> <span class="toggle-text">แสดงตัวกรอง</span>
             </button>
             <div class="view-switch-group">
@@ -304,7 +311,8 @@
                 📋 ตาราง
               </button>
             </div>
-            <button id="btnResetCaseFilter" class="filter-reset-btn" onclick="resetCaseFilters()" title="ล้างตัวกรองทั้งหมด" style="display: none;">
+            <button id="btnResetCaseFilter" class="filter-reset-btn" onclick="resetCaseFilters()"
+              title="ล้างตัวกรองทั้งหมด" style="display: none;">
               ✕ ล้างตัวกรอง
             </button>
           </div>
@@ -365,10 +373,12 @@
               <button class="filter-chip active" data-case-type="ALL" onclick="setCaseFilter('type', 'ALL')">
                 <span class="chip-check">✓</span> ทั้งหมด
               </button>
-              <button class="filter-chip" data-case-type="สหกรณ์การเกษตร" onclick="setCaseFilter('type', 'สหกรณ์การเกษตร')">
+              <button class="filter-chip" data-case-type="สหกรณ์การเกษตร"
+                onclick="setCaseFilter('type', 'สหกรณ์การเกษตร')">
                 <span class="chip-check">✓</span> สหกรณ์การเกษตร
               </button>
-              <button class="filter-chip" data-case-type="สหกรณ์ออมทรัพย์" onclick="setCaseFilter('type', 'สหกรณ์ออมทรัพย์')">
+              <button class="filter-chip" data-case-type="สหกรณ์ออมทรัพย์"
+                onclick="setCaseFilter('type', 'สหกรณ์ออมทรัพย์')">
                 <span class="chip-check">✓</span> สหกรณ์ออมทรัพย์
               </button>
               <button class="filter-chip" data-case-type="สหกรณ์บริการ" onclick="setCaseFilter('type', 'สหกรณ์บริการ')">
@@ -377,13 +387,15 @@
               <button class="filter-chip" data-case-type="สหกรณ์นิคม" onclick="setCaseFilter('type', 'สหกรณ์นิคม')">
                 <span class="chip-check">✓</span> สหกรณ์นิคม
               </button>
-              <button class="filter-chip" data-case-type="สหกรณ์ร้านค้า" onclick="setCaseFilter('type', 'สหกรณ์ร้านค้า')">
+              <button class="filter-chip" data-case-type="สหกรณ์ร้านค้า"
+                onclick="setCaseFilter('type', 'สหกรณ์ร้านค้า')">
                 <span class="chip-check">✓</span> สหกรณ์ร้านค้า
               </button>
               <button class="filter-chip" data-case-type="สหกรณ์ประมง" onclick="setCaseFilter('type', 'สหกรณ์ประมง')">
                 <span class="chip-check">✓</span> สหกรณ์ประมง
               </button>
-              <button class="filter-chip" data-case-type="สหกรณ์เครดิตยูเนี่ยน" onclick="setCaseFilter('type', 'สหกรณ์เครดิตยูเนี่ยน')">
+              <button class="filter-chip" data-case-type="สหกรณ์เครดิตยูเนี่ยน"
+                onclick="setCaseFilter('type', 'สหกรณ์เครดิตยูเนี่ยน')">
                 <span class="chip-check">✓</span> สหกรณ์เครดิตยูเนี่ยน
               </button>
             </div>
@@ -398,22 +410,28 @@
               <button class="filter-chip" data-case-type="กลุ่มเกษตรกร" onclick="setCaseFilter('type', 'กลุ่มเกษตรกร')">
                 <span class="chip-check">✓</span> 🌾 กลุ่มเกษตรกร (ทุกประเภท)
               </button>
-              <button class="filter-chip" data-case-type="กลุ่มเกษตรกรทำนา" onclick="setCaseFilter('type', 'กลุ่มเกษตรกรทำนา')">
+              <button class="filter-chip" data-case-type="กลุ่มเกษตรกรทำนา"
+                onclick="setCaseFilter('type', 'กลุ่มเกษตรกรทำนา')">
                 <span class="chip-check">✓</span> กลุ่มเกษตรกรทำนา
               </button>
-              <button class="filter-chip" data-case-type="กลุ่มเกษตรกรทำไร่" onclick="setCaseFilter('type', 'กลุ่มเกษตรกรทำไร่')">
+              <button class="filter-chip" data-case-type="กลุ่มเกษตรกรทำไร่"
+                onclick="setCaseFilter('type', 'กลุ่มเกษตรกรทำไร่')">
                 <span class="chip-check">✓</span> กลุ่มเกษตรกรทำไร่
               </button>
-              <button class="filter-chip" data-case-type="กลุ่มเกษตรกรทำสวน" onclick="setCaseFilter('type', 'กลุ่มเกษตรกรทำสวน')">
+              <button class="filter-chip" data-case-type="กลุ่มเกษตรกรทำสวน"
+                onclick="setCaseFilter('type', 'กลุ่มเกษตรกรทำสวน')">
                 <span class="chip-check">✓</span> กลุ่มเกษตรกรทำสวน
               </button>
-              <button class="filter-chip" data-case-type="กลุ่มเกษตรกรเลี้ยงสัตว์" onclick="setCaseFilter('type', 'กลุ่มเกษตรกรเลี้ยงสัตว์')">
+              <button class="filter-chip" data-case-type="กลุ่มเกษตรกรเลี้ยงสัตว์"
+                onclick="setCaseFilter('type', 'กลุ่มเกษตรกรเลี้ยงสัตว์')">
                 <span class="chip-check">✓</span> กลุ่มเกษตรกรเลี้ยงสัตว์
               </button>
-              <button class="filter-chip" data-case-type="กลุ่มเกษตรกรประมง" onclick="setCaseFilter('type', 'กลุ่มเกษตรกรประมง')">
+              <button class="filter-chip" data-case-type="กลุ่มเกษตรกรประมง"
+                onclick="setCaseFilter('type', 'กลุ่มเกษตรกรประมง')">
                 <span class="chip-check">✓</span> กลุ่มเกษตรกรประมง
               </button>
-              <button class="filter-chip" data-case-type="กลุ่มเกษตรกรอื่นๆ" onclick="setCaseFilter('type', 'กลุ่มเกษตรกรอื่นๆ')">
+              <button class="filter-chip" data-case-type="กลุ่มเกษตรกรอื่นๆ"
+                onclick="setCaseFilter('type', 'กลุ่มเกษตรกรอื่นๆ')">
                 <span class="chip-check">✓</span> กลุ่มเกษตรกรอื่นๆ
               </button>
             </div>
@@ -527,11 +545,13 @@
           <div class="filter-panel-title">
             <span>🏷️ ตัวกรองระเบียบและข้อบังคับ</span>
             <span id="regFilterCount" class="filter-active-count">ทั้งหมด</span>
-            <span id="regFilterResultCount" style="font-size: 0.82rem; font-weight: 500; color: var(--text-muted); margin-left: 6px;"></span>
+            <span id="regFilterResultCount"
+              style="font-size: 0.82rem; font-weight: 500; color: var(--text-muted); margin-left: 6px;"></span>
           </div>
 
           <div class="filter-panel-actions">
-            <button id="btnToggleRegFilter" class="filter-toggle-btn" onclick="toggleFilterPanel('regFilter')" title="เปิด/ปิด แผงตัวกรอง">
+            <button id="btnToggleRegFilter" class="filter-toggle-btn" onclick="toggleFilterPanel('regFilter')"
+              title="เปิด/ปิด แผงตัวกรอง">
               <span class="toggle-icon">▼</span> <span class="toggle-text">แสดงตัวกรอง</span>
             </button>
             <div class="view-switch-group">
@@ -542,7 +562,8 @@
                 📋 ตาราง
               </button>
             </div>
-            <button id="btnResetRegFilter" class="filter-reset-btn" onclick="resetRegFilters()" title="ล้างตัวกรองทั้งหมด" style="display: none;">
+            <button id="btnResetRegFilter" class="filter-reset-btn" onclick="resetRegFilters()"
+              title="ล้างตัวกรองทั้งหมด" style="display: none;">
               ✕ ล้างตัวกรอง
             </button>
           </div>
@@ -582,13 +603,16 @@
               <button class="filter-chip active" data-reg-doc="ALL" onclick="setRegFilter('docType', 'ALL')">
                 <span class="chip-check">✓</span> ทั้งหมด
               </button>
-              <button class="filter-chip" data-reg-doc="ข้อบังคับสหกรณ์" onclick="setRegFilter('docType', 'ข้อบังคับสหกรณ์')">
+              <button class="filter-chip" data-reg-doc="ข้อบังคับสหกรณ์"
+                onclick="setRegFilter('docType', 'ข้อบังคับสหกรณ์')">
                 <span class="chip-check">✓</span> 📘 ข้อบังคับ (14 วัน)
               </button>
-              <button class="filter-chip" data-reg-doc="ระเบียบสหกรณ์ (เห็นชอบ)" onclick="setRegFilter('docType', 'ระเบียบสหกรณ์ (เห็นชอบ)')">
+              <button class="filter-chip" data-reg-doc="ระเบียบสหกรณ์ (เห็นชอบ)"
+                onclick="setRegFilter('docType', 'ระเบียบสหกรณ์ (เห็นชอบ)')">
                 <span class="chip-check">✓</span> 📗 ระเบียบ - เห็นชอบ (7 วัน)
               </button>
-              <button class="filter-chip" data-reg-doc="ระเบียบสหกรณ์ (รับทราบ)" onclick="setRegFilter('docType', 'ระเบียบสหกรณ์ (รับทราบ)')">
+              <button class="filter-chip" data-reg-doc="ระเบียบสหกรณ์ (รับทราบ)"
+                onclick="setRegFilter('docType', 'ระเบียบสหกรณ์ (รับทราบ)')">
                 <span class="chip-check">✓</span> 📙 ระเบียบ - รับทราบ (30 วัน)
               </button>
             </div>
@@ -624,10 +648,12 @@
               <button class="filter-chip active" data-reg-type="ALL" onclick="setRegFilter('type', 'ALL')">
                 <span class="chip-check">✓</span> ทั้งหมด
               </button>
-              <button class="filter-chip" data-reg-type="สหกรณ์การเกษตร" onclick="setRegFilter('type', 'สหกรณ์การเกษตร')">
+              <button class="filter-chip" data-reg-type="สหกรณ์การเกษตร"
+                onclick="setRegFilter('type', 'สหกรณ์การเกษตร')">
                 <span class="chip-check">✓</span> สหกรณ์การเกษตร
               </button>
-              <button class="filter-chip" data-reg-type="สหกรณ์ออมทรัพย์" onclick="setRegFilter('type', 'สหกรณ์ออมทรัพย์')">
+              <button class="filter-chip" data-reg-type="สหกรณ์ออมทรัพย์"
+                onclick="setRegFilter('type', 'สหกรณ์ออมทรัพย์')">
                 <span class="chip-check">✓</span> สหกรณ์ออมทรัพย์
               </button>
               <button class="filter-chip" data-reg-type="สหกรณ์บริการ" onclick="setRegFilter('type', 'สหกรณ์บริการ')">
@@ -642,7 +668,8 @@
               <button class="filter-chip" data-reg-type="สหกรณ์ประมง" onclick="setRegFilter('type', 'สหกรณ์ประมง')">
                 <span class="chip-check">✓</span> สหกรณ์ประมง
               </button>
-              <button class="filter-chip" data-reg-type="สหกรณ์เครดิตยูเนี่ยน" onclick="setRegFilter('type', 'สหกรณ์เครดิตยูเนี่ยน')">
+              <button class="filter-chip" data-reg-type="สหกรณ์เครดิตยูเนี่ยน"
+                onclick="setRegFilter('type', 'สหกรณ์เครดิตยูเนี่ยน')">
                 <span class="chip-check">✓</span> สหกรณ์เครดิตยูเนี่ยน
               </button>
             </div>
@@ -657,22 +684,28 @@
               <button class="filter-chip" data-reg-type="กลุ่มเกษตรกร" onclick="setRegFilter('type', 'กลุ่มเกษตรกร')">
                 <span class="chip-check">✓</span> 🌾 กลุ่มเกษตรกร (ทุกประเภท)
               </button>
-              <button class="filter-chip" data-reg-type="กลุ่มเกษตรกรทำนา" onclick="setRegFilter('type', 'กลุ่มเกษตรกรทำนา')">
+              <button class="filter-chip" data-reg-type="กลุ่มเกษตรกรทำนา"
+                onclick="setRegFilter('type', 'กลุ่มเกษตรกรทำนา')">
                 <span class="chip-check">✓</span> กลุ่มเกษตรกรทำนา
               </button>
-              <button class="filter-chip" data-reg-type="กลุ่มเกษตรกรทำไร่" onclick="setRegFilter('type', 'กลุ่มเกษตรกรทำไร่')">
+              <button class="filter-chip" data-reg-type="กลุ่มเกษตรกรทำไร่"
+                onclick="setRegFilter('type', 'กลุ่มเกษตรกรทำไร่')">
                 <span class="chip-check">✓</span> กลุ่มเกษตรกรทำไร่
               </button>
-              <button class="filter-chip" data-reg-type="กลุ่มเกษตรกรทำสวน" onclick="setRegFilter('type', 'กลุ่มเกษตรกรทำสวน')">
+              <button class="filter-chip" data-reg-type="กลุ่มเกษตรกรทำสวน"
+                onclick="setRegFilter('type', 'กลุ่มเกษตรกรทำสวน')">
                 <span class="chip-check">✓</span> กลุ่มเกษตรกรทำสวน
               </button>
-              <button class="filter-chip" data-reg-type="กลุ่มเกษตรกรเลี้ยงสัตว์" onclick="setRegFilter('type', 'กลุ่มเกษตรกรเลี้ยงสัตว์')">
+              <button class="filter-chip" data-reg-type="กลุ่มเกษตรกรเลี้ยงสัตว์"
+                onclick="setRegFilter('type', 'กลุ่มเกษตรกรเลี้ยงสัตว์')">
                 <span class="chip-check">✓</span> กลุ่มเกษตรกรเลี้ยงสัตว์
               </button>
-              <button class="filter-chip" data-reg-type="กลุ่มเกษตรกรประมง" onclick="setRegFilter('type', 'กลุ่มเกษตรกรประมง')">
+              <button class="filter-chip" data-reg-type="กลุ่มเกษตรกรประมง"
+                onclick="setRegFilter('type', 'กลุ่มเกษตรกรประมง')">
                 <span class="chip-check">✓</span> กลุ่มเกษตรกรประมง
               </button>
-              <button class="filter-chip" data-reg-type="กลุ่มเกษตรกรอื่นๆ" onclick="setRegFilter('type', 'กลุ่มเกษตรกรอื่นๆ')">
+              <button class="filter-chip" data-reg-type="กลุ่มเกษตรกรอื่นๆ"
+                onclick="setRegFilter('type', 'กลุ่มเกษตรกรอื่นๆ')">
                 <span class="chip-check">✓</span> กลุ่มเกษตรกรอื่นๆ
               </button>
             </div>
@@ -803,7 +836,8 @@
           </button>
         </div>
         <div style="display: flex; gap: 8px; margin-left: auto;">
-          <button class="btn btn-outline-primary btn-sm" onclick="exportCurrentCasePdf()" title="ส่งออกเป็นเอกสาร PDF หรือพิมพ์รายงานฉบับนี้">
+          <button class="btn btn-outline-primary btn-sm" onclick="exportCurrentCasePdf()"
+            title="ส่งออกเป็นเอกสาร PDF หรือพิมพ์รายงานฉบับนี้">
             🖨️ ส่งออก PDF / พิมพ์
           </button>
           <button class="btn btn-secondary" onclick="closeModal('caseDetailModal')">ปิดหน้าต่าง</button>
@@ -879,7 +913,8 @@
           <div class="form-row">
             <div class="form-group">
               <label>วันที่ออกคำสั่ง / ประกาศเลิก</label>
-              <input type="text" id="createOrderDate" name="orderDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
+              <input type="text" id="createOrderDate" name="orderDate" class="form-control thai-date-input"
+                placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
             </div>
             <div class="form-group">
               <label>ขั้นตอนเริ่มต้น / อยู่ที่ขั้นตอน <span style="color: red;">*</span></label>
@@ -947,18 +982,21 @@
               <option value="เสร็จสิ้น">🟢 เสร็จสิ้นแล้ว</option>
             </select>
             <small style="color: var(--text-muted); font-size: 0.78rem; display: block; margin-top: 4px;">
-              💡 หากเลือก <strong>กำลังดำเนินการ</strong> หรือ <strong>เสร็จสิ้น</strong> ระบบจะปรับขั้นตอนก่อนหน้าทั้งหมดเป็น "เสร็จสิ้น" ให้อัตโนมัติ
+              💡 หากเลือก <strong>กำลังดำเนินการ</strong> หรือ <strong>เสร็จสิ้น</strong>
+              ระบบจะปรับขั้นตอนก่อนหน้าทั้งหมดเป็น "เสร็จสิ้น" ให้อัตโนมัติ
             </small>
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label>วันที่เริ่มต้นขั้นตอนนี้</label>
-              <input type="text" id="updateStepStartDate" name="startDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
+              <input type="text" id="updateStepStartDate" name="startDate" class="form-control thai-date-input"
+                placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
             </div>
             <div class="form-group">
               <label>วันที่สิ้นสุด / แล้วเสร็จ</label>
-              <input type="text" id="updateStepEndDate" name="endDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
+              <input type="text" id="updateStepEndDate" name="endDate" class="form-control thai-date-input"
+                placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
             </div>
           </div>
 
@@ -1011,7 +1049,8 @@
           <div class="form-row">
             <div class="form-group">
               <label>วันที่เริ่มปฏิบัติหน้าที่</label>
-              <input type="text" id="liqStartDate" name="startDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
+              <input type="text" id="liqStartDate" name="startDate" class="form-control thai-date-input"
+                placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
             </div>
             <div class="form-group">
               <label>เบอร์โทรศัพท์ติดต่อ</label>
@@ -1087,11 +1126,13 @@
           <div class="form-row">
             <div class="form-group">
               <label>วันที่เริ่มปฏิบัติหน้าที่</label>
-              <input type="text" id="editLiqStartDate" name="startDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
+              <input type="text" id="editLiqStartDate" name="startDate" class="form-control thai-date-input"
+                placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
             </div>
             <div class="form-group">
               <label>วันที่พ้นหน้าที่</label>
-              <input type="text" id="editLiqEndDate" name="endDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
+              <input type="text" id="editLiqEndDate" name="endDate" class="form-control thai-date-input"
+                placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
             </div>
           </div>
 
@@ -1175,7 +1216,8 @@
           <div class="form-row">
             <div class="form-group">
               <label>วันที่ออกคำสั่ง / ประกาศเลิก</label>
-              <input type="text" id="editCaseOrderDate" name="orderDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
+              <input type="text" id="editCaseOrderDate" name="orderDate" class="form-control thai-date-input"
+                placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
             </div>
             <div class="form-group">
               <label>สถานะการดำเนินงาน</label>
@@ -1330,7 +1372,8 @@
           </button>
         </div>
         <div style="display: flex; gap: 8px; margin-left: auto;">
-          <button class="btn btn-outline-primary btn-sm" onclick="exportCurrentRegPdf()" title="ส่งออกเป็นเอกสาร PDF หรือพิมพ์รายงานฉบับนี้">
+          <button class="btn btn-outline-primary btn-sm" onclick="exportCurrentRegPdf()"
+            title="ส่งออกเป็นเอกสาร PDF หรือพิมพ์รายงานฉบับนี้">
             🖨️ ส่งออก PDF / พิมพ์
           </button>
           <button class="btn btn-secondary" onclick="closeModal('regDetailModal')">ปิดหน้าต่าง</button>
@@ -1348,16 +1391,11 @@
       </div>
       <form id="createRegForm">
         <div class="modal-body">
-          <div class="form-group">
-            <label>ชื่อสหกรณ์ที่ยื่นเรื่อง <span style="color: red;">*</span></label>
-            <input type="text" name="coopName" class="form-control" placeholder="เช่น สหกรณ์ออมทรัพย์ครูขอนแก่น จำกัด"
-              required>
-          </div>
-
           <div class="form-row">
             <div class="form-group">
-              <label>เลขทะเบียนสหกรณ์</label>
-              <input type="text" name="regNumber" class="form-control" placeholder="เช่น อ.0456/2540">
+              <label>ชื่อสหกรณ์ที่ยื่นเรื่อง <span style="color: red;">*</span></label>
+              <input type="text" name="coopName" class="form-control" placeholder="เช่น สหกรณ์ออมทรัพย์... จำกัด"
+                required>
             </div>
             <div class="form-group">
               <label>ประเภทสถาบัน</label>
@@ -1391,20 +1429,15 @@
             </div>
             <div class="form-group">
               <label>วันที่ยื่นเรื่อง / รับเรื่อง</label>
-              <input type="text" id="createRegSubmitDate" name="submitDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
+              <input type="text" id="createRegSubmitDate" name="submitDate" class="form-control thai-date-input"
+                placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
             </div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>เจ้าหน้าที่กลุ่มจัดตั้งฯผู้รับผิดชอบ <span style="color: red;">*</span></label>
-              <input type="text" name="officerName" class="form-control" placeholder="เช่น นายสมเกียรติ สหกรณ์ดี"
-                required>
-            </div>
-            <div class="form-group">
-              <label>เบอร์โทรศัพท์ติดต่อ จนท.</label>
-              <input type="text" name="officerContact" class="form-control" placeholder="เช่น 081-999-8877">
-            </div>
+          <div class="form-group">
+            <label>เจ้าหน้าที่กลุ่มจัดตั้งฯผู้รับผิดชอบ <span style="color: red;">*</span></label>
+            <input type="text" name="officerName" class="form-control" placeholder="เช่น นายสมเกียรติ สหกรณ์ดี"
+              required>
           </div>
 
           <div class="form-group">
@@ -1417,8 +1450,10 @@
 
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
             <div>
-              <h4 style="font-size: 1rem; color: var(--primary); margin: 0;">📜 รายการระเบียบ / ข้อบังคับที่ยื่นเรื่อง</h4>
-              <span style="font-size: 0.78rem; color: var(--text-muted);">สามารถเพิ่มได้มากกว่า 1 ระเบียบ/ข้อบังคับในคราวเดียว</span>
+              <h4 style="font-size: 1rem; color: var(--primary); margin: 0;">📜 รายการระเบียบ / ข้อบังคับที่ยื่นเรื่อง
+              </h4>
+              <span style="font-size: 0.78rem; color: var(--text-muted);">สามารถเพิ่มได้มากกว่า 1
+                ระเบียบ/ข้อบังคับในคราวเดียว</span>
             </div>
             <button type="button" class="btn btn-secondary btn-sm" onclick="addRegulationRowToCreateForm()">
               + เพิ่มระเบียบ/ข้อบังคับอีกรายการ
@@ -1426,8 +1461,8 @@
           </div>
 
           <!-- Container for Dynamic Regulation Input Rows -->
-          <div id="createRegItemsList"
-            style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 1rem;"></div>
+          <div id="createRegItemsList" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 1rem;">
+          </div>
         </div>
 
         <div class="modal-footer">
@@ -1443,75 +1478,99 @@
     <div class="modal-container" style="max-width: 620px;">
       <div class="modal-header">
         <div>
-          <h3 id="updateRegMilestonesTitle" style="margin: 0; font-size: 1.15rem; color: var(--primary);">📅 บันทึกวันสำคัญในกระบวนการพิจารณา</h3>
-          <div id="updateRegMilestonesSub" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">สหกรณ์...</div>
+          <h3 id="updateRegMilestonesTitle" style="margin: 0; font-size: 1.15rem; color: var(--primary);">📅
+            บันทึกวันสำคัญในกระบวนการพิจารณา</h3>
+          <div id="updateRegMilestonesSub" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+            สหกรณ์...</div>
         </div>
         <button class="modal-close-btn" onclick="closeModal('updateRegMilestonesModal')">&times;</button>
       </div>
       <form id="updateRegMilestonesForm">
         <input type="hidden" id="updateRegMilestonesRegId" name="regId">
         <div class="modal-body" style="padding: 1.25rem;">
-          
-          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; margin-bottom: 1rem; font-size: 0.82rem; color: #166534; line-height: 1.5;">
-            ⏱️ <strong>การนับระยะเวลาพิจารณา (SLA):</strong> เริ่มนับจาก <strong>วันที่ฝ่ายบริหารลงรับหนังสือ</strong> จนถึง <strong>วันที่นายทะเบียนรับจดทะเบียน (ขั้นตอนที่ 3)</strong>
+
+          <div
+            style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; margin-bottom: 1rem; font-size: 0.82rem; color: #166534; line-height: 1.5;">
+            ⏱️ <strong>การนับระยะเวลาพิจารณา (SLA):</strong> เริ่มนับจาก <strong>วันที่ฝ่ายบริหารลงรับหนังสือ</strong>
+            จนถึง <strong>วันที่นายทะเบียนรับจดทะเบียน (ขั้นตอนที่ 3)</strong>
           </div>
 
           <!-- Milestone 1 -->
-          <div class="form-group" style="margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-            <label style="font-weight: 600; color: #0f766e; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+          <div class="form-group"
+            style="margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <label
+              style="font-weight: 600; color: #0f766e; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
               <span>📥 1. วันที่ฝ่ายบริหารลงรับหนังสือ <span style="color: red;">*</span></span>
               <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(เริ่มกระบวนการ)</span>
             </label>
-            <input type="text" id="regMilestoneReceiveDate" name="receiveDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10" required>
+            <input type="text" id="regMilestoneReceiveDate" name="receiveDate" class="form-control thai-date-input"
+              placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10" required>
             <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 3px;">
               เมื่อกรอกวันที่นี้ ขั้นตอนที่ 1 (ฝ่ายบริหารรับเอกสาร) จะปรับเป็น "เสร็จสิ้น"
             </small>
           </div>
 
           <!-- Milestone 2 -->
-          <div class="form-group" style="margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-            <label style="font-weight: 600; color: #0284c7; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+          <div class="form-group"
+            style="margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <label
+              style="font-weight: 600; color: #0284c7; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
               <span>📤 2. วันที่หนังสือออกจากกลุ่มจัดตั้ง</span>
-              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(ตรวจเสร็จ & ส่งเสนอนายทะเบียน)</span>
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(ตรวจเสร็จ &
+                ส่งเสนอนายทะเบียน)</span>
             </label>
-            <input type="text" id="regMilestoneGroupExitDate" name="groupExitDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
+            <input type="text" id="regMilestoneGroupExitDate" name="groupExitDate" class="form-control thai-date-input"
+              placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
             <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 3px;">
               เมื่อกรอกวันที่นี้ ขั้นตอนที่ 2 (กลุ่มจัดตั้งฯ ตรวจสอบ) จะปรับเป็น "เสร็จสิ้น"
             </small>
           </div>
 
           <!-- Milestone 3 -->
-          <div class="form-group" style="margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-            <label style="font-weight: 600; color: #059669; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+          <div class="form-group"
+            style="margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <label
+              style="font-weight: 600; color: #059669; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
               <span>✍️ 3. วันที่นายทะเบียนรับจดทะเบียน / พิจารณา</span>
-              <span style="font-size: 0.75rem; color: #059669; font-weight: 600; background: #dcfce7; padding: 1px 6px; border-radius: 4px;">🏁 สิ้นสุดการนับระยะเวลา</span>
+              <span
+                style="font-size: 0.75rem; color: #059669; font-weight: 600; background: #dcfce7; padding: 1px 6px; border-radius: 4px;">🏁
+                สิ้นสุดการนับระยะเวลา</span>
             </label>
-            <input type="text" id="regMilestoneApproveDate" name="regApproveDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
+            <input type="text" id="regMilestoneApproveDate" name="regApproveDate" class="form-control thai-date-input"
+              placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
             <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 3px;">
-              เมื่อกรอกวันที่นี้ ขั้นตอนที่ 3 จะ "เสร็จสิ้น" และระบบจะหยุดนับเวลาทันที สถานะหลักจะเปลี่ยนเป็น "รับจดทะเบียนแล้ว"
+              เมื่อกรอกวันที่นี้ ขั้นตอนที่ 3 จะ "เสร็จสิ้น" และระบบจะหยุดนับเวลาทันที สถานะหลักจะเปลี่ยนเป็น
+              "รับจดทะเบียนแล้ว"
             </small>
           </div>
 
           <!-- Step 4 Dispatch -->
-          <div class="form-group" style="margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+          <div class="form-group"
+            style="margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
             <label style="font-weight: 600; color: #475569; margin-bottom: 6px; display: block;">
               📦 4. การส่งเอกสารให้สหกรณ์และหน่วยงานที่เกี่ยวข้อง
             </label>
             <div style="display: flex; align-items: center; gap: 8px;">
-              <input type="checkbox" id="regMilestoneDocDispatched" name="docDispatched" style="width: 18px; height: 18px; cursor: pointer;">
-              <label for="regMilestoneDocDispatched" style="cursor: pointer; font-size: 0.85rem; margin: 0; font-weight: 500;">
+              <input type="checkbox" id="regMilestoneDocDispatched" name="docDispatched"
+                style="width: 18px; height: 18px; cursor: pointer;">
+              <label for="regMilestoneDocDispatched"
+                style="cursor: pointer; font-size: 0.85rem; margin: 0; font-weight: 500;">
                 ส่งมอบเอกสารให้สหกรณ์และหน่วยงานเรียบร้อยแล้ว
               </label>
             </div>
             <div id="regMilestoneDispatchWrap" style="margin-top: 8px;">
-              <label style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 2px; display: block;">วันที่ส่งหนังสือออก (ถ้ามี):</label>
-              <input type="text" id="regMilestoneDispatchDate" name="dispatchDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
+              <label
+                style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 2px; display: block;">วันที่ส่งหนังสือออก
+                (ถ้ามี):</label>
+              <input type="text" id="regMilestoneDispatchDate" name="dispatchDate" class="form-control thai-date-input"
+                placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
             </div>
           </div>
 
           <!-- Issue & Note -->
           <div class="form-group" style="margin-bottom: 10px;">
-            <label style="font-size: 0.82rem;">ข้อสังเกต / จุดที่ต้องแก้ไขปรับปรุง (ถ้ามี - ใส่เมื่อต้องส่งคืนแก้ไข)</label>
+            <label style="font-size: 0.82rem;">ข้อสังเกต / จุดที่ต้องแก้ไขปรับปรุง (ถ้ามี -
+              ใส่เมื่อต้องส่งคืนแก้ไข)</label>
             <textarea id="regMilestoneIssue" name="issue" class="form-control" rows="2"
               placeholder="เช่น ข้อความในข้อ 14 ขัดต่อระเบียบนายทะเบียนฯ ต้องตัดวรรคสองออก..."></textarea>
           </div>
@@ -1524,7 +1583,8 @@
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" onclick="closeModal('updateRegMilestonesModal')">ยกเลิก</button>
+          <button type="button" class="btn btn-secondary"
+            onclick="closeModal('updateRegMilestonesModal')">ยกเลิก</button>
           <button type="submit" class="btn btn-primary">💾 บันทึกวันสำคัญ</button>
         </div>
       </form>
@@ -1573,7 +1633,8 @@
           <div class="form-row">
             <div class="form-group" style="flex: 1;">
               <label>ประเภทรายการ <span style="color: red;">*</span></label>
-              <select id="editRegMainCategory" name="mainCategory" class="form-control" onchange="onEditRegCategoryChange()">
+              <select id="editRegMainCategory" name="mainCategory" class="form-control"
+                onchange="onEditRegCategoryChange()">
                 <option value="ระเบียบสหกรณ์" selected>📙 ระเบียบสหกรณ์</option>
                 <option value="ข้อบังคับสหกรณ์">📘 ข้อบังคับสหกรณ์</option>
               </select>
@@ -1587,7 +1648,8 @@
             </div>
             <div id="editRegBylawHint" class="form-group" style="flex: 1.2; display: none;">
               <label>กรอบเวลาพิจารณา (SLA)</label>
-              <div style="padding: 8px 12px; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 6px; color: #0369a1; font-size: 0.82rem; font-weight: 600;">
+              <div
+                style="padding: 8px 12px; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 6px; color: #0369a1; font-size: 0.82rem; font-weight: 600;">
                 ⏱️ ข้อบังคับกำหนดรับจดทะเบียนใน 14 วัน
               </div>
             </div>
@@ -1605,19 +1667,14 @@
             </div>
             <div class="form-group">
               <label>วันที่ยื่นเรื่อง</label>
-              <input type="text" id="editRegSubmitDate" name="submitDate" class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
+              <input type="text" id="editRegSubmitDate" name="submitDate" class="form-control thai-date-input"
+                placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
             </div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>เจ้าหน้าที่กลุ่มจัดตั้งฯผู้รับผิดชอบ</label>
-              <input type="text" id="editRegOfficerName" name="officerName" class="form-control">
-            </div>
-            <div class="form-group">
-              <label>เบอร์ติดต่อ จนท.</label>
-              <input type="text" id="editRegOfficerContact" name="officerContact" class="form-control">
-            </div>
+          <div class="form-group">
+            <label>เจ้าหน้าที่กลุ่มจัดตั้งฯผู้รับผิดชอบ</label>
+            <input type="text" id="editRegOfficerName" name="officerName" class="form-control">
           </div>
 
           <div class="form-row">
@@ -1731,10 +1788,13 @@
         <div id="googleSignInBtn" style="display: none; justify-content: center; margin-bottom: 1rem;"></div>
 
         <!-- Admin Login Form -->
-        <form id="adminLoginForm" style="border-top: 1px solid var(--border-color); padding-top: 1.25rem; margin-top: 0.5rem; text-align: left;">
+        <form id="adminLoginForm"
+          style="border-top: 1px solid var(--border-color); padding-top: 1.25rem; margin-top: 0.5rem; text-align: left;">
           <div class="form-group" style="margin-bottom: 1.25rem;">
-            <label class="form-label" for="loginEmail" style="font-size: 0.85rem; font-weight: 500;">อีเมลเจ้าหน้าที่ / บัญชีผู้ดูแล</label>
-            <input type="email" id="loginEmail" class="form-control" placeholder="กรอกอีเมลเจ้าหน้าที่ เช่น admin@cpd.go.th" required>
+            <label class="form-label" for="loginEmail" style="font-size: 0.85rem; font-weight: 500;">อีเมลเจ้าหน้าที่ /
+              บัญชีผู้ดูแล</label>
+            <input type="email" id="loginEmail" class="form-control"
+              placeholder="กรอกอีเมลเจ้าหน้าที่ เช่น admin@cpd.go.th" required>
           </div>
           <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
             🔑 เข้าสู่ระบบเจ้าหน้าที่
@@ -1754,15 +1814,18 @@
     <div class="modal-container active-export-modal-container" style="max-width: 1140px; width: 95%;">
       <div class="modal-header" style="background: linear-gradient(135deg, #0e3760 0%, #0369a1 100%); color: #fff;">
         <div style="display: flex; align-items: center; gap: 12px;">
-          <span style="font-size: 1.6rem; background: rgba(255,255,255,0.15); border-radius: 10px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">📑</span>
+          <span
+            style="font-size: 1.6rem; background: rgba(255,255,255,0.15); border-radius: 10px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">📑</span>
           <div>
-            <h3 style="font-size: 1.25rem; margin: 0; color: #fff; font-weight: 700;">ศูนย์ส่งออกสรุปข้อมูล (Data Export & Reporting Hub)</h3>
+            <h3 style="font-size: 1.25rem; margin: 0; color: #fff; font-weight: 700;">ศูนย์ส่งออกสรุปข้อมูล (Data Export
+              & Reporting Hub)</h3>
             <span style="font-size: 0.82rem; color: rgba(255,255,255,0.88);">
               ส่งออกข้อมูลงานชำระบัญชีสหกรณ์และระเบียบข้อบังคับ กำหนดตัวกรองได้ทุกมิติ พร้อมส่งออก Excel, PDF และ CSV
             </span>
           </div>
         </div>
-        <button class="modal-close-btn" onclick="closeModal('activeExportModal')" style="color: #fff; font-size: 1.5rem; opacity: 0.85;">&times;</button>
+        <button class="modal-close-btn" onclick="closeModal('activeExportModal')"
+          style="color: #fff; font-size: 1.5rem; opacity: 0.85;">&times;</button>
       </div>
 
       <div class="modal-body" style="padding: 1.25rem; max-height: calc(85vh - 140px); overflow-y: auto;">
@@ -1807,10 +1870,14 @@
             </div>
             <div class="export-quick-presets">
               <span class="preset-label">เลือกด่วน:</span>
-              <button type="button" class="preset-pill active" id="presetActiveOnly" onclick="setExportScopePreset('ACTIVE')">🟡 กำลังดำเนินการ</button>
-              <button type="button" class="preset-pill" id="presetDoneOnly" onclick="setExportScopePreset('DONE')">🟢 เสร็จสิ้นแล้ว</button>
-              <button type="button" class="preset-pill" id="presetAllRecords" onclick="setExportScopePreset('ALL')">🌐 ข้อมูลทั้งหมด</button>
-              <button type="button" class="preset-pill preset-issues" id="presetIssuesOnly" onclick="setExportScopePreset('ISSUES')">⚠️ มีปัญหา/ส่งคืน</button>
+              <button type="button" class="preset-pill active" id="presetActiveOnly"
+                onclick="setExportScopePreset('ACTIVE')">🟡 กำลังดำเนินการ</button>
+              <button type="button" class="preset-pill" id="presetDoneOnly" onclick="setExportScopePreset('DONE')">🟢
+                เสร็จสิ้นแล้ว</button>
+              <button type="button" class="preset-pill" id="presetAllRecords" onclick="setExportScopePreset('ALL')">🌐
+                ข้อมูลทั้งหมด</button>
+              <button type="button" class="preset-pill preset-issues" id="presetIssuesOnly"
+                onclick="setExportScopePreset('ISSUES')">⚠️ มีปัญหา/ส่งคืน</button>
               <button type="button" class="export-reset-btn" onclick="resetExportFilters()" title="ล้างตัวกรองทั้งหมด">
                 🔄 ล้างตัวกรอง
               </button>
@@ -1919,8 +1986,11 @@
             <div class="export-filter-item export-filter-search">
               <label for="exportSearchInput">ค้นหาคำสำคัญ (ทุกฟิลด์)</label>
               <div class="export-search-input-wrap">
-                <input type="text" id="exportSearchInput" placeholder="🔍 ค้นหาชื่อสหกรณ์, เลขทะเบียน, คำสั่ง, ผู้ชำระบัญชี, เจ้าหน้าที่, ที่ตั้ง..." oninput="handleExportFilterChange()">
-                <button type="button" id="exportSearchClearBtn" class="export-search-clear-btn" onclick="clearExportSearchInput()" title="ล้างคำค้น">&times;</button>
+                <input type="text" id="exportSearchInput"
+                  placeholder="🔍 ค้นหาชื่อสหกรณ์, เลขทะเบียน, คำสั่ง, ผู้ชำระบัญชี, เจ้าหน้าที่, ที่ตั้ง..."
+                  oninput="handleExportFilterChange()">
+                <button type="button" id="exportSearchClearBtn" class="export-search-clear-btn"
+                  onclick="clearExportSearchInput()" title="ล้างคำค้น">&times;</button>
               </div>
             </div>
           </div>
@@ -1939,7 +2009,8 @@
             <span style="font-size: 0.8rem; color: var(--text-muted);">ส่งออกข้อมูลตามเงื่อนไขตัวกรองที่เลือก</span>
           </div>
           <div class="export-btn-group">
-            <button class="btn btn-success export-action-btn" onclick="exportCombinedActiveExcel()" title="ส่งออกเป็นไฟล์ Excel (.xlsx) ตามเงื่อนไขตัวกรอง">
+            <button class="btn btn-success export-action-btn" onclick="exportCombinedActiveExcel()"
+              title="ส่งออกเป็นไฟล์ Excel (.xlsx) ตามเงื่อนไขตัวกรอง">
               <span class="export-btn-icon">📊</span>
               <div class="export-btn-text">
                 <strong>ส่งออก Excel (.xlsx)</strong>
@@ -1947,7 +2018,8 @@
               </div>
             </button>
 
-            <button class="btn btn-primary export-action-btn" onclick="exportAllActiveOperationsPdf()" title="ดูตัวอย่างเอกสารและส่งออกรายงานทางการเป็น PDF ตามเงื่อนไขตัวกรอง">
+            <button class="btn btn-primary export-action-btn" onclick="exportAllActiveOperationsPdf()"
+              title="ดูตัวอย่างเอกสารและส่งออกรายงานทางการเป็น PDF ตามเงื่อนไขตัวกรอง">
               <span class="export-btn-icon">📑</span>
               <div class="export-btn-text">
                 <strong>ส่งออก PDF ทางการ (.pdf)</strong>
@@ -1955,7 +2027,8 @@
               </div>
             </button>
 
-            <button class="btn btn-outline-primary export-action-btn" onclick="exportCombinedActiveCsv()" title="ส่งออกข้อมูลเป็นไฟล์ CSV ตามเงื่อนไขตัวกรอง (UTF-8 รองรับภาษาไทย)">
+            <button class="btn btn-outline-primary export-action-btn" onclick="exportCombinedActiveCsv()"
+              title="ส่งออกข้อมูลเป็นไฟล์ CSV ตามเงื่อนไขตัวกรอง (UTF-8 รองรับภาษาไทย)">
               <span class="export-btn-icon">📄</span>
               <div class="export-btn-text">
                 <strong>ส่งออก CSV (.csv)</strong>
@@ -1963,7 +2036,8 @@
               </div>
             </button>
 
-            <button class="btn btn-secondary export-action-btn" onclick="triggerActiveExportDirectPrint()" title="สั่งพิมพ์รายงานสรุปตามเงื่อนไขตัวกรองผ่านเครื่องพิมพ์">
+            <button class="btn btn-secondary export-action-btn" onclick="triggerActiveExportDirectPrint()"
+              title="สั่งพิมพ์รายงานสรุปตามเงื่อนไขตัวกรองผ่านเครื่องพิมพ์">
               <span class="export-btn-icon">🖨️</span>
               <div class="export-btn-text">
                 <strong>สั่งพิมพ์รายงาน (Print)</strong>
@@ -1987,17 +2061,21 @@
 
         <!-- Tab 1: Liquidation Cases Preview -->
         <div id="exportTabContentCases" class="export-tab-content active">
-          <div class="export-section-notice" style="border-left: 4px solid #0284c7; background: #f0f9ff; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; font-size: 0.85rem; color: #0369a1; display: flex; justify-content: space-between; align-items: center;">
+          <div class="export-section-notice"
+            style="border-left: 4px solid #0284c7; background: #f0f9ff; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; font-size: 0.85rem; color: #0369a1; display: flex; justify-content: space-between; align-items: center;">
             <div>
               <strong id="exportCasesSectionTitle">หมวดที่ 1: รายการสหกรณ์ชำระบัญชี (ตรงตามตัวกรอง)</strong>
-              <div id="exportCasesSectionSubtitle" style="font-size: 0.78rem; color: #0284c7; margin-top: 2px;">แสดงรายการสหกรณ์ที่ตรงตามเงื่อนไขตัวกรอง พร้อมระยะเวลาสะสมและปัญหาอุปสรรค</div>
+              <div id="exportCasesSectionSubtitle" style="font-size: 0.78rem; color: #0284c7; margin-top: 2px;">
+                แสดงรายการสหกรณ์ที่ตรงตามเงื่อนไขตัวกรอง พร้อมระยะเวลาสะสมและปัญหาอุปสรรค</div>
             </div>
-            <button class="btn btn-outline-primary btn-sm" onclick="exportActiveCasesOnlyPdf()" title="ส่งออกเฉพาะหมวดนี้เป็น PDF">
+            <button class="btn btn-outline-primary btn-sm" onclick="exportActiveCasesOnlyPdf()"
+              title="ส่งออกเฉพาะหมวดนี้เป็น PDF">
               📄 PDF เฉพาะชำระบัญชี
             </button>
           </div>
 
-          <div class="table-responsive" style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+          <div class="table-responsive"
+            style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
             <table class="cases-table" style="width: 100%; font-size: 0.82rem;">
               <thead style="position: sticky; top: 0; z-index: 2; background: #f8fafc;">
                 <tr>
@@ -2020,17 +2098,21 @@
 
         <!-- Tab 2: Regulations Preview -->
         <div id="exportTabContentRegs" class="export-tab-content" style="display: none;">
-          <div class="export-section-notice" style="border-left: 4px solid #0d9488; background: #f0fdfa; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; font-size: 0.85rem; color: #0f766e; display: flex; justify-content: space-between; align-items: center;">
+          <div class="export-section-notice"
+            style="border-left: 4px solid #0d9488; background: #f0fdfa; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; font-size: 0.85rem; color: #0f766e; display: flex; justify-content: space-between; align-items: center;">
             <div>
               <strong id="exportRegsSectionTitle">หมวดที่ 2: รายการระเบียบและข้อบังคับสหกรณ์ (ตรงตามตัวกรอง)</strong>
-              <div id="exportRegsSectionSubtitle" style="font-size: 0.78rem; color: #0d9488; margin-top: 2px;">แสดงระเบียบและข้อบังคับที่ตรงตามเงื่อนไขตัวกรอง พร้อมระยะเวลาสะสมและสถานะ</div>
+              <div id="exportRegsSectionSubtitle" style="font-size: 0.78rem; color: #0d9488; margin-top: 2px;">
+                แสดงระเบียบและข้อบังคับที่ตรงตามเงื่อนไขตัวกรอง พร้อมระยะเวลาสะสมและสถานะ</div>
             </div>
-            <button class="btn btn-outline-primary btn-sm" onclick="exportActiveRegulationsOnlyPdf()" title="ส่งออกเฉพาะหมวดนี้เป็น PDF">
+            <button class="btn btn-outline-primary btn-sm" onclick="exportActiveRegulationsOnlyPdf()"
+              title="ส่งออกเฉพาะหมวดนี้เป็น PDF">
               📄 PDF เฉพาะระเบียบข้อบังคับ
             </button>
           </div>
 
-          <div class="table-responsive" style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+          <div class="table-responsive"
+            style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
             <table class="cases-table" style="width: 100%; font-size: 0.82rem;">
               <thead style="position: sticky; top: 0; z-index: 2; background: #f8fafc;">
                 <tr>
@@ -2052,9 +2134,11 @@
         </div>
       </div>
 
-      <div class="modal-footer" style="justify-content: space-between; flex-wrap: wrap; gap: 10px; background: #f8fafc;">
+      <div class="modal-footer"
+        style="justify-content: space-between; flex-wrap: wrap; gap: 10px; background: #f8fafc;">
         <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-muted);">
-          <span>💡 สามารถดาวน์โหลดเป็น Excel (.xlsx), เอกสาร PDF ทางการ หรือไฟล์ CSV โดยข้อมูลจะถูกส่งออกตามตัวกรองที่เลือกจริง</span>
+          <span>💡 สามารถดาวน์โหลดเป็น Excel (.xlsx), เอกสาร PDF ทางการ หรือไฟล์ CSV
+            โดยข้อมูลจะถูกส่งออกตามตัวกรองที่เลือกจริง</span>
         </div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
           <button class="btn btn-secondary" onclick="closeModal('activeExportModal')">ปิดหน้าต่าง</button>
@@ -2079,13 +2163,16 @@
         <div style="display: flex; align-items: center; gap: 10px;">
           <span style="font-size: 1.5rem;">📄</span>
           <div>
-            <h3 id="pdfPreviewModalTitle" style="font-size: 1.15rem; margin: 0; color: var(--primary);">ตัวอย่างเอกสารรายงาน PDF</h3>
-            <span id="pdfPreviewModalSubtitle" style="font-size: 0.82rem; color: var(--text-muted);">ระบบศูนย์บริการงานนายทะเบียนและส่งเสริมสหกรณ์</span>
+            <h3 id="pdfPreviewModalTitle" style="font-size: 1.15rem; margin: 0; color: var(--primary);">
+              ตัวอย่างเอกสารรายงาน PDF</h3>
+            <span id="pdfPreviewModalSubtitle"
+              style="font-size: 0.82rem; color: var(--text-muted);">ระบบศูนย์บริการงานนายทะเบียนและส่งเสริมสหกรณ์</span>
           </div>
         </div>
         <button class="modal-close-btn" onclick="closeModal('pdfPreviewModal')">&times;</button>
       </div>
-      <div class="modal-body pdf-preview-body" style="padding: 1.5rem; background: #e2e8f0; overflow-y: auto; max-height: calc(85vh - 140px);">
+      <div class="modal-body pdf-preview-body"
+        style="padding: 1.5rem; background: #e2e8f0; overflow-y: auto; max-height: calc(85vh - 140px);">
         <div id="pdfPreviewContent" class="pdf-document-paper">
           <!-- Rendered Printable Document Content -->
         </div>
