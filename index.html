@@ -2326,7 +2326,13 @@
               placeholder="🔍 ค้นหารายชื่อสหกรณ์ในระบบ..."
               oninput="renderCoopDirectoryList()">
           </div>
-          <div style="display: flex; gap: 8px;">
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <span id="coopDirSyncBadge" style="background: #e0f2fe; color: #0369a1; font-size: 0.8rem; font-weight: 500; padding: 6px 12px; border-radius: 20px; border: 1px solid #bae6fd; display: inline-flex; align-items: center; gap: 5px;">
+              ☁️ ซิงค์ Google Sheets (CoopDirectory) แล้ว
+            </span>
+            <button class="btn btn-outline-secondary btn-sm" onclick="syncCoopDirectoryWithRemote(true)" title="ดึงข้อมูลล่าสุดจาก Google Sheets">
+              <span id="coopSyncSpin">🔄</span> ซิงค์ข้อมูล
+            </button>
             <button class="btn btn-primary" onclick="toggleBatchImportForm(true)">
               📥 นำเข้ารายชื่อสหกรณ์ (แบบชุด)
             </button>

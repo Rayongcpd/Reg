@@ -299,6 +299,11 @@ async function initializeApp() {
   }
 
   updateHubStatsDisplay();
+
+  // โหลด/ซิงค์ฐานข้อมูลรายชื่อสหกรณ์ล่าสุดจาก Google Sheets (CoopDirectory) เบื้องหลัง
+  if (typeof CoopDatabaseUtil !== 'undefined' && typeof CoopDatabaseUtil.syncFromRemote === 'function') {
+    CoopDatabaseUtil.syncFromRemote().catch(e => console.warn('Background coop directory sync:', e));
+  }
 }
 
 async function loadCasesData() {
@@ -5827,6 +5832,48 @@ function openCoopDirectoryModal() {
   }
   
   openModal('coopDirectoryModal');
+
+  // ซิงค์ข้อมูลล่าสุดจาก Google Sheets (CoopDirectory)
+  syncCoopDirectoryWithRemote(false);
+}
+
+/**
+ * Sync cooperative directory from Google Sheets
+ */
+async function syncCoopDirectoryWithRemote(manual = false) {
+  const syncBadge = document.getElementById('coopDirSyncBadge');
+  const spinIcon = document.getElementById('coopSyncSpin');
+  
+  if (syncBadge) {
+    syncBadge.innerText = '⏳ กำลังซิงค์กับ Google Sheets...';
+    syncBadge.style.background = '#fef3c7';
+    syncBadge.style.color = '#92400e';
+  }
+  if (spinIcon) spinIcon.classList.add('spin-animation');
+
+  try {
+    const list = await CoopDatabaseUtil.syncFromRemote();
+    renderCoopDirectoryList();
+    if (syncBadge) {
+      syncBadge.innerText = '☁️ ซิงค์ Google Sheets (CoopDirectory) แล้ว';
+      syncBadge.style.background = '#dcfce7';
+      syncBadge.style.color = '#166534';
+    }
+    if (manual) {
+      showToast(`ซิงค์ข้อมูลกับ Google Sheets สำเร็จ (${list.length} สหกรณ์)`, 'success');
+    }
+  } catch (err) {
+    if (syncBadge) {
+      syncBadge.innerText = '⚠️ ใช้ข้อมูลในเครื่อง (ออฟไลน์)';
+      syncBadge.style.background = '#fee2e2';
+      syncBadge.style.color = '#991b1b';
+    }
+    if (manual) {
+      showToast('ไม่สามารถเชื่อมต่อ Google Sheets ได้ กำลังใช้ข้อมูลในเครื่อง', 'warning');
+    }
+  } finally {
+    if (spinIcon) spinIcon.classList.remove('spin-animation');
+  }
 }
 
 /**
@@ -5889,9 +5936,9 @@ function updateBatchNamesCountPreview() {
 }
 
 /**
- * Handle Batch Import Submission
+ * Handle Batch Import Submission (บันทึกทั้ง LocalStorage และ Google Sheets)
  */
-function handleBatchImportCoops(e) {
+async function handleBatchImportCoops(e) {
   e.preventDefault();
   const group = document.getElementById('batchImportTargetGroup')?.value;
   const defaultType = document.getElementById('batchImportDefaultType')?.value || 'สหกรณ์การเกษตร';
@@ -5911,45 +5958,64 @@ function handleBatchImportCoops(e) {
     return;
   }
 
-  const result = CoopDatabaseUtil.batchAdd(group, lines, defaultType);
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  const origBtnText = submitBtn ? submitBtn.innerHTML : '';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '⏳ กำลังบันทึกลง Google Sheets...';
+  }
 
-  showToast(`นำเข้ารายชื่อสหกรณ์เข้า "${group}" สำเร็จ ${result.added} รายชื่อ (รวมทั้งหมด ${result.total} สหกรณ์)`, 'success');
-  
-  // Reset textarea
-  const textarea = document.getElementById('batchCoopNamesInput');
-  if (textarea) textarea.value = '';
-  updateBatchNamesCountPreview();
+  try {
+    const result = await CoopDatabaseUtil.batchAddRemote(group, lines, defaultType);
 
-  toggleBatchImportForm(false);
-  renderCoopDirectoryList();
+    showToast(`นำเข้ารายชื่อสหกรณ์เข้า "${group}" สำเร็จ ${result.added} รายชื่อ (บันทึกลง Google Sheets เรียบร้อยแล้ว)`, 'success');
+    
+    // Reset textarea
+    const textarea = document.getElementById('batchCoopNamesInput');
+    if (textarea) textarea.value = '';
+    updateBatchNamesCountPreview();
+
+    toggleBatchImportForm(false);
+    renderCoopDirectoryList();
+  } catch (err) {
+    showToast('บันทึกลงเครื่องสำเร็จ แต่อาจเกิดปัญหาในการเชื่อมต่อ Google Sheets: ' + (err.message || err), 'warning');
+    renderCoopDirectoryList();
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = origBtnText;
+    }
+  }
 }
 
 /**
- * Delete a single cooperative from database
+ * Delete a single cooperative from database and Google Sheets
  */
-function handleDeleteCoop(coopName) {
+async function handleDeleteCoop(coopName) {
   if (!coopName) return;
-  if (!confirm(`คุณต้องการลบ "${coopName}" ออกจากฐานข้อมูลหรือไม่?`)) return;
+  if (!confirm(`คุณต้องการลบ "${coopName}" ออกจากฐานข้อมูลและ Google Sheets หรือไม่?`)) return;
 
-  CoopDatabaseUtil.deleteCoop(coopName);
+  showToast(`กำลังลบ "${coopName}"...`, 'info');
+  await CoopDatabaseUtil.deleteCoopRemote(coopName);
   showToast(`ลบ "${coopName}" เรียบร้อยแล้ว`, 'info');
   renderCoopDirectoryList();
 }
 
 /**
- * Clear all cooperatives from database
+ * Clear all cooperatives from database and Google Sheets
  */
-function handleClearAllCoops() {
+async function handleClearAllCoops() {
   const allCoops = CoopDatabaseUtil.getAll();
   if (allCoops.length === 0) {
     showToast('ไม่มีข้อมูลสหกรณ์ในฐานข้อมูลอยู่แล้ว', 'info');
     return;
   }
 
-  if (!confirm(`คุณต้องการล้างรายชื่อสหกรณ์ทั้งหมด ${allCoops.length} รายการออกจากระบบหรือไม่?`)) return;
+  if (!confirm(`คุณต้องการล้างรายชื่อสหกรณ์ทั้งหมด ${allCoops.length} รายการออกจากระบบและ Google Sheets หรือไม่?`)) return;
 
-  CoopDatabaseUtil.clearAll();
-  showToast('ล้างรายชื่อสหกรณ์ทั้งหมดออกจากฐานข้อมูลเรียบร้อยแล้ว', 'info');
+  showToast('กำลังล้างข้อมูลใน Google Sheets...', 'info');
+  await CoopDatabaseUtil.clearAllRemote();
+  showToast('ล้างรายชื่อสหกรณ์ทั้งหมดออกจากระบบและ Google Sheets เรียบร้อยแล้ว', 'info');
   renderCoopDirectoryList();
   toggleBatchImportForm(true);
 }

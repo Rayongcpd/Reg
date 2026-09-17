@@ -746,6 +746,66 @@ const CoopDatabaseUtil = {
   saveCoop(coopData) {
     if (!coopData || !coopData.name) return null;
     return this.batchAdd(coopData.group, [coopData.name], coopData.type);
+  },
+
+  // ซิงค์ข้อมูลล่าสุดจาก Google Sheets (แท็บ CoopDirectory) ลงเครื่อง
+  async syncFromRemote() {
+    if (typeof ApiClient === 'undefined' || !CONFIG.APPS_SCRIPT_URL) {
+      return this.getAll();
+    }
+    try {
+      const remoteData = await ApiClient.get('getCoopDirectory');
+      if (Array.isArray(remoteData)) {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(remoteData));
+        return remoteData;
+      }
+    } catch (e) {
+      console.warn('Cannot sync coop directory from Google Sheets:', e);
+    }
+    return this.getAll();
+  },
+
+  // นำเข้ารายชื่อสหกรณ์ (บันทึกทั้ง LocalStorage และ Google Sheets ทันที)
+  async batchAddRemote(group, namesList, defaultType) {
+    const localResult = this.batchAdd(group, namesList);
+    if (typeof ApiClient !== 'undefined' && CONFIG.APPS_SCRIPT_URL) {
+      try {
+        await ApiClient.post('saveCoopDirectoryBatch', {
+          group: group,
+          namesList: namesList,
+          defaultType: defaultType
+        });
+      } catch (err) {
+        console.warn('Cloud sync error on batchAdd:', err);
+      }
+    }
+    return localResult;
+  },
+
+  // ลบสหกรณ์รายตัว (ลบทั้ง LocalStorage และ Google Sheets)
+  async deleteCoopRemote(name) {
+    const localResult = this.deleteCoop(name);
+    if (typeof ApiClient !== 'undefined' && CONFIG.APPS_SCRIPT_URL) {
+      try {
+        await ApiClient.post('deleteCoopFromDirectory', { coopName: name });
+      } catch (err) {
+        console.warn('Cloud sync error on deleteCoop:', err);
+      }
+    }
+    return localResult;
+  },
+
+  // ล้างฐานข้อมูลทั้งหมด (ล้างทั้ง LocalStorage และ Google Sheets)
+  async clearAllRemote() {
+    const localResult = this.clearAll();
+    if (typeof ApiClient !== 'undefined' && CONFIG.APPS_SCRIPT_URL) {
+      try {
+        await ApiClient.post('clearCoopDirectory', {});
+      } catch (err) {
+        console.warn('Cloud sync error on clearAll:', err);
+      }
+    }
+    return localResult;
   }
 };
 
