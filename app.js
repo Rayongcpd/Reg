@@ -5617,24 +5617,24 @@ function setupCoopAutocomplete(inputId, dropdownId, onSelect) {
   }
 
   function renderResults(results, query) {
+    if (!query || query.trim().length === 0) {
+      closeDropdown();
+      return;
+    }
     currentResults = results;
     activeIndex = -1;
     if (!results || results.length === 0) {
-      if (query.trim().length > 0) {
-        dropdown.innerHTML = `
-          <div style="padding: 10px 14px; color: var(--text-muted); font-size: 0.84rem; text-align: center;">
-            🔍 ไม่พบสหกรณ์ที่ตรงกับ "<strong>${escapeHtml(query)}</strong>"
-            <div style="margin-top: 4px;">
-              <a href="javascript:void(0)" onclick="openCoopDirectoryModal(); toggleBatchImportForm(true);" style="color: var(--primary); font-weight: 500; text-decoration: underline;">
-                📥 คลิกที่นี่เพื่อนำเข้ารายชื่อสหกรณ์เข้ากลุ่มส่งเสริมฯ
-              </a>
-            </div>
+      dropdown.innerHTML = `
+        <div style="padding: 10px 14px; color: var(--text-muted); font-size: 0.84rem; text-align: center;">
+          🔍 ไม่พบสหกรณ์ที่ตรงกับ "<strong>${escapeHtml(query)}</strong>"
+          <div style="margin-top: 4px;">
+            <a href="javascript:void(0)" onclick="openCoopDirectoryModal(); toggleBatchImportForm(true);" style="color: var(--primary); font-weight: 500; text-decoration: underline;">
+              📥 คลิกที่นี่เพื่อนำเข้ารายชื่อสหกรณ์เข้ากลุ่มส่งเสริมฯ
+            </a>
           </div>
-        `;
-        dropdown.style.display = 'block';
-      } else {
-        closeDropdown();
-      }
+        </div>
+      `;
+      dropdown.style.display = 'block';
       return;
     }
 
@@ -5691,9 +5691,7 @@ function setupCoopAutocomplete(inputId, dropdownId, onSelect) {
   input.addEventListener('input', () => {
     const q = input.value.trim();
     if (q.length === 0) {
-      // Show top cooperatives as suggestions
-      const all = CoopDatabaseUtil.getAll();
-      renderResults(all.slice(0, 8), '');
+      closeDropdown();
       return;
     }
     const results = CoopDatabaseUtil.search(q);
@@ -5703,8 +5701,7 @@ function setupCoopAutocomplete(inputId, dropdownId, onSelect) {
   input.addEventListener('focus', () => {
     const q = input.value.trim();
     if (q.length === 0) {
-      const all = CoopDatabaseUtil.getAll();
-      renderResults(all.slice(0, 8), '');
+      closeDropdown();
     } else {
       const results = CoopDatabaseUtil.search(q);
       renderResults(results, q);
