@@ -2774,6 +2774,9 @@ function updateAuthUI() {
   const adminAddRegBtn = document.getElementById('adminAddRegBtn');
   const adminAuditLogBtn = document.getElementById('adminAuditLogBtn');
 
+  const coopDirBatchImportBtn = document.getElementById('coopDirBatchImportBtn');
+  const coopDirClearAllBtn = document.getElementById('coopDirClearAllBtn');
+
   if (AppState.currentUser) {
     if (loginBtn) loginBtn.style.display = 'none';
     if (userProfile) {
@@ -2784,12 +2787,22 @@ function updateAuthUI() {
     if (adminAddCaseBtn) adminAddCaseBtn.style.display = AppState.currentView === 'liquidation' ? 'inline-flex' : 'none';
     if (adminAddRegBtn) adminAddRegBtn.style.display = AppState.currentView === 'regulations' ? 'inline-flex' : 'none';
     if (adminAuditLogBtn) adminAuditLogBtn.style.display = 'inline-flex';
+    if (coopDirBatchImportBtn) coopDirBatchImportBtn.style.display = 'inline-flex';
+    if (coopDirClearAllBtn) coopDirClearAllBtn.style.display = 'inline-flex';
   } else {
     if (loginBtn) loginBtn.style.display = 'inline-flex';
     if (userProfile) userProfile.style.display = 'none';
     if (adminAddCaseBtn) adminAddCaseBtn.style.display = 'none';
     if (adminAddRegBtn) adminAddRegBtn.style.display = 'none';
     if (adminAuditLogBtn) adminAuditLogBtn.style.display = 'none';
+    if (coopDirBatchImportBtn) coopDirBatchImportBtn.style.display = 'none';
+    if (coopDirClearAllBtn) coopDirClearAllBtn.style.display = 'none';
+  }
+
+  // Re-render coop directory modal if currently open
+  const coopDirModal = document.getElementById('coopDirectoryModal');
+  if (coopDirModal && coopDirModal.classList.contains('active')) {
+    renderCoopDirectoryList();
   }
 }
 
@@ -6031,11 +6044,13 @@ function setupCoopAutocomplete(inputId, dropdownId, onSelect) {
       dropdown.innerHTML = `
         <div style="padding: 10px 14px; color: var(--text-muted); font-size: 0.84rem; text-align: center;">
           🔍 ไม่พบสหกรณ์ที่ตรงกับ "<strong>${escapeHtml(query)}</strong>"
-          <div style="margin-top: 4px;">
-            <a href="javascript:void(0)" onclick="openCoopDirectoryModal(); toggleBatchImportForm(true);" style="color: var(--primary); font-weight: 500; text-decoration: underline;">
-              📥 คลิกที่นี่เพื่อนำเข้ารายชื่อสหกรณ์เข้ากลุ่มส่งเสริมฯ
-            </a>
-          </div>
+          ${AppState.currentUser ? `
+            <div style="margin-top: 4px;">
+              <a href="javascript:void(0)" onclick="openCoopDirectoryModal(); toggleBatchImportForm(true);" style="color: var(--primary); font-weight: 500; text-decoration: underline;">
+                📥 คลิกที่นี่เพื่อนำเข้ารายชื่อสหกรณ์เข้ากลุ่มส่งเสริมฯ
+              </a>
+            </div>
+          ` : ''}
         </div>
       `;
       dropdown.style.display = 'block';
@@ -6225,8 +6240,8 @@ function openCoopDirectoryModal() {
   updateCoopDirChipUI();
   renderCoopDirectoryList();
   
-  // If database is empty, automatically open the batch import form
-  if (allCoops.length === 0) {
+  // If database is empty and user is admin, automatically open the batch import form
+  if (AppState.currentUser && allCoops.length === 0) {
     toggleBatchImportForm(true);
   } else {
     toggleBatchImportForm(false);
@@ -6302,11 +6317,20 @@ function updateCoopDirChipUI() {
 }
 
 /**
- * Toggle batch import form card
+ * Toggle batch import form card (เฉพาะ Admin เท่านั้น)
  */
 function toggleBatchImportForm(force) {
   const card = document.getElementById('batchImportCoopCard');
   if (!card) return;
+
+  if (!AppState.currentUser) {
+    card.style.display = 'none';
+    if (force === true) {
+      showToast('เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถนำเข้ารายชื่อสหกรณ์ได้', 'warning');
+    }
+    return;
+  }
+
   const isVisible = card.style.display !== 'none';
   const show = typeof force === 'boolean' ? force : !isVisible;
   card.style.display = show ? 'block' : 'none';
@@ -6337,10 +6361,16 @@ function updateBatchNamesCountPreview() {
 }
 
 /**
- * Handle Batch Import Submission (บันทึกทั้ง LocalStorage และ Google Sheets)
+ * Handle Batch Import Submission (บันทึกทั้ง LocalStorage และ Google Sheets - เฉพาะ Admin)
  */
 async function handleBatchImportCoops(e) {
   e.preventDefault();
+
+  if (!AppState.currentUser) {
+    showToast('คุณไม่มีสิทธิ์นำเข้ารายชื่อสหกรณ์ (เฉพาะผู้ดูแลระบบเท่านั้น)', 'error');
+    return;
+  }
+
   const group = document.getElementById('batchImportTargetGroup')?.value;
   const defaultType = document.getElementById('batchImportDefaultType')?.value || 'สหกรณ์การเกษตร';
   const rawText = document.getElementById('batchCoopNamesInput')?.value || '';
@@ -6390,22 +6420,37 @@ async function handleBatchImportCoops(e) {
 }
 
 /**
- * Delete a single cooperative from database and Google Sheets
+ * Delete a single cooperative from database and Google Sheets (เฉพาะ Admin)
  */
 async function handleDeleteCoop(coopName) {
   if (!coopName) return;
+
+  if (!AppState.currentUser) {
+    showToast('คุณไม่มีสิทธิ์ลบข้อมูลสหกรณ์ (เฉพาะผู้ดูแลระบบเท่านั้น)', 'error');
+    return;
+  }
+
   if (!confirm(`คุณต้องการลบ "${coopName}" ออกจากฐานข้อมูลและ Google Sheets หรือไม่?`)) return;
 
   showToast(`กำลังลบ "${coopName}"...`, 'info');
-  await CoopDatabaseUtil.deleteCoopRemote(coopName);
-  showToast(`ลบ "${coopName}" เรียบร้อยแล้ว`, 'info');
+  try {
+    await CoopDatabaseUtil.deleteCoopRemote(coopName);
+    showToast(`ลบ "${coopName}" เรียบร้อยแล้ว`, 'info');
+  } catch (err) {
+    showToast('เกิดข้อผิดพลาดในการลบ: ' + (err.message || err), 'error');
+  }
   renderCoopDirectoryList();
 }
 
 /**
- * Clear all cooperatives from database and Google Sheets
+ * Clear all cooperatives from database and Google Sheets (เฉพาะ Admin)
  */
 async function handleClearAllCoops() {
+  if (!AppState.currentUser) {
+    showToast('คุณไม่มีสิทธิ์ล้างฐานข้อมูลสหกรณ์ (เฉพาะผู้ดูแลระบบเท่านั้น)', 'error');
+    return;
+  }
+
   const allCoops = CoopDatabaseUtil.getAll();
   if (allCoops.length === 0) {
     showToast('ไม่มีข้อมูลสหกรณ์ในฐานข้อมูลอยู่แล้ว', 'info');
@@ -6415,8 +6460,12 @@ async function handleClearAllCoops() {
   if (!confirm(`คุณต้องการล้างรายชื่อสหกรณ์ทั้งหมด ${allCoops.length} รายการออกจากระบบและ Google Sheets หรือไม่?`)) return;
 
   showToast('กำลังล้างข้อมูลใน Google Sheets...', 'info');
-  await CoopDatabaseUtil.clearAllRemote();
-  showToast('ล้างรายชื่อสหกรณ์ทั้งหมดออกจากระบบและ Google Sheets เรียบร้อยแล้ว', 'info');
+  try {
+    await CoopDatabaseUtil.clearAllRemote();
+    showToast('ล้างรายชื่อสหกรณ์ทั้งหมดออกจากระบบและ Google Sheets เรียบร้อยแล้ว', 'info');
+  } catch (err) {
+    showToast('เกิดข้อผิดพลาดในการล้างข้อมูล: ' + (err.message || err), 'error');
+  }
   renderCoopDirectoryList();
   toggleBatchImportForm(true);
 }
@@ -6426,6 +6475,33 @@ async function handleClearAllCoops() {
  */
 function renderCoopDirectoryList() {
   const allCoops = CoopDatabaseUtil.getAll();
+  const isAdmin = !!AppState.currentUser;
+
+  // ควบคุมการแสดงปุ่มจัดการข้อมูลด้านบน (เฉพาะ Admin เท่านั้น)
+  const batchBtn = document.getElementById('coopDirBatchImportBtn');
+  const clearBtn = document.getElementById('coopDirClearAllBtn');
+  if (batchBtn) batchBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+  if (clearBtn) clearBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+
+  // ถ้าไม่ได้เป็น Admin ให้ซ่อนฟอร์มนำเข้าทันที
+  if (!isAdmin) {
+    const card = document.getElementById('batchImportCoopCard');
+    if (card) card.style.display = 'none';
+  }
+
+  // ปรับข้อความคำอธิบายส่วนท้าย Modal ตามสิทธิ์
+  const footerNote = document.getElementById('coopDirFooterNote');
+  if (footerNote) {
+    footerNote.innerHTML = isAdmin
+      ? '💡 <strong>โหมดผู้ดูแลระบบ:</strong> สามารถนำเข้ารายชื่อสหกรณ์ หรือลบรายชื่อได้ ข้อมูลจะซิงค์กับ Google Sheets อัตโนมัติ'
+      : '💡 <strong>โหมดบุคคลทั่วไป (Read-Only):</strong> สามารถค้นหาและตรวจสอบรายชื่อสหกรณ์ได้ (สิทธิ์การนำเข้าและลบข้อมูลสงวนไว้สำหรับผู้ดูแลระบบ)';
+  }
+
+  // ปรับหัวตารางคอลัมน์สุดท้าย
+  const actionHeader = document.getElementById('coopDirActionHeader');
+  if (actionHeader) {
+    actionHeader.innerText = isAdmin ? 'การจัดการ' : 'การใช้งาน';
+  }
 
   // Update counts
   const totalCount = allCoops.length;
@@ -6469,9 +6545,9 @@ function renderCoopDirectoryList() {
             ${isTotalEmpty ? 'ยังไม่มีรายชื่อสหกรณ์ในฐานข้อมูล' : 'ไม่พบข้อมูลสหกรณ์ที่ตรงกับเงื่อนไขการค้นหา'}
           </div>
           <p style="margin: 0 0 1rem; font-size: 0.85rem;">
-            ${isTotalEmpty ? 'คุณสามารถเลือกกลุ่มส่งเสริมฯ และวางรายชื่อสหกรณ์ทีละหลายชื่อเพื่อนำเข้าสู่ระบบได้ทันที' : 'ลองปรับคำค้นหาหรือเลือกกลุ่มส่งเสริมสหกรณ์อื่น'}
+            ${isTotalEmpty ? (isAdmin ? 'คุณสามารถเลือกกลุ่มส่งเสริมฯ และวางรายชื่อสหกรณ์ทีละหลายชื่อเพื่อนำเข้าสู่ระบบได้ทันที' : 'ยังไม่มีรายชื่อสหกรณ์ในระบบ กรุณาติดต่อเจ้าหน้าที่/ผู้ดูแลระบบ') : 'ลองปรับคำค้นหาหรือเลือกกลุ่มส่งเสริมสหกรณ์อื่น'}
           </p>
-          ${isTotalEmpty ? `
+          ${isTotalEmpty && isAdmin ? `
             <button class="btn btn-primary btn-sm" onclick="toggleBatchImportForm(true)">
               📥 เริ่มนำเข้ารายชื่อสหกรณ์ (แบบชุด)
             </button>
@@ -6489,6 +6565,24 @@ function renderCoopDirectoryList() {
     const escapedName = escapeHtml(c.name);
     const encodedName = escapedName.replace(/'/g, "\\'");
 
+    let actionContent = '';
+    if (isAdmin) {
+      actionContent = `
+        <button class="btn btn-outline-primary btn-sm" onclick="useCoopFromDirectory('${encodedName}')" style="padding: 2px 8px; font-size: 0.75rem; margin-right: 4px;" title="นำข้อมูลสหกรณ์นี้ไปกรอกในแบบฟอร์ม">
+          นำไปใช้ ➔
+        </button>
+        <button class="btn btn-outline-danger btn-sm" onclick="handleDeleteCoop('${encodedName}')" style="padding: 2px 6px; font-size: 0.75rem; border-color: #fca5a5; color: #dc2626;" title="ลบสหกรณ์นี้ (เฉพาะ Admin)">
+          🗑️
+        </button>
+      `;
+    } else {
+      actionContent = `
+        <span style="font-size: 0.75rem; color: var(--text-muted); background: #f1f5f9; padding: 3px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+          👁️ ดูข้อมูลเท่านั้น
+        </span>
+      `;
+    }
+
     return `
       <tr>
         <td style="text-align: center; color: var(--text-muted); font-size: 0.8rem;">${idx + 1}</td>
@@ -6498,12 +6592,7 @@ function renderCoopDirectoryList() {
         <td>${groupBadge}</td>
         <td>${typeBadge}</td>
         <td style="text-align: right; white-space: nowrap;">
-          <button class="btn btn-outline-primary btn-sm" onclick="useCoopFromDirectory('${encodedName}')" style="padding: 2px 8px; font-size: 0.75rem; margin-right: 4px;" title="นำข้อมูลสหกรณ์นี้ไปกรอกในแบบฟอร์ม">
-            นำไปใช้ ➔
-          </button>
-          <button class="btn btn-outline-danger btn-sm" onclick="handleDeleteCoop('${encodedName}')" style="padding: 2px 6px; font-size: 0.75rem; border-color: #fca5a5; color: #dc2626;" title="ลบสหกรณ์นี้">
-            🗑️
-          </button>
+          ${actionContent}
         </td>
       </tr>
     `;

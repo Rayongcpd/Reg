@@ -2455,10 +2455,10 @@
             <button class="btn btn-outline-secondary btn-sm" onclick="syncCoopDirectoryWithRemote(true)" title="ดึงข้อมูลล่าสุดจาก Google Sheets">
               <span id="coopSyncSpin">🔄</span> ซิงค์ข้อมูล
             </button>
-            <button class="btn btn-primary" onclick="toggleBatchImportForm(true)">
+            <button id="coopDirBatchImportBtn" class="btn btn-primary" onclick="toggleBatchImportForm(true)" style="display: none;">
               📥 นำเข้ารายชื่อสหกรณ์ (แบบชุด)
             </button>
-            <button class="btn btn-outline-danger btn-sm" onclick="handleClearAllCoops()" title="ล้างรายชื่อสหกรณ์ทั้งหมดออกจากระบบ" style="border-color: #fca5a5; color: #dc2626;">
+            <button id="coopDirClearAllBtn" class="btn btn-outline-danger btn-sm" onclick="handleClearAllCoops()" title="ล้างรายชื่อสหกรณ์ทั้งหมดออกจากระบบ (เฉพาะผู้ดูแลระบบ)" style="border-color: #fca5a5; color: #dc2626; display: none;">
               🗑️ ล้างทั้งหมด
             </button>
           </div>
@@ -2559,7 +2559,7 @@
                 <th>ชื่อสหกรณ์ / สถาบัน</th>
                 <th>กลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ</th>
                 <th>ประเภทสถาบัน</th>
-                <th style="text-align: right; width: 130px;">การจัดการ</th>
+                <th style="text-align: right; width: 130px;" id="coopDirActionHeader">การจัดการ</th>
               </tr>
             </thead>
             <tbody id="coopDirectoryTableBody">
@@ -2570,7 +2570,7 @@
       </div>
 
       <div class="modal-footer" style="background: #f8fafc; justify-content: space-between;">
-        <div style="font-size: 0.8rem; color: var(--text-muted);">
+        <div id="coopDirFooterNote" style="font-size: 0.8rem; color: var(--text-muted);">
           💡 สหกรณ์ที่นำเข้าจะปรากฏในระบบพิมพ์แนะนำ (Autocomplete) ทันทีที่พิมพ์ชื่อในแบบฟอร์ม
         </div>
         <button class="btn btn-secondary" onclick="closeModal('coopDirectoryModal')">ปิดหน้าต่าง</button>

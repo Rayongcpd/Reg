@@ -765,8 +765,11 @@ const CoopDatabaseUtil = {
     return this.getAll();
   },
 
-  // นำเข้ารายชื่อสหกรณ์ (บันทึกทั้ง LocalStorage และ Google Sheets ทันที)
+  // นำเข้ารายชื่อสหกรณ์ (บันทึกทั้ง LocalStorage และ Google Sheets ทันที - เฉพาะ Admin)
   async batchAddRemote(group, namesList, defaultType) {
+    if (typeof AppState !== 'undefined' && !AppState.currentUser) {
+      throw new Error('ต้องเข้าสู่ระบบ Admin ก่อนทำการนำเข้ารายชื่อสหกรณ์');
+    }
     const localResult = this.batchAdd(group, namesList);
     if (typeof ApiClient !== 'undefined' && CONFIG.APPS_SCRIPT_URL) {
       try {
@@ -782,8 +785,11 @@ const CoopDatabaseUtil = {
     return localResult;
   },
 
-  // ลบสหกรณ์รายตัว (ลบทั้ง LocalStorage และ Google Sheets)
+  // ลบสหกรณ์รายตัว (ลบทั้ง LocalStorage และ Google Sheets - เฉพาะ Admin)
   async deleteCoopRemote(name) {
+    if (typeof AppState !== 'undefined' && !AppState.currentUser) {
+      throw new Error('ต้องเข้าสู่ระบบ Admin ก่อนทำการลบรายชื่อสหกรณ์');
+    }
     const localResult = this.deleteCoop(name);
     if (typeof ApiClient !== 'undefined' && CONFIG.APPS_SCRIPT_URL) {
       try {
@@ -795,8 +801,11 @@ const CoopDatabaseUtil = {
     return localResult;
   },
 
-  // ล้างฐานข้อมูลทั้งหมด (ล้างทั้ง LocalStorage และ Google Sheets)
+  // ล้างฐานข้อมูลทั้งหมด (ล้างทั้ง LocalStorage และ Google Sheets - เฉพาะ Admin)
   async clearAllRemote() {
+    if (typeof AppState !== 'undefined' && !AppState.currentUser) {
+      throw new Error('ต้องเข้าสู่ระบบ Admin ก่อนทำการล้างฐานข้อมูลสหกรณ์');
+    }
     const localResult = this.clearAll();
     if (typeof ApiClient !== 'undefined' && CONFIG.APPS_SCRIPT_URL) {
       try {
