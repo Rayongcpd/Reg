@@ -2230,51 +2230,6 @@
           </div>
         </div>
 
-        <!-- Export Action Center -->
-        <div class="export-action-toolbar">
-          <div class="export-toolbar-title">
-            <strong>🎯 รูปแบบการส่งออกข้อมูล (Export Formats):</strong>
-            <span style="font-size: 0.8rem; color: var(--text-muted);">ส่งออกข้อมูลตามเงื่อนไขตัวกรองที่เลือก</span>
-          </div>
-          <div class="export-btn-group">
-            <button class="btn btn-success export-action-btn" onclick="exportCombinedActiveExcel()"
-              title="ส่งออกเป็นไฟล์ Excel (.xlsx) ตามเงื่อนไขตัวกรอง">
-              <span class="export-btn-icon">📊</span>
-              <div class="export-btn-text">
-                <strong>ส่งออก Excel (.xlsx)</strong>
-                <small>แยกชีตชำระบัญชี + ระเบียบข้อบังคับ</small>
-              </div>
-            </button>
-
-            <button class="btn btn-primary export-action-btn" onclick="exportAllActiveOperationsPdf()"
-              title="ดูตัวอย่างเอกสารและส่งออกรายงานทางการเป็น PDF ตามเงื่อนไขตัวกรอง">
-              <span class="export-btn-icon">📑</span>
-              <div class="export-btn-text">
-                <strong>ส่งออก PDF ทางการ (.pdf)</strong>
-                <small>รายงานสรุปพร้อมพิมพ์ตามตัวกรอง</small>
-              </div>
-            </button>
-
-            <button class="btn btn-outline-primary export-action-btn" onclick="exportCombinedActiveCsv()"
-              title="ส่งออกข้อมูลเป็นไฟล์ CSV ตามเงื่อนไขตัวกรอง (UTF-8 รองรับภาษาไทย)">
-              <span class="export-btn-icon">📄</span>
-              <div class="export-btn-text">
-                <strong>ส่งออก CSV (.csv)</strong>
-                <small>ไฟล์ข้อมูลสำหรับเปิดในสเปรดชีต</small>
-              </div>
-            </button>
-
-            <button class="btn btn-secondary export-action-btn" onclick="triggerActiveExportDirectPrint()"
-              title="สั่งพิมพ์รายงานสรุปตามเงื่อนไขตัวกรองผ่านเครื่องพิมพ์">
-              <span class="export-btn-icon">🖨️</span>
-              <div class="export-btn-text">
-                <strong>สั่งพิมพ์รายงาน (Print)</strong>
-                <small>พิมพ์ออกเครื่องพิมพ์โดยตรง</small>
-              </div>
-            </button>
-          </div>
-        </div>
-
         <!-- Section Tabs & Search Filter -->
         <div class="export-preview-header">
           <div class="export-tabs-nav">
@@ -2365,18 +2320,20 @@
       <div class="modal-footer"
         style="justify-content: space-between; flex-wrap: wrap; gap: 10px; background: #f8fafc;">
         <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-muted);">
-          <span>💡 สามารถดาวน์โหลดเป็น Excel (.xlsx), เอกสาร PDF ทางการ หรือไฟล์ CSV
-            โดยข้อมูลจะถูกส่งออกตามตัวกรองที่เลือกจริง</span>
+          <span>💡 ข้อมูลจะถูกส่งออกและพิมพ์ตรงตามเงื่อนไขตัวกรองและช่วงเวลาที่เลือกจริง</span>
         </div>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
           <button class="btn btn-secondary" onclick="closeModal('activeExportModal')">ปิดหน้าต่าง</button>
-          <button class="btn btn-outline-primary" onclick="exportCombinedActiveCsv()">
+          <button class="btn btn-outline-secondary" onclick="triggerActiveExportDirectPrint()" title="สั่งพิมพ์รายงานสรุปตามเงื่อนไขตัวกรองออกเครื่องพิมพ์ทันที">
+            🖨️ สั่งพิมพ์ (Print)
+          </button>
+          <button class="btn btn-outline-primary" onclick="exportCombinedActiveCsv()" title="ส่งออกเป็นไฟล์ CSV">
             📄 ส่งออก CSV (.csv)
           </button>
-          <button class="btn btn-success" onclick="exportCombinedActiveExcel()">
-            📊 ดาวน์โหลด Excel (.xlsx)
+          <button class="btn btn-success" onclick="exportCombinedActiveExcel()" title="ดาวน์โหลดเป็นไฟล์ Excel (.xlsx) แยกชีตชำระบัญชี + ระเบียบข้อบังคับ">
+            📊 ส่งออก Excel (.xlsx)
           </button>
-          <button class="btn btn-primary" onclick="exportAllActiveOperationsPdf()">
+          <button class="btn btn-primary" onclick="exportAllActiveOperationsPdf()" title="ดูตัวอย่างเอกสารรายงานทางการและบันทึกเป็น PDF">
             📑 ดูตัวอย่าง & พิมพ์ PDF
           </button>
         </div>

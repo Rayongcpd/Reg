@@ -2475,22 +2475,56 @@ function openEditRegInfoModal() {
   const regData = AppState.selectedReg;
   if (!regData) return;
 
-  document.getElementById('editRegCoopName').value = regData.coopName || '';
+  if (document.getElementById('editRegCoopName')) {
+    document.getElementById('editRegCoopName').value = regData.coopName || '';
+  }
   if (document.getElementById('editRegCoopType')) {
     document.getElementById('editRegCoopType').value = regData.coopType || 'สหกรณ์การเกษตร';
   }
   if (document.getElementById('editRegPromotionGroup')) {
     document.getElementById('editRegPromotionGroup').value = regData.promotionGroup || getResolvedGroup(regData) || '';
   }
-  document.getElementById('editRegDocType').value = regData.docType || 'ข้อบังคับสหกรณ์';
-  document.getElementById('editRegTitle').value = regData.title || '';
-  document.getElementById('editRegDocNumber').value = regData.docNumber || '';
-  document.getElementById('editRegSubmitDate').value = toThaiDateInput(regData.submitDate);
+
+  // จัดการประเภทรายการ (ระเบียบ vs ข้อบังคับ) และประเภทย่อย
+  const isRule = (regData.docType || '').includes('ระเบียบ');
+  const mainCatEl = document.getElementById('editRegMainCategory');
+  const subTypeEl = document.getElementById('editRegSubType');
+  if (mainCatEl) {
+    mainCatEl.value = isRule ? 'ระเบียบสหกรณ์' : 'ข้อบังคับสหกรณ์';
+  }
+  if (subTypeEl) {
+    if ((regData.docType || '').includes('เห็นชอบ')) {
+      subTypeEl.value = 'ระเบียบสหกรณ์ (เห็นชอบ)';
+    } else {
+      subTypeEl.value = 'ระเบียบสหกรณ์ (รับทราบ)';
+    }
+  }
+  onEditRegCategoryChange();
+
+  if (document.getElementById('editRegDocType')) {
+    document.getElementById('editRegDocType').value = regData.docType || 'ข้อบังคับสหกรณ์';
+  }
+  if (document.getElementById('editRegTitle')) {
+    document.getElementById('editRegTitle').value = regData.title || '';
+  }
+  if (document.getElementById('editRegDocNumber')) {
+    document.getElementById('editRegDocNumber').value = regData.docNumber || '';
+  }
+  if (document.getElementById('editRegSubmitDate')) {
+    document.getElementById('editRegSubmitDate').value = toThaiDateInput(regData.submitDate);
+  }
+  if (document.getElementById('editRegOfficerName')) {
+    document.getElementById('editRegOfficerName').value = regData.officerName || '';
+  }
   if (document.getElementById('editRegOfficerContact')) {
     document.getElementById('editRegOfficerContact').value = regData.officerContact || '';
   }
-  document.getElementById('editRegOverallStatus').value = regData.status || 'อยู่ระหว่างพิจารณา';
-  document.getElementById('editRegNote').value = regData.note || '';
+  if (document.getElementById('editRegOverallStatus')) {
+    document.getElementById('editRegOverallStatus').value = regData.status || 'อยู่ระหว่างพิจารณา';
+  }
+  if (document.getElementById('editRegNote')) {
+    document.getElementById('editRegNote').value = regData.note || '';
+  }
 
   openModal('editRegModal');
 }
@@ -2501,19 +2535,31 @@ async function handleEditRegSubmit(e) {
   if (!regData) return;
 
   const form = e.target;
+
+  let resolvedDocType = 'ข้อบังคับสหกรณ์';
+  if (form.mainCategory && form.mainCategory.value === 'ระเบียบสหกรณ์') {
+    resolvedDocType = form.subType ? form.subType.value : 'ระเบียบสหกรณ์ (รับทราบ)';
+  } else if (form.mainCategory) {
+    resolvedDocType = 'ข้อบังคับสหกรณ์';
+  } else if (form.docType) {
+    resolvedDocType = form.docType.value;
+  } else {
+    resolvedDocType = regData.docType || 'ข้อบังคับสหกรณ์';
+  }
+
   const payload = {
     regId: regData.regId,
-    coopName: form.coopName.value.trim(),
+    coopName: form.coopName ? form.coopName.value.trim() : (regData.coopName || ''),
     coopType: form.coopType ? form.coopType.value : (regData.coopType || 'สหกรณ์การเกษตร'),
     promotionGroup: form.promotionGroup ? form.promotionGroup.value : '',
-    docType: form.docType.value,
-    title: form.title.value.trim(),
-    docNumber: form.docNumber.value.trim(),
-    submitDate: fromThaiDateInput(form.submitDate.value),
-    officerName: form.officerName.value.trim(),
+    docType: resolvedDocType,
+    title: form.title ? form.title.value.trim() : '',
+    docNumber: form.docNumber ? form.docNumber.value.trim() : '',
+    submitDate: form.submitDate ? fromThaiDateInput(form.submitDate.value) : '',
+    officerName: form.officerName ? form.officerName.value.trim() : '',
     officerContact: form.officerContact ? form.officerContact.value.trim() : (regData.officerContact || ''),
-    status: form.status.value,
-    note: form.note.value.trim()
+    status: form.status ? form.status.value : (regData.status || 'อยู่ระหว่างพิจารณา'),
+    note: form.note ? form.note.value.trim() : ''
   };
 
   setLoading(true);
