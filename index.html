@@ -51,14 +51,17 @@
           ⚖️ ชำระบัญชี
         </button>
         <button id="btnNavRegulations" class="nav-module-btn" onclick="switchAppView('regulations')">
-          📜 ระเบียบ / ข้อบังคับ
+          📗 ระเบียบสหกรณ์
+        </button>
+        <button id="btnNavBylaws" class="nav-module-btn" onclick="switchAppView('bylaws')">
+          📘 ข้อบังคับสหกรณ์
         </button>
       </div>
 
       <div class="navbar-actions">
         <!-- Export Summary Modal Button -->
         <button id="btnNavExportActivePdf" class="btn btn-outline-primary btn-sm" onclick="openActiveExportModal()"
-          title="ส่งออกสรุปข้อมูลงานชำระบัญชี และระเบียบข้อบังคับ สามารถเลือกกรองข้อมูลได้ทุกเงื่อนไข (Excel / PDF / CSV)">
+          title="ส่งออกสรุปข้อมูลงานชำระบัญชี ระเบียบ และข้อบังคับ สามารถเลือกกรองข้อมูลได้ทุกเงื่อนไข (Excel / PDF / CSV)">
           📑 ส่งออกสรุปข้อมูล
         </button>
 
@@ -73,9 +76,13 @@
           style="display: none;">
           + เพิ่มรายการชำระบัญชี
         </button>
-        <button id="adminAddRegBtn" class="btn btn-success btn-sm" onclick="openCreateRegModal()"
+        <button id="adminAddRegBtn" class="btn btn-success btn-sm" onclick="openCreateRegModal('ระเบียบ')"
           style="display: none;">
           + ยื่นเรื่องระเบียบใหม่
+        </button>
+        <button id="adminAddBylawBtn" class="btn btn-primary btn-sm" onclick="openCreateRegModal('ข้อบังคับ')"
+          style="display: none; background: #0284c7; border-color: #0284c7;">
+          + ยื่นเรื่องข้อบังคับใหม่
         </button>
 
         <!-- Cooperative Directory Button -->
@@ -163,15 +170,15 @@
           </button>
         </div>
 
-        <!-- Service Card 2: Regulations & Bylaws -->
+        <!-- Service Card 2: Regulations (ระเบียบสหกรณ์) -->
         <div class="hub-card hub-card-reg" onclick="switchAppView('regulations')">
           <div class="hub-icon-wrapper" style="color: #0d9488;">
-            📜
+            📗
           </div>
-          <h3 class="hub-card-title">ระบบติดตาม ระเบียบ / ข้อบังคับสหกรณ์</h3>
+          <h3 class="hub-card-title">ระบบติดตาม ระเบียบสหกรณ์</h3>
           <p class="hub-card-desc">
-            ตรวจสอบความคืบหน้าการยื่นขอความเห็นชอบ รับทราบ และรับจดทะเบียน ข้อบังคับและระเบียบสหกรณ์ 4 ขั้นตอน
-            สำหรับเจ้าหน้าที่ส่งเสริมและสหกรณ์
+            ตรวจสอบความคืบหน้าการยื่นขอความเห็นชอบ (7 วัน) และรับทราบ (30 วัน) ระเบียบสหกรณ์ 4 ขั้นตอน
+            พร้อมระบบเตือนกรอบเวลา SLA
           </p>
 
           <div class="hub-stat-badges">
@@ -181,10 +188,10 @@
             </div>
             <div class="hub-stat-pill">
               <span>อยู่ระหว่างพิจารณา</span>
-              <strong id="hubStatRegReview" style="color: #0284c7;">0</strong>
+              <strong id="hubStatRegReview" style="color: #0d9488;">0</strong>
             </div>
             <div class="hub-stat-pill">
-              <span>รับจดทะเบียน/เห็นชอบ/รับทราบ</span>
+              <span>เห็นชอบ/รับทราบแล้ว</span>
               <strong id="hubStatRegDone" style="color: var(--accent-emerald);">0</strong>
             </div>
             <div class="hub-stat-pill">
@@ -194,7 +201,42 @@
           </div>
 
           <button class="btn btn-primary hub-card-btn" style="background: linear-gradient(135deg, #0d9488, #0f766e);">
-            เข้าสู่ระบบติดตามระเบียบ/ข้อบังคับ ➔
+            เข้าสู่ระบบติดตามระเบียบ ➔
+          </button>
+        </div>
+
+        <!-- Service Card 3: Bylaws (ข้อบังคับสหกรณ์) -->
+        <div class="hub-card hub-card-bylaw" onclick="switchAppView('bylaws')">
+          <div class="hub-icon-wrapper" style="color: #0284c7;">
+            📘
+          </div>
+          <h3 class="hub-card-title">ระบบติดตาม ข้อบังคับสหกรณ์</h3>
+          <p class="hub-card-desc">
+            ตรวจสอบความคืบหน้าการยื่นขอรับจดทะเบียนข้อบังคับสหกรณ์ตาม พ.ร.บ. สหกรณ์ กรอบเวลาพิจารณา 14 วันทำการ
+            4 ขั้นตอนมาตรฐาน
+          </p>
+
+          <div class="hub-stat-badges">
+            <div class="hub-stat-pill">
+              <span>เรื่องทั้งหมด</span>
+              <strong id="hubStatBylawTotal">0</strong>
+            </div>
+            <div class="hub-stat-pill">
+              <span>อยู่ระหว่างพิจารณา</span>
+              <strong id="hubStatBylawReview" style="color: #0284c7;">0</strong>
+            </div>
+            <div class="hub-stat-pill">
+              <span>รับจดทะเบียนแล้ว</span>
+              <strong id="hubStatBylawDone" style="color: var(--accent-emerald);">0</strong>
+            </div>
+            <div class="hub-stat-pill">
+              <span>ส่งคืนแก้ไข</span>
+              <strong id="hubStatBylawIssues" style="color: var(--accent-rose);">0</strong>
+            </div>
+          </div>
+
+          <button class="btn btn-primary hub-card-btn" style="background: linear-gradient(135deg, #0284c7, #0369a1);">
+            เข้าสู่ระบบติดตามข้อบังคับ ➔
           </button>
         </div>
       </section>
@@ -204,10 +246,9 @@
         <div class="hub-announcement-content">
           <span style="font-size: 2.5rem;">💡</span>
           <div>
-            <h4 style="margin: 0; color: var(--primary); font-size: 1.05rem;">คำแนะนำสำหรับเจ้าหน้าที่ส่งเสริมสหกรณ์
-            </h4>
+            <h4 style="margin: 0; color: var(--primary); font-size: 1.05rem;">คำแนะนำสำหรับเจ้าหน้าที่ส่งเสริมสหกรณ์</h4>
             <p style="margin: 4px 0 0; font-size: 0.88rem; color: var(--text-muted);">
-              ท่านสามารถใช้ระบบนี้ในการกำกับดูแลสหกรณ์ในความรับผิดชอบได้ทั้ง 2 ด้าน โดยข้อมูลจะถูกแยกส่วนกันอย่างชัดเจน
+              ท่านสามารถใช้ระบบนี้ในการกำกับดูแลและติดตามงานได้ทั้ง 3 ด้าน (งานชำระบัญชี, ระเบียบสหกรณ์, และข้อบังคับสหกรณ์) โดยข้อมูลจะถูกแยกส่วนกันอย่างชัดเจน
             </p>
           </div>
         </div>
@@ -221,7 +262,10 @@
             ⚖️ ดูงานชำระบัญชี
           </button>
           <button class="btn btn-secondary btn-sm" onclick="switchAppView('regulations')">
-            📜 ดูงานระเบียบข้อบังคับ
+            📗 ดูงานระเบียบ
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="switchAppView('bylaws')">
+            📘 ดูงานข้อบังคับ
           </button>
         </div>
       </section>
@@ -503,7 +547,7 @@
   </div>
 
   <!-- ========================================================================= -->
-  <!-- VIEW 3: REGULATIONS & BYLAWS MODULE (ระบบติดตามระเบียบและข้อบังคับสหกรณ์) -->
+  <!-- VIEW 3: REGULATIONS MODULE (ระบบติดตามระเบียบสหกรณ์) -->
   <!-- ========================================================================= -->
   <div id="viewRegulations" class="app-view" style="display: none;">
     <header class="hero-section" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #0e3760 100%);">
@@ -511,17 +555,15 @@
         <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 0.5rem;">
           <span class="status-badge"
             style="background: rgba(255,255,255,0.2); color: #fff; font-size: 0.85rem;">โมดูลที่ 2</span>
-          <span style="color: rgba(255,255,255,0.8); font-size: 0.85rem;">• 4 ขั้นตอนการพิจารณาเห็นชอบ /
-            รับจดทะเบียน</span>
+          <span style="color: rgba(255,255,255,0.8); font-size: 0.85rem;">• 4 ขั้นตอนการพิจารณาเห็นชอบ (7 วัน) / รับทราบ (30 วัน)</span>
         </div>
-        <h2 class="hero-title">ระบบติดตาม ระเบียบ และ ข้อบังคับสหกรณ์</h2>
-        <p class="hero-subtitle">ตรวจสอบสถานะการยื่นขอความเห็นชอบ รับทราบ และรับจดทะเบียน
-          ข้อบังคับและระเบียบสหกรณ์สำหรับเจ้าหน้าที่ส่งเสริม</p>
+        <h2 class="hero-title">ระบบติดตาม ระเบียบสหกรณ์</h2>
+        <p class="hero-subtitle">ตรวจสอบสถานะการยื่นขอความเห็นชอบ (7 วัน) และรับทราบ (30 วัน) ระเบียบสหกรณ์สำหรับเจ้าหน้าที่ส่งเสริม</p>
 
         <!-- Search Bar -->
         <div class="hero-search-box">
           <input type="text" id="regSearchInput"
-            placeholder="พิมพ์ชื่อสหกรณ์, ชื่อระเบียบ/ข้อบังคับ, เลขที่รับเรื่อง, หรือชื่อผู้รับผิดชอบ...">
+            placeholder="พิมพ์ชื่อสหกรณ์, ชื่อระเบียบสหกรณ์, เลขที่รับเรื่อง, หรือชื่อผู้รับผิดชอบ...">
           <button id="regSearchBtn" class="hero-search-btn" style="background: #0f766e;" onclick="applyRegFilters()">
             🔍 ค้นหา
           </button>
@@ -534,9 +576,9 @@
       <section class="stats-section">
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-icon total">📜</div>
+            <div class="stat-icon total">📗</div>
             <div class="stat-info">
-              <div class="stat-label">เรื่องที่ยื่นทั้งหมด</div>
+              <div class="stat-label">เรื่องระเบียบทั้งหมด</div>
               <div id="regStatTotal" class="stat-value">0</div>
             </div>
           </div>
@@ -552,7 +594,7 @@
           <div class="stat-card">
             <div class="stat-icon done">✅</div>
             <div class="stat-info">
-              <div class="stat-label">รับจดทะเบียน / เห็นชอบ / รับทราบ</div>
+              <div class="stat-label">เห็นชอบ / รับทราบแล้ว</div>
               <div id="regStatApproved" class="stat-value">0</div>
             </div>
           </div>
@@ -572,7 +614,7 @@
         <!-- Panel Header -->
         <div class="filter-panel-header">
           <div class="filter-panel-title">
-            <span>🏷️ ตัวกรองระเบียบและข้อบังคับ</span>
+            <span>🏷️ ตัวกรองระเบียบสหกรณ์</span>
             <span id="regFilterCount" class="filter-active-count">ทั้งหมด</span>
             <span id="regFilterResultCount"
               style="font-size: 0.82rem; font-weight: 500; color: var(--text-muted); margin-left: 6px;"></span>
@@ -623,18 +665,14 @@
             </div>
           </div>
 
-          <!-- Section 2: Document Type (ประเภทเอกสาร) -->
+          <!-- Section 2: Document Type (ประเภทยื่นขอระเบียบสหกรณ์) -->
           <div class="filter-section">
             <div class="filter-section-header">
-              <span class="filter-section-label">📄 ประเภทเอกสาร (Document Type)</span>
+              <span class="filter-section-label">📄 ประเภทยื่นขอระเบียบสหกรณ์ (Document Type)</span>
             </div>
             <div class="filter-chip-group">
               <button class="filter-chip active" data-reg-doc="ALL" onclick="setRegFilter('docType', 'ALL')">
                 <span class="chip-check">✓</span> ทั้งหมด
-              </button>
-              <button class="filter-chip" data-reg-doc="ข้อบังคับสหกรณ์"
-                onclick="setRegFilter('docType', 'ข้อบังคับสหกรณ์')">
-                <span class="chip-check">✓</span> 📘 ข้อบังคับ (14 วัน)
               </button>
               <button class="filter-chip" data-reg-doc="ระเบียบสหกรณ์ (เห็นชอบ)"
                 onclick="setRegFilter('docType', 'ระเบียบสหกรณ์ (เห็นชอบ)')">
@@ -777,7 +815,7 @@
               <th style="width: 50px; text-align: center;">ลำดับ</th>
               <th>สหกรณ์ / เลขทะเบียน</th>
               <th>ประเภท</th>
-              <th>ชื่อระเบียบ / ข้อบังคับ</th>
+              <th>ชื่อระเบียบสหกรณ์</th>
               <th>เลขที่รับเรื่อง & วันที่</th>
               <th>ขั้นตอนปัจจุบัน</th>
               <th>ผู้รับผิดชอบ</th>
@@ -794,8 +832,300 @@
 
       <!-- Empty State for Regulations -->
       <div id="regEmptyState" class="empty-state" style="display: none;">
-        <div class="empty-icon">📜</div>
-        <h3 style="margin-bottom: 0.5rem; color: var(--primary);">ไม่พบข้อมูลระเบียบหรือข้อบังคับ</h3>
+        <div class="empty-icon">📗</div>
+        <h3 style="margin-bottom: 0.5rem; color: var(--primary);">ไม่พบข้อมูลระเบียบสหกรณ์</h3>
+        <p>ลองปรับคำค้นหา หรือเปลี่ยนเงื่อนไขตัวกรองใหม่อีกครั้ง</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- VIEW 4: BYLAWS MODULE (ระบบติดตามข้อบังคับสหกรณ์) -->
+  <!-- ========================================================================= -->
+  <div id="viewBylaws" class="app-view" style="display: none;">
+    <header class="hero-section" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #0e3760 100%);">
+      <div class="container hero-content">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 0.5rem;">
+          <span class="status-badge"
+            style="background: rgba(255,255,255,0.2); color: #fff; font-size: 0.85rem;">โมดูลที่ 3</span>
+          <span style="color: rgba(255,255,255,0.8); font-size: 0.85rem;">• 4 ขั้นตอนการพิจารณารับจดทะเบียนข้อบังคับ (14 วันทำการ)</span>
+        </div>
+        <h2 class="hero-title">ระบบติดตาม ข้อบังคับสหกรณ์</h2>
+        <p class="hero-subtitle">ตรวจสอบสถานะการยื่นขอรับจดทะเบียนข้อบังคับสหกรณ์ตาม พ.ร.บ. สหกรณ์ (กรอบเวลา SLA 14 วันทำการ)</p>
+
+        <!-- Search Bar -->
+        <div class="hero-search-box">
+          <input type="text" id="bylawSearchInput"
+            placeholder="พิมพ์ชื่อสหกรณ์, ชื่อข้อบังคับ, เลขที่รับเรื่อง, หรือชื่อผู้รับผิดชอบ...">
+          <button id="bylawSearchBtn" class="hero-search-btn" style="background: #0284c7;" onclick="applyBylawFilters()">
+            🔍 ค้นหา
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container" style="flex: 1;">
+      <!-- KPI Stats Section for Bylaws -->
+      <section class="stats-section">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon total" style="background: #eff6ff; color: #0284c7;">📘</div>
+            <div class="stat-info">
+              <div class="stat-label">ข้อบังคับที่ยื่นทั้งหมด</div>
+              <div id="bylawStatTotal" class="stat-value">0</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon active" style="background: #e0f2fe; color: #0284c7;">🔍</div>
+            <div class="stat-info">
+              <div class="stat-label">อยู่ระหว่างพิจารณา/ตรวจ</div>
+              <div id="bylawStatReview" class="stat-value">0</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon done" style="background: #ecfdf5; color: #059669;">🏆</div>
+            <div class="stat-info">
+              <div class="stat-label">รับจดทะเบียนแล้ว (14 วัน)</div>
+              <div id="bylawStatApproved" class="stat-value">0</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #fffbeb; color: #d97706;">⏰</div>
+            <div class="stat-info">
+              <div class="stat-label">ใกล้ครบ/เกินกำหนด SLA</div>
+              <div id="bylawStatSlaAlert" class="stat-value">0</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon issues">✏️</div>
+            <div class="stat-info">
+              <div class="stat-label">รอแก้ไข / ส่งคืน</div>
+              <div id="bylawStatFixes" class="stat-value">0</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Smart Filter Chips Panel (Bylaws) -->
+      <section class="filter-panel">
+        <div class="filter-panel-header">
+          <div class="filter-panel-title">
+            <span>🏷️ ตัวกรองข้อบังคับสหกรณ์</span>
+            <span id="bylawFilterCount" class="filter-active-count">ทั้งหมด</span>
+            <span id="bylawFilterResultCount"
+              style="font-size: 0.82rem; font-weight: 500; color: var(--text-muted); margin-left: 6px;"></span>
+          </div>
+
+          <div class="filter-panel-actions">
+            <button id="btnToggleBylawFilter" class="filter-toggle-btn" onclick="toggleFilterPanel('bylawFilter')"
+              title="เปิด/ปิด แผงตัวกรอง">
+              <span class="toggle-icon">▼</span> <span class="toggle-text">แสดงตัวกรอง</span>
+            </button>
+            <div class="view-switch-group">
+              <button id="btnBylawGridView" class="view-btn active" title="แสดงแบบการ์ด">
+                🔲 การ์ด
+              </button>
+              <button id="btnBylawTableView" class="view-btn" title="แสดงแบบตาราง">
+                📋 ตาราง
+              </button>
+            </div>
+            <button id="btnResetBylawFilter" class="filter-reset-btn" onclick="resetBylawFilters()"
+              title="ล้างตัวกรองทั้งหมด" style="display: none;">
+              ✕ ล้างตัวกรอง
+            </button>
+          </div>
+        </div>
+
+        <div id="bylawFilterBody" class="filter-panel-body collapsed">
+          <!-- Section 1: Progress / Steps -->
+          <div class="filter-section">
+            <div class="filter-section-header">
+              <span class="filter-section-label">🚀 ความคืบหน้า / ขั้นตอนการพิจารณา (Progress)</span>
+            </div>
+            <div class="filter-chip-group">
+              <button class="filter-chip step-chip active" data-bylaw-step="ALL" onclick="setBylawFilter('step', 'ALL')">
+                <span class="chip-check">✓</span> ทั้งหมด
+              </button>
+              <button class="filter-chip step-chip" data-bylaw-step="1" onclick="setBylawFilter('step', '1')">
+                <span class="chip-check">✓</span> ขั้น 1: ฝ่ายบริหารรับเอกสาร (25%)
+              </button>
+              <button class="filter-chip step-chip" data-bylaw-step="2" onclick="setBylawFilter('step', '2')">
+                <span class="chip-check">✓</span> ขั้น 2: กลุ่มจัดตั้งฯ ตรวจสอบ (50%)
+              </button>
+              <button class="filter-chip step-chip" data-bylaw-step="3" onclick="setBylawFilter('step', '3')">
+                <span class="chip-check">✓</span> ขั้น 3: เสนอนายทะเบียน (75%)
+              </button>
+              <button class="filter-chip step-chip" data-bylaw-step="4" onclick="setBylawFilter('step', '4')">
+                <span class="chip-check">✓</span> ขั้น 4: ส่งเอกสารให้สหกรณ์/หน่วยงาน (100%)
+              </button>
+            </div>
+          </div>
+
+          <!-- Section 2: SLA 14 Days -->
+          <div class="filter-section">
+            <div class="filter-section-header">
+              <span class="filter-section-label">⏱️ กรอบเวลาพิจารณา SLA (14 วันทำการ)</span>
+            </div>
+            <div class="filter-chip-group">
+              <button class="filter-chip active" data-bylaw-sla="ALL" onclick="setBylawFilter('sla', 'ALL')">
+                <span class="chip-check">✓</span> ทั้งหมด
+              </button>
+              <button class="filter-chip" data-bylaw-sla="NORMAL" onclick="setBylawFilter('sla', 'NORMAL')">
+                <span class="chip-check">✓</span> 🟢 ภายในกำหนดปกติ
+              </button>
+              <button class="filter-chip" data-bylaw-sla="NEAR" onclick="setBylawFilter('sla', 'NEAR')">
+                <span class="chip-check">✓</span> ⏰ ใกล้ครบกำหนด (เหลือ 1-3 วัน)
+              </button>
+              <button class="filter-chip" data-bylaw-sla="OVERDUE" onclick="setBylawFilter('sla', 'OVERDUE')">
+                <span class="chip-check">✓</span> 🔴 เกินกำหนดเวลา SLA (>14 วัน)
+              </button>
+            </div>
+          </div>
+
+          <!-- Section 3: Status -->
+          <div class="filter-section">
+            <div class="filter-section-header">
+              <span class="filter-section-label">📌 สถานะการดำเนินงาน (Status)</span>
+            </div>
+            <div class="filter-chip-group">
+              <button class="filter-chip active" data-bylaw-status="ALL" onclick="setBylawFilter('status', 'ALL')">
+                <span class="chip-check">✓</span> ทั้งหมด
+              </button>
+              <button class="filter-chip" data-bylaw-status="IN_REVIEW" onclick="setBylawFilter('status', 'IN_REVIEW')">
+                <span class="chip-check">✓</span> 🔍 อยู่ระหว่างพิจารณา/ตรวจ
+              </button>
+              <button class="filter-chip" data-bylaw-status="APPROVED" onclick="setBylawFilter('status', 'APPROVED')">
+                <span class="chip-check">✓</span> 🏆 รับจดทะเบียนแล้ว
+              </button>
+              <button class="filter-chip" data-bylaw-status="NEED_FIX" onclick="setBylawFilter('status', 'NEED_FIX')">
+                <span class="chip-check">✓</span> ✏️ รอแก้ไข/ส่งคืน
+              </button>
+            </div>
+          </div>
+
+          <!-- Section 4: Promotion Groups -->
+          <div class="filter-section">
+            <div class="filter-section-header">
+              <span class="filter-section-label">🏢 กลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ (Promotion Group)</span>
+            </div>
+            <div class="filter-chip-group">
+              <button class="filter-chip active" data-bylaw-group="ALL" onclick="setBylawFilter('group', 'ALL')">
+                <span class="chip-check">✓</span> ทั้งหมด
+              </button>
+              <button class="filter-chip group-chip" data-bylaw-group="กลุ่มส่งเสริมสหกรณ์ 1" onclick="setBylawFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 1')">
+                <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 1
+              </button>
+              <button class="filter-chip group-chip" data-bylaw-group="กลุ่มส่งเสริมสหกรณ์ 2" onclick="setBylawFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 2')">
+                <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 2
+              </button>
+              <button class="filter-chip group-chip" data-bylaw-group="กลุ่มส่งเสริมสหกรณ์ 3" onclick="setBylawFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 3')">
+                <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 3
+              </button>
+              <button class="filter-chip group-chip" data-bylaw-group="นิคมสหกรณ์ชะแวะ" onclick="setBylawFilter('group', 'นิคมสหกรณ์ชะแวะ')">
+                <span class="chip-check">✓</span> 🌾 นิคมสหกรณ์ชะแวะ
+              </button>
+            </div>
+          </div>
+
+          <!-- Section 5: Cooperatives -->
+          <div class="filter-section">
+            <div class="filter-section-header">
+              <span class="filter-section-label">🏛️ ประเภทสหกรณ์ (Cooperatives - 7 ประเภท)</span>
+            </div>
+            <div class="filter-chip-group">
+              <button class="filter-chip active" data-bylaw-type="ALL" onclick="setBylawFilter('type', 'ALL')">
+                <span class="chip-check">✓</span> ทั้งหมด
+              </button>
+              <button class="filter-chip" data-bylaw-type="สหกรณ์การเกษตร" onclick="setBylawFilter('type', 'สหกรณ์การเกษตร')">
+                <span class="chip-check">✓</span> สหกรณ์การเกษตร
+              </button>
+              <button class="filter-chip" data-bylaw-type="สหกรณ์ออมทรัพย์" onclick="setBylawFilter('type', 'สหกรณ์ออมทรัพย์')">
+                <span class="chip-check">✓</span> สหกรณ์ออมทรัพย์
+              </button>
+              <button class="filter-chip" data-bylaw-type="สหกรณ์บริการ" onclick="setBylawFilter('type', 'สหกรณ์บริการ')">
+                <span class="chip-check">✓</span> สหกรณ์บริการ
+              </button>
+              <button class="filter-chip" data-bylaw-type="สหกรณ์นิคม" onclick="setBylawFilter('type', 'สหกรณ์นิคม')">
+                <span class="chip-check">✓</span> สหกรณ์นิคม
+              </button>
+              <button class="filter-chip" data-bylaw-type="สหกรณ์ร้านค้า" onclick="setBylawFilter('type', 'สหกรณ์ร้านค้า')">
+                <span class="chip-check">✓</span> สหกรณ์ร้านค้า
+              </button>
+              <button class="filter-chip" data-bylaw-type="สหกรณ์ประมง" onclick="setBylawFilter('type', 'สหกรณ์ประมง')">
+                <span class="chip-check">✓</span> สหกรณ์ประมง
+              </button>
+              <button class="filter-chip" data-bylaw-type="สหกรณ์เครดิตยูเนี่ยน" onclick="setBylawFilter('type', 'สหกรณ์เครดิตยูเนี่ยน')">
+                <span class="chip-check">✓</span> สหกรณ์เครดิตยูเนี่ยน
+              </button>
+            </div>
+          </div>
+
+          <!-- Section 6: Farmer Groups -->
+          <div class="filter-section">
+            <div class="filter-section-header">
+              <span class="filter-section-label">🌾 ประเภทกลุ่มเกษตรกร (Farmer Groups)</span>
+            </div>
+            <div class="filter-chip-group">
+              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกร" onclick="setBylawFilter('type', 'กลุ่มเกษตรกร')">
+                <span class="chip-check">✓</span> 🌾 กลุ่มเกษตรกร (ทุกประเภท)
+              </button>
+              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกรทำนา" onclick="setBylawFilter('type', 'กลุ่มเกษตรกรทำนา')">
+                <span class="chip-check">✓</span> กลุ่มเกษตรกรทำนา
+              </button>
+              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกรทำไร่" onclick="setBylawFilter('type', 'กลุ่มเกษตรกรทำไร่')">
+                <span class="chip-check">✓</span> กลุ่มเกษตรกรทำไร่
+              </button>
+              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกรทำสวน" onclick="setBylawFilter('type', 'กลุ่มเกษตรกรทำสวน')">
+                <span class="chip-check">✓</span> กลุ่มเกษตรกรทำสวน
+              </button>
+              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกรเลี้ยงสัตว์" onclick="setBylawFilter('type', 'กลุ่มเกษตรกรเลี้ยงสัตว์')">
+                <span class="chip-check">✓</span> กลุ่มเกษตรกรเลี้ยงสัตว์
+              </button>
+              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกรประมง" onclick="setBylawFilter('type', 'กลุ่มเกษตรกรประมง')">
+                <span class="chip-check">✓</span> กลุ่มเกษตรกรประมง
+              </button>
+              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกรอื่นๆ" onclick="setBylawFilter('type', 'กลุ่มเกษตรกรอื่นๆ')">
+                <span class="chip-check">✓</span> กลุ่มเกษตรกรอื่นๆ
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bylaws Grid View -->
+      <section id="bylawGrid" class="cases-grid"></section>
+
+      <!-- Bylaws Table View -->
+      <section id="bylawTableWrap" class="table-wrap table-responsive" style="display: none;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 50px; text-align: center;">ลำดับ</th>
+              <th>สหกรณ์ / เลขทะเบียน</th>
+              <th>ประเภท</th>
+              <th>ชื่อข้อบังคับสหกรณ์</th>
+              <th>เลขที่รับเรื่อง & วันที่</th>
+              <th>ขั้นตอนปัจจุบัน</th>
+              <th>ผู้รับผิดชอบ</th>
+              <th>สถานะ</th>
+              <th style="text-align: right;">การจัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="bylawTableBody"></tbody>
+        </table>
+      </section>
+
+      <!-- Pagination for Bylaws -->
+      <div id="bylawPagination" class="pagination-wrapper" style="display: none;"></div>
+
+      <!-- Empty State for Bylaws -->
+      <div id="bylawEmptyState" class="empty-state" style="display: none;">
+        <div class="empty-icon">📘</div>
+        <h3 style="margin-bottom: 0.5rem; color: var(--primary);">ไม่พบข้อมูลข้อบังคับสหกรณ์</h3>
         <p>ลองปรับคำค้นหา หรือเปลี่ยนเงื่อนไขตัวกรองใหม่อีกครั้ง</p>
       </div>
     </main>
@@ -1467,7 +1797,7 @@
   <div id="createRegModal" class="modal-backdrop">
     <div class="modal-container" style="max-width: 680px;">
       <div class="modal-header">
-        <h3>➕ ยื่นเรื่องระเบียบ / ข้อบังคับสหกรณ์ใหม่</h3>
+        <h3 id="createRegModalTitle">➕ ยื่นเรื่องระเบียบสหกรณ์ใหม่</h3>
         <button class="modal-close-btn" onclick="closeModal('createRegModal')">&times;</button>
       </div>
       <form id="createRegForm">
@@ -1544,13 +1874,12 @@
 
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
             <div>
-              <h4 style="font-size: 1rem; color: var(--primary); margin: 0;">📜 รายการระเบียบ / ข้อบังคับที่ยื่นเรื่อง
+              <h4 id="createRegItemsHeaderTitle" style="font-size: 1rem; color: var(--primary); margin: 0;">📜 รายการที่ยื่นเรื่อง
               </h4>
-              <span style="font-size: 0.78rem; color: var(--text-muted);">สามารถเพิ่มได้มากกว่า 1
-                ระเบียบ/ข้อบังคับในคราวเดียว</span>
+              <span id="createRegItemsHeaderDesc" style="font-size: 0.78rem; color: var(--text-muted);">สามารถเพิ่มได้มากกว่า 1 รายการในคราวเดียว</span>
             </div>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="addRegulationRowToCreateForm()">
-              + เพิ่มระเบียบ/ข้อบังคับอีกรายการ
+            <button type="button" id="btnAddRegRowBtn" class="btn btn-secondary btn-sm" onclick="addRegulationRowToCreateForm()">
+              + เพิ่มอีกรายการ
             </button>
           </div>
 
@@ -1952,10 +2281,17 @@
             </div>
           </div>
           <div class="export-kpi-card kpi-regs">
-            <div class="export-kpi-icon">📜</div>
+            <div class="export-kpi-icon">📗</div>
             <div class="export-kpi-info">
               <span class="export-kpi-val" id="exportKpiActiveRegs">0</span>
-              <span class="export-kpi-lbl">งานระเบียบและข้อบังคับ (เรื่อง)</span>
+              <span class="export-kpi-lbl">งานระเบียบสหกรณ์ (เรื่อง)</span>
+            </div>
+          </div>
+          <div class="export-kpi-card kpi-bylaws">
+            <div class="export-kpi-icon">📘</div>
+            <div class="export-kpi-info">
+              <span class="export-kpi-val" id="exportKpiActiveBylaws">0</span>
+              <span class="export-kpi-lbl">งานข้อบังคับสหกรณ์ (เรื่อง)</span>
             </div>
           </div>
           <div class="export-kpi-card kpi-issues">
@@ -2127,9 +2463,10 @@
             <div class="export-filter-item">
               <label for="exportFilterModule">หมวดงานที่ต้องการส่งออก</label>
               <select id="exportFilterModule" onchange="handleExportFilterChange()">
-                <option value="ALL" selected>📑 รวม 2 หมวด (ชำระบัญชี + ระเบียบ)</option>
+                <option value="ALL" selected>📑 ทุกหมวดงาน (ชำระบัญชี + ระเบียบ + ข้อบังคับ)</option>
                 <option value="CASES">⚖️ เฉพาะงานชำระบัญชีสหกรณ์</option>
-                <option value="REGS">📜 เฉพาะงานระเบียบและข้อบังคับ</option>
+                <option value="REGS">📗 เฉพาะงานระเบียบสหกรณ์</option>
+                <option value="BYLAWS">📘 เฉพาะงานข้อบังคับสหกรณ์</option>
               </select>
             </div>
 
@@ -2237,7 +2574,10 @@
               ⚖️ ส่วนที่ 1: งานชำระบัญชีสหกรณ์ <span id="exportTabCasesBadge" class="export-tab-badge">0</span>
             </button>
             <button id="btnExportTabRegs" class="export-tab-btn" onclick="switchActiveExportTab('regs')">
-              📜 ส่วนที่ 2: ระเบียบและข้อบังคับ <span id="exportTabRegsBadge" class="export-tab-badge">0</span>
+              📗 ส่วนที่ 2: ระเบียบสหกรณ์ <span id="exportTabRegsBadge" class="export-tab-badge">0</span>
+            </button>
+            <button id="btnExportTabBylaws" class="export-tab-btn" onclick="switchActiveExportTab('bylaws')">
+              📘 ส่วนที่ 3: ข้อบังคับสหกรณ์ <span id="exportTabBylawsBadge" class="export-tab-badge">0</span>
             </button>
           </div>
         </div>
@@ -2284,13 +2624,13 @@
           <div class="export-section-notice"
             style="border-left: 4px solid #0d9488; background: #f0fdfa; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; font-size: 0.85rem; color: #0f766e; display: flex; justify-content: space-between; align-items: center;">
             <div>
-              <strong id="exportRegsSectionTitle">หมวดที่ 2: รายการระเบียบและข้อบังคับสหกรณ์ (ตรงตามตัวกรอง)</strong>
+              <strong id="exportRegsSectionTitle">หมวดที่ 2: รายการระเบียบสหกรณ์ (ตรงตามตัวกรอง)</strong>
               <div id="exportRegsSectionSubtitle" style="font-size: 0.78rem; color: #0d9488; margin-top: 2px;">
-                แสดงระเบียบและข้อบังคับที่ตรงตามเงื่อนไขตัวกรอง พร้อมระยะเวลาสะสมและสถานะ</div>
+                แสดงระเบียบสหกรณ์ที่ตรงตามเงื่อนไขตัวกรอง พร้อมระยะเวลาสะสมและสถานะ</div>
             </div>
             <button class="btn btn-outline-primary btn-sm" onclick="exportActiveRegulationsOnlyPdf()"
               title="ส่งออกเฉพาะหมวดนี้เป็น PDF">
-              📄 PDF เฉพาะระเบียบข้อบังคับ
+              📄 PDF เฉพาะระเบียบ
             </button>
           </div>
 
@@ -2300,7 +2640,7 @@
               <thead style="position: sticky; top: 0; z-index: 2; background: #f8fafc;">
                 <tr>
                   <th style="width: 40px; text-align: center;">ลำดับ</th>
-                  <th>ชื่อเรื่อง ระเบียบ/ข้อบังคับ / สหกรณ์</th>
+                  <th>ชื่อเรื่องระเบียบสหกรณ์ / สหกรณ์</th>
                   <th style="width: 100px;">ประเภท</th>
                   <th style="width: 120px;">เลขที่/วันยื่น</th>
                   <th style="width: 150px;">ขั้นตอนปัจจุบัน</th>
@@ -2310,6 +2650,43 @@
                 </tr>
               </thead>
               <tbody id="exportRegsTableBody">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 3: Bylaws Preview -->
+        <div id="exportTabContentBylaws" class="export-tab-content" style="display: none;">
+          <div class="export-section-notice"
+            style="border-left: 4px solid #0284c7; background: #f0f9ff; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; font-size: 0.85rem; color: #0369a1; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong id="exportBylawsSectionTitle">หมวดที่ 3: รายการข้อบังคับสหกรณ์ (ตรงตามตัวกรอง)</strong>
+              <div id="exportBylawsSectionSubtitle" style="font-size: 0.78rem; color: #0284c7; margin-top: 2px;">
+                แสดงข้อบังคับสหกรณ์ที่ตรงตามเงื่อนไขตัวกรอง พร้อมกรอบเวลา SLA 14 วันทำการ และสถานะ</div>
+            </div>
+            <button class="btn btn-outline-primary btn-sm" onclick="exportActiveBylawsOnlyPdf()"
+              title="ส่งออกเฉพาะหมวดนี้เป็น PDF">
+              📄 PDF เฉพาะข้อบังคับ
+            </button>
+          </div>
+
+          <div class="table-responsive"
+            style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+            <table class="cases-table" style="width: 100%; font-size: 0.82rem;">
+              <thead style="position: sticky; top: 0; z-index: 2; background: #f8fafc;">
+                <tr>
+                  <th style="width: 40px; text-align: center;">ลำดับ</th>
+                  <th>ชื่อข้อบังคับสหกรณ์ / สหกรณ์</th>
+                  <th style="width: 100px;">ประเภท</th>
+                  <th style="width: 120px;">เลขที่/วันยื่น</th>
+                  <th style="width: 150px;">ขั้นตอนปัจจุบัน</th>
+                  <th style="width: 120px;">จนท. ผู้รับผิดชอบ</th>
+                  <th style="width: 90px; text-align: center;">วันทำการ</th>
+                  <th style="width: 120px; text-align: center;">สถานะ</th>
+                </tr>
+              </thead>
+              <tbody id="exportBylawsTableBody">
                 <!-- Injected via JavaScript -->
               </tbody>
             </table>

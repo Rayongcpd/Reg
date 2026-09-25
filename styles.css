@@ -1716,7 +1716,11 @@ button {
 }
 
 .hub-card.hub-card-reg::before {
-  background: linear-gradient(90deg, #0d9488, #0284c7);
+  background: linear-gradient(90deg, #0d9488, #059669);
+}
+
+.hub-card.hub-card-bylaw::before {
+  background: linear-gradient(90deg, #0284c7, #3b82f6);
 }
 
 .hub-card:hover {
@@ -1745,6 +1749,11 @@ button {
 .hub-card-reg .hub-icon-wrapper {
   background: #f0fdfa;
   border-color: #ccfbf1;
+}
+
+.hub-card-bylaw .hub-icon-wrapper {
+  background: #eff6ff;
+  border-color: #bfdbfe;
 }
 
 .hub-card-title {
@@ -2864,6 +2873,11 @@ body {
 .export-kpi-card.kpi-regs {
   border-left: 4px solid #0d9488;
   background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+}
+
+.export-kpi-card.kpi-bylaws {
+  border-left: 4px solid #6366f1;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
 }
 
 .export-kpi-card.kpi-issues {

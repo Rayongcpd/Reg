@@ -11,7 +11,7 @@
 // 1. Application State
 // ------------------------------------------------------------------------------
 const AppState = {
-  currentView: 'portal', // 'portal' | 'liquidation' | 'regulations'
+  currentView: 'portal', // 'portal' | 'liquidation' | 'regulations' | 'bylaws'
 
   // Module 1: Liquidation State
   cases: [],
@@ -26,8 +26,9 @@ const AppState = {
   filterStep: 'ALL',
   filterGroup: 'ALL', // 'ALL' | 'กลุ่มส่งเสริมสหกรณ์ 1' | 'กลุ่มส่งเสริมสหกรณ์ 2' | 'กลุ่มส่งเสริมสหกรณ์ 3' | 'นิคมสหกรณ์ชะแวะ'
 
-  // Module 2: Regulations & Bylaws State
-  regulations: [],
+  // Module 2: Regulations State (ระเบียบสหกรณ์)
+  allRegulations: [], // All records from sheet (both regulations and bylaws)
+  regulations: [], // Strictly regulations
   filteredRegulations: [],
   selectedReg: null,
   activeRegDetailTab: 'regTimeline',
@@ -39,6 +40,19 @@ const AppState = {
   regFilterStatus: 'ALL',
   regFilterStep: 'ALL',
   regFilterGroup: 'ALL', // 'ALL' | 'กลุ่มส่งเสริมสหกรณ์ 1' | 'กลุ่มส่งเสริมสหกรณ์ 2' | 'กลุ่มส่งเสริมสหกรณ์ 3' | 'นิคมสหกรณ์ชะแวะ'
+
+  // Module 3: Bylaws State (ข้อบังคับสหกรณ์)
+  bylaws: [], // Strictly bylaws
+  filteredBylaws: [],
+  selectedBylaw: null,
+  bylawViewMode: 'grid', // 'grid' | 'table'
+  bylawPage: 1,
+  bylawSearchTerm: '',
+  bylawFilterCoopType: 'ALL',
+  bylawFilterStatus: 'ALL',
+  bylawFilterStep: 'ALL',
+  bylawFilterSla: 'ALL', // 'ALL' | 'NORMAL' | 'NEAR' | 'OVERDUE'
+  bylawFilterGroup: 'ALL',
 
   // Cooperative Directory State
   coopDirGroupFilter: 'ALL',
@@ -197,15 +211,18 @@ function switchAppView(viewName) {
   document.getElementById('btnNavHub')?.classList.toggle('active', viewName === 'portal');
   document.getElementById('btnNavLiquidation')?.classList.toggle('active', viewName === 'liquidation');
   document.getElementById('btnNavRegulations')?.classList.toggle('active', viewName === 'regulations');
+  document.getElementById('btnNavBylaws')?.classList.toggle('active', viewName === 'bylaws');
 
   // Toggle View Containers
   const portalEl = document.getElementById('viewPortalHub');
   const liqEl = document.getElementById('viewLiquidation');
   const regEl = document.getElementById('viewRegulations');
+  const bylawEl = document.getElementById('viewBylaws');
 
   if (portalEl) portalEl.style.display = viewName === 'portal' ? 'block' : 'none';
   if (liqEl) liqEl.style.display = viewName === 'liquidation' ? 'block' : 'none';
   if (regEl) regEl.style.display = viewName === 'regulations' ? 'block' : 'none';
+  if (bylawEl) bylawEl.style.display = viewName === 'bylaws' ? 'block' : 'none';
 
   // Update Admin Buttons context
   updateAuthUI();
@@ -221,31 +238,57 @@ function switchAppView(viewName) {
   } else if (viewName === 'regulations') {
     applyRegFilters();
     updateRegStatsDisplay();
+  } else if (viewName === 'bylaws') {
+    applyBylawFilters();
+    updateBylawStatsDisplay();
   }
 }
 
 function updateHubStatsDisplay() {
-  // Liquidation Stats on Hub
+  // 1. Liquidation Stats on Hub
   const liqTotal = AppState.cases.length;
   const liqActive = AppState.cases.filter(c => c.caseStatus !== 'เสร็จสิ้น' && c.currentStep < 10).length;
   const liqDone = AppState.cases.filter(c => c.caseStatus === 'เสร็จสิ้น' || c.currentStep >= 10).length;
   const liqIssues = AppState.cases.filter(c => c.hasIssues).length;
 
-  document.getElementById('hubStatLiqTotal').innerText = liqTotal;
-  document.getElementById('hubStatLiqActive').innerText = liqActive;
-  document.getElementById('hubStatLiqDone').innerText = liqDone;
-  document.getElementById('hubStatLiqIssues').innerText = liqIssues;
+  const elLiqTotal = document.getElementById('hubStatLiqTotal');
+  const elLiqActive = document.getElementById('hubStatLiqActive');
+  const elLiqDone = document.getElementById('hubStatLiqDone');
+  const elLiqIssues = document.getElementById('hubStatLiqIssues');
+  if (elLiqTotal) elLiqTotal.innerText = liqTotal;
+  if (elLiqActive) elLiqActive.innerText = liqActive;
+  if (elLiqDone) elLiqDone.innerText = liqDone;
+  if (elLiqIssues) elLiqIssues.innerText = liqIssues;
 
-  // Regulations Stats on Hub
+  // 2. Regulations Stats on Hub (ระเบียบสหกรณ์)
   const regTotal = AppState.regulations.length;
   const regReview = AppState.regulations.filter(r => r.status === 'อยู่ระหว่างพิจารณา').length;
   const regDone = AppState.regulations.filter(r => r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= (CONFIG.REGULATION_STEPS?.length || 4)).length;
   const regIssues = AppState.regulations.filter(r => r.status === 'ส่งคืนแก้ไข').length;
 
-  document.getElementById('hubStatRegTotal').innerText = regTotal;
-  document.getElementById('hubStatRegReview').innerText = regReview;
-  document.getElementById('hubStatRegDone').innerText = regDone;
-  document.getElementById('hubStatRegIssues').innerText = regIssues;
+  const elRegTotal = document.getElementById('hubStatRegTotal');
+  const elRegReview = document.getElementById('hubStatRegReview');
+  const elRegDone = document.getElementById('hubStatRegDone');
+  const elRegIssues = document.getElementById('hubStatRegIssues');
+  if (elRegTotal) elRegTotal.innerText = regTotal;
+  if (elRegReview) elRegReview.innerText = regReview;
+  if (elRegDone) elRegDone.innerText = regDone;
+  if (elRegIssues) elRegIssues.innerText = regIssues;
+
+  // 3. Bylaws Stats on Hub (ข้อบังคับสหกรณ์)
+  const bylawTotal = AppState.bylaws.length;
+  const bylawReview = AppState.bylaws.filter(b => b.status === 'อยู่ระหว่างพิจารณา').length;
+  const bylawDone = AppState.bylaws.filter(b => b.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || b.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || b.currentStep >= (CONFIG.REGULATION_STEPS?.length || 4)).length;
+  const bylawIssues = AppState.bylaws.filter(b => b.status === 'ส่งคืนแก้ไข').length;
+
+  const elBylawTotal = document.getElementById('hubStatBylawTotal');
+  const elBylawReview = document.getElementById('hubStatBylawReview');
+  const elBylawDone = document.getElementById('hubStatBylawDone');
+  const elBylawIssues = document.getElementById('hubStatBylawIssues');
+  if (elBylawTotal) elBylawTotal.innerText = bylawTotal;
+  if (elBylawReview) elBylawReview.innerText = bylawReview;
+  if (elBylawDone) elBylawDone.innerText = bylawDone;
+  if (elBylawIssues) elBylawIssues.innerText = bylawIssues;
 }
 
 function handleHubGlobalSearch() {
@@ -266,7 +309,17 @@ function handleHubGlobalSearch() {
     (r.title && r.title.toLowerCase().includes(q))
   );
 
-  if (regMatches.length > 0 && liqMatches.length === 0) {
+  const bylawMatches = AppState.bylaws.filter(b =>
+    (b.coopName && b.coopName.toLowerCase().includes(q)) ||
+    (b.title && b.title.toLowerCase().includes(q))
+  );
+
+  if (bylawMatches.length > 0 && regMatches.length === 0 && liqMatches.length === 0) {
+    AppState.bylawSearchTerm = query;
+    const input = document.getElementById('bylawSearchInput');
+    if (input) input.value = query;
+    switchAppView('bylaws');
+  } else if (regMatches.length > 0 && liqMatches.length === 0) {
     AppState.regSearchTerm = query;
     const input = document.getElementById('regSearchInput');
     if (input) input.value = query;
@@ -321,9 +374,19 @@ async function loadCasesData() {
 async function loadRegulationsData() {
   try {
     const regs = await ApiClient.get('listRegulations');
-    AppState.regulations = Array.isArray(regs) ? regs : [];
+    const all = Array.isArray(regs) ? regs : [];
+    AppState.allRegulations = all;
+    // แยกโมดูล: ระเบียบสหกรณ์ (เฉพาะระเบียบ) vs ข้อบังคับสหกรณ์ (เฉพาะข้อบังคับ)
+    AppState.regulations = all.filter(r => !(r.docType && r.docType.includes('ข้อบังคับ')));
+    AppState.bylaws = all.filter(r => r.docType && r.docType.includes('ข้อบังคับ'));
+
     applyRegFilters();
     updateRegStatsDisplay();
+
+    applyBylawFilters();
+    updateBylawStatsDisplay();
+
+    updateHubStatsDisplay();
   } catch (err) {
     console.warn('Load regulations error:', err);
     showToast('ไม่สามารถโหลดข้อมูลระเบียบ/ข้อบังคับได้: ' + (err.message || err), 'error');
@@ -2177,11 +2240,395 @@ function switchRegDetailTab(tab) {
   document.getElementById('tabRegDocuments').style.display = tab === 'regDocuments' ? 'block' : 'none';
 }
 
-function renderRegulationRowHtml(num, hasRemoveBtn = false) {
+// ------------------------------------------------------------------------------
+// 8.1 Module 3: Bylaws Operations & Rendering (โมดูลข้อบังคับสหกรณ์)
+// ------------------------------------------------------------------------------
+function applyBylawFilters() {
+  let list = [...AppState.bylaws];
+
+  if (AppState.bylawSearchTerm.trim() !== '') {
+    const q = AppState.bylawSearchTerm.toLowerCase().trim();
+    list = list.filter(r => {
+      const g = getResolvedGroup(r);
+      return (r.coopName && r.coopName.toLowerCase().includes(q)) ||
+        (r.title && r.title.toLowerCase().includes(q)) ||
+        (r.docNumber && r.docNumber.toLowerCase().includes(q)) ||
+        (r.officerName && r.officerName.toLowerCase().includes(q)) ||
+        (r.regNumber && r.regNumber.toLowerCase().includes(q)) ||
+        (g && g.toLowerCase().includes(q));
+    });
+  }
+
+  // Filter by Promotion Group
+  if (AppState.bylawFilterGroup && AppState.bylawFilterGroup !== 'ALL') {
+    list = list.filter(r => getResolvedGroup(r) === AppState.bylawFilterGroup);
+  }
+
+  // Filter by Step / Progress (1 - 4)
+  if (AppState.bylawFilterStep && AppState.bylawFilterStep !== 'ALL') {
+    const stepNum = parseInt(AppState.bylawFilterStep, 10);
+    if (!isNaN(stepNum)) {
+      list = list.filter(r => r.currentStep === stepNum);
+    }
+  }
+
+  // Filter by Coop Type
+  if (AppState.bylawFilterCoopType && AppState.bylawFilterCoopType !== 'ALL') {
+    if (AppState.bylawFilterCoopType === 'กลุ่มเกษตรกร') {
+      list = list.filter(r => r.coopType && r.coopType.includes('กลุ่มเกษตรกร'));
+    } else {
+      list = list.filter(r => r.coopType === AppState.bylawFilterCoopType || (r.coopType && r.coopType.includes(AppState.bylawFilterCoopType)));
+    }
+  }
+
+  // Filter by SLA (กรอบเวลา 14 วันทำการ)
+  if (AppState.bylawFilterSla && AppState.bylawFilterSla !== 'ALL') {
+    list = list.filter(r => {
+      const dur = getRegDuration(r);
+      if (!dur.sla || !dur.sla.hasData) return false;
+      if (AppState.bylawFilterSla === 'OVERDUE') return dur.sla.isOverdue;
+      if (AppState.bylawFilterSla === 'NEAR') return dur.sla.isNearDue && !dur.sla.isOverdue;
+      if (AppState.bylawFilterSla === 'NORMAL') return !dur.sla.isNearDue && !dur.sla.isOverdue;
+      return true;
+    });
+  }
+
+  // Filter by Status
+  if (AppState.bylawFilterStatus === 'IN_REVIEW') {
+    list = list.filter(r => r.status === 'อยู่ระหว่างพิจารณา');
+  } else if (AppState.bylawFilterStatus === 'APPROVED') {
+    list = list.filter(r => r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= (CONFIG.REGULATION_STEPS?.length || 4));
+  } else if (AppState.bylawFilterStatus === 'NEED_FIX') {
+    list = list.filter(r => r.status === 'ส่งคืนแก้ไข');
+  }
+
+  AppState.filteredBylaws = list;
+  AppState.bylawPage = 1;
+  renderBylawsList();
+  updateHubStatsDisplay();
+  updateBylawFilterChipUI();
+}
+
+function setBylawFilter(filterKey, value) {
+  if (filterKey === 'step') AppState.bylawFilterStep = value;
+  if (filterKey === 'sla') AppState.bylawFilterSla = value;
+  if (filterKey === 'status') AppState.bylawFilterStatus = value;
+  if (filterKey === 'type') AppState.bylawFilterCoopType = value;
+  if (filterKey === 'group') AppState.bylawFilterGroup = value;
+  applyBylawFilters();
+}
+
+function resetBylawFilters() {
+  AppState.bylawFilterStep = 'ALL';
+  AppState.bylawFilterSla = 'ALL';
+  AppState.bylawFilterStatus = 'ALL';
+  AppState.bylawFilterCoopType = 'ALL';
+  AppState.bylawFilterGroup = 'ALL';
+  AppState.bylawSearchTerm = '';
+  const searchInput = document.getElementById('bylawSearchInput');
+  if (searchInput) searchInput.value = '';
+  applyBylawFilters();
+}
+
+function updateBylawFilterChipUI() {
+  document.querySelectorAll('[data-bylaw-group]').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.bylawGroup === AppState.bylawFilterGroup);
+  });
+  document.querySelectorAll('[data-bylaw-step]').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.bylawStep === AppState.bylawFilterStep);
+  });
+  document.querySelectorAll('[data-bylaw-sla]').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.bylawSla === AppState.bylawFilterSla);
+  });
+  document.querySelectorAll('[data-bylaw-status]').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.bylawStatus === AppState.bylawFilterStatus);
+  });
+  document.querySelectorAll('[data-bylaw-type]').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.bylawType === AppState.bylawFilterCoopType);
+  });
+
+  let activeCount = 0;
+  if (AppState.bylawFilterGroup && AppState.bylawFilterGroup !== 'ALL') activeCount++;
+  if (AppState.bylawFilterStep !== 'ALL') activeCount++;
+  if (AppState.bylawFilterSla !== 'ALL') activeCount++;
+  if (AppState.bylawFilterStatus !== 'ALL') activeCount++;
+  if (AppState.bylawFilterCoopType !== 'ALL') activeCount++;
+  if (AppState.bylawSearchTerm.trim() !== '') activeCount++;
+
+  const countEl = document.getElementById('bylawFilterCount');
+  if (countEl) {
+    countEl.innerText = activeCount > 0 ? `เลือกแล้ว ${activeCount} ตัวกรอง` : 'ทั้งหมด';
+  }
+
+  const resetBtn = document.getElementById('btnResetBylawFilter');
+  if (resetBtn) {
+    resetBtn.style.display = activeCount > 0 ? 'inline-flex' : 'none';
+  }
+
+  const resultCountEl = document.getElementById('bylawFilterResultCount');
+  if (resultCountEl) {
+    resultCountEl.innerText = `พบ ${AppState.filteredBylaws.length} จาก ${AppState.bylaws.length} รายการ`;
+  }
+}
+
+function updateBylawStatsDisplay() {
+  const total = AppState.bylaws.length;
+  const inReview = AppState.bylaws.filter(r => r.status === 'อยู่ระหว่างพิจารณา').length;
+  const approved = AppState.bylaws.filter(r => r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= (CONFIG.REGULATION_STEPS?.length || 4)).length;
+  const needFix = AppState.bylaws.filter(r => r.status === 'ส่งคืนแก้ไข').length;
+
+  // SLA Alert: ใกล้ครบกำหนดหรือเกินกำหนด 14 วันทำการ
+  const slaAlert = AppState.bylaws.filter(r => {
+    const isDone = r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= 4;
+    if (isDone) return false;
+    const dur = getRegDuration(r);
+    return dur.sla && (dur.sla.isNearDue || dur.sla.isOverdue);
+  }).length;
+
+  const elTotal = document.getElementById('bylawStatTotal');
+  const elReview = document.getElementById('bylawStatReview');
+  const elApproved = document.getElementById('bylawStatApproved');
+  const elSlaAlert = document.getElementById('bylawStatSlaAlert');
+  const elFixes = document.getElementById('bylawStatFixes');
+
+  if (elTotal) elTotal.innerText = total;
+  if (elReview) elReview.innerText = inReview;
+  if (elApproved) elApproved.innerText = approved;
+  if (elSlaAlert) elSlaAlert.innerText = slaAlert;
+  if (elFixes) elFixes.innerText = needFix;
+}
+
+function renderBylawsList() {
+  const gridContainer = document.getElementById('bylawGrid');
+  const tableContainer = document.getElementById('bylawTableWrap');
+  const emptyState = document.getElementById('bylawEmptyState');
+  const paginationContainer = document.getElementById('bylawPagination');
+
+  if (!gridContainer || !tableContainer || !emptyState) return;
+
+  if (AppState.filteredBylaws.length === 0) {
+    gridContainer.style.display = 'none';
+    tableContainer.style.display = 'none';
+    if (paginationContainer) paginationContainer.style.display = 'none';
+    emptyState.style.display = 'block';
+    return;
+  }
+
+  emptyState.style.display = 'none';
+
+  const pageSize = AppState.bylawViewMode === 'grid' ? 6 : 10;
+  const total = AppState.filteredBylaws.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  if (AppState.bylawPage > totalPages) AppState.bylawPage = totalPages;
+  if (AppState.bylawPage < 1) AppState.bylawPage = 1;
+
+  const startIndex = (AppState.bylawPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, total);
+  const pageItems = AppState.filteredBylaws.slice(startIndex, endIndex);
+
+  if (AppState.bylawViewMode === 'grid') {
+    gridContainer.style.display = 'grid';
+    tableContainer.style.display = 'none';
+    renderBylawGrid(gridContainer, pageItems);
+  } else {
+    gridContainer.style.display = 'none';
+    tableContainer.style.display = 'block';
+    renderBylawTable(tableContainer, pageItems, startIndex);
+  }
+
+  renderPaginationUI('bylawPagination', AppState.bylawPage, totalPages, total, startIndex, endIndex, 'changeBylawPage');
+}
+
+function changeBylawPage(page) {
+  AppState.bylawPage = page;
+  renderBylawsList();
+  window.scrollTo({ top: 300, behavior: 'smooth' });
+}
+
+function changeBylawViewMode(mode) {
+  AppState.bylawViewMode = mode;
+  document.getElementById('btnBylawGridView')?.classList.toggle('active', mode === 'grid');
+  document.getElementById('btnBylawTableView')?.classList.toggle('active', mode === 'table');
+  renderBylawsList();
+}
+
+function handleBylawSearch() {
+  const input = document.getElementById('bylawSearchInput');
+  AppState.bylawSearchTerm = input ? input.value.trim() : '';
+  applyBylawFilters();
+}
+
+function renderBylawGrid(container, items = AppState.filteredBylaws) {
+  const maxRegSteps = CONFIG.REGULATION_STEPS?.length || 4;
+  container.innerHTML = items.map(item => {
+    const isApproved = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || item.currentStep >= maxRegSteps;
+    const isNeedFix = item.status === 'ส่งคืนแก้ไข';
+    const progressPercent = Math.min(100, Math.round((item.currentStep / maxRegSteps) * 100));
+    const stepObj = CONFIG.REGULATION_STEPS.find(s => s.number === item.currentStep) || { title: `ขั้นตอนที่ ${item.currentStep}` };
+    const isFarmerGroup = item.coopType && item.coopType.includes('กลุ่มเกษตรกร');
+    const dur = getRegDuration(item);
+    const sla = dur.sla;
+
+    let statusBadgeClass = 'active';
+    let statusText = '● อยู่ระหว่างพิจารณา';
+    if (isApproved) {
+      statusBadgeClass = 'completed';
+      statusText = '✓ รับจดทะเบียนแล้ว';
+    } else if (isNeedFix) {
+      statusBadgeClass = 'issue';
+      statusText = '⚠️ ส่งคืนแก้ไข';
+    }
+
+    return `
+      <div class="case-card" style="border-top: 3px solid #0284c7;">
+        <div class="case-card-header">
+          <div class="case-badge-group">
+            <span class="case-type-badge reg-type-bylaw" title="ข้อบังคับสหกรณ์ (SLA: รับจดทะเบียน 14 วันทำการ)">📘 ข้อบังคับสหกรณ์</span>
+            <span class="case-type-badge ${isFarmerGroup ? 'farmer-group' : 'coop-type-badge'}">${escapeHtml(item.coopType || 'สหกรณ์')}</span>
+          </div>
+          <span class="status-badge ${statusBadgeClass}">${statusText}</span>
+        </div>
+
+        <h3 class="case-title" style="font-size: 1.05rem; line-height: 1.4;">${escapeHtml(item.title)}</h3>
+        <div style="font-size: 0.88rem; font-weight: 600; color: #0369a1; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <span>🏛️ ${escapeHtml(item.coopName)}</span>
+          ${getGroupBadgeHtml(getResolvedGroup(item))}
+        </div>
+
+        <div class="case-meta">
+          <div class="case-meta-item">
+            <span>📄 เลขที่รับเรื่อง: ${escapeHtml(item.docNumber || '-')}</span>
+          </div>
+          <div class="case-meta-item">
+            <span>📅 ลงรับ: ${formatThaiDate(item.receiveDate || item.submitDate)}</span>
+          </div>
+          ${item.regApproveDate ? `
+            <div class="case-meta-item" style="color: #0284c7; font-weight: 500;">
+              <span>✍️ รับจดทะเบียน: ${formatThaiDate(item.regApproveDate)}</span>
+            </div>
+          ` : ''}
+          ${sla && sla.hasData ? `
+            <div class="case-meta-item" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--border-color);">
+              <span style="font-size: 0.78rem;">⏱️ SLA รับจดทะเบียน: <strong>${sla.slaDays} วัน</strong></span>
+              <span class="sla-badge ${sla.badgeClass}">${sla.badgeText}</span>
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="case-progress-wrap">
+          <div class="progress-header">
+            <span class="step-name">ขั้นที่ ${item.currentStep}/${maxRegSteps}: ${escapeHtml(stepObj.title)}</span>
+            <span>${progressPercent}%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: ${progressPercent}%; background: linear-gradient(90deg, #0284c7, #3b82f6);"></div>
+          </div>
+        </div>
+
+        <div class="case-liquidator">
+          <span>👤 จนท. ผู้รับผิดชอบ: <strong>${escapeHtml(item.officerName || 'ยังไม่ระบุ')}</strong> ${item.officerContact ? '(' + escapeHtml(item.officerContact) + ')' : ''}</span>
+        </div>
+
+        <!-- Issue Alert -->
+        ${renderRegCardIssuesHtml(item)}
+
+        <div class="case-card-footer">
+          <span style="font-size: 0.78rem; color: var(--text-muted);">
+            ${dur.hasData ? `ใช้ไป ${dur.workingDays} วันทำการ` : `อัพเดต: ${formatThaiDate(item.lastUpdated)}`}
+          </span>
+          <button class="btn btn-primary btn-sm" onclick="openRegDetail('${item.regId}')" style="background: linear-gradient(135deg, #0284c7, #3b82f6);">
+            ดูรายละเอียด ➔
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderBylawTable(container, items = AppState.filteredBylaws, startIndex = 0) {
+  const tbody = document.getElementById('bylawTableBody');
+  if (!tbody) return;
+
+  const maxRegSteps = CONFIG.REGULATION_STEPS?.length || 4;
+  tbody.innerHTML = items.map((item, idx) => {
+    const isApproved = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || item.currentStep >= maxRegSteps;
+    const isNeedFix = item.status === 'ส่งคืนแก้ไข';
+    const progressPercent = Math.min(100, Math.round((item.currentStep / maxRegSteps) * 100));
+    const isFarmerGroup = item.coopType && item.coopType.includes('กลุ่มเกษตรกร');
+    const dur = getRegDuration(item);
+    const sla = dur.sla;
+
+    let statusBadgeClass = 'active';
+    let statusText = 'อยู่ระหว่างพิจารณา';
+    if (isApproved) {
+      statusBadgeClass = 'completed';
+      statusText = 'รับจดทะเบียนแล้ว';
+    } else if (isNeedFix) {
+      statusBadgeClass = 'issue';
+      statusText = 'ส่งคืนแก้ไข';
+    }
+
+    return `
+      <tr>
+        <td style="text-align: center; color: var(--text-muted);">${startIndex + idx + 1}</td>
+        <td>
+          <strong style="color: #0284c7;">${escapeHtml(item.coopName)}</strong>
+          <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 2px;">
+            <span>${escapeHtml(item.regNumber)}</span>
+            <span>|</span>
+            <span class="case-type-badge ${isFarmerGroup ? 'farmer-group' : 'coop-type-badge'}" style="font-size: 0.7rem;">${escapeHtml(item.coopType || 'สหกรณ์')}</span>
+            ${getGroupBadgeHtml(getResolvedGroup(item))}
+          </div>
+        </td>
+        <td>
+          <span class="case-type-badge reg-type-bylaw">📘 ข้อบังคับสหกรณ์</span>
+          ${sla && sla.hasData ? `<div style="margin-top: 4px;"><span class="sla-badge ${sla.badgeClass}">${sla.badgeText}</span></div>` : ''}
+        </td>
+        <td>
+          <div style="font-weight: 500; font-size: 0.9rem;">${escapeHtml(item.title)}</div>
+        </td>
+        <td>
+          <div>${escapeHtml(item.docNumber || '-')}</div>
+          <div style="font-size: 0.78rem; color: var(--text-muted);">${formatThaiDate(item.receiveDate || item.submitDate)}</div>
+        </td>
+        <td>
+          <div style="font-size: 0.85rem; font-weight: 500;">ขั้นที่ ${item.currentStep}/${maxRegSteps} (${progressPercent}%)</div>
+          <div class="progress-bar-bg" style="height: 6px; width: 90px; margin-top: 4px;">
+            <div class="progress-bar-fill" style="width: ${progressPercent}%; background: #0284c7;"></div>
+          </div>
+          ${dur.hasData ? `<div style="font-size: 0.74rem; color: #0369a1; margin-top: 2px;">${dur.workingDays} วันทำการ</div>` : ''}
+        </td>
+        <td>${escapeHtml(item.officerName || '-')}</td>
+        <td>
+          <span class="status-badge ${statusBadgeClass}">
+            ${statusText}
+          </span>
+        </td>
+        <td style="text-align: right; white-space: nowrap;">
+          <button class="btn btn-outline-primary btn-sm" onclick="quickExportRegPdf('${item.regId}')" title="ส่งออกข้อมูลข้อบังคับนี้เป็น PDF" style="padding: 4px 8px; margin-right: 4px;">
+            📄 PDF
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="openRegDetail('${item.regId}')">
+            รายละเอียด
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ------------------------------------------------------------------------------
+// Modal Input Rows for Regulations & Bylaws
+// ------------------------------------------------------------------------------
+let currentCreateRegModule = 'ระเบียบสหกรณ์'; // 'ระเบียบสหกรณ์' | 'ข้อบังคับสหกรณ์'
+
+function renderRegulationRowHtml(num, hasRemoveBtn = false, defaultCategory = currentCreateRegModule) {
+  const isRule = defaultCategory === 'ระเบียบสหกรณ์';
   return `
     <div class="reg-input-row" style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px; margin-bottom: 8px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <span class="reg-row-title" style="font-weight: 600; font-size: 0.85rem; color: var(--primary);">📜 รายการระเบียบ / ข้อบังคับที่ ${num}</span>
+        <span class="reg-row-title" style="font-weight: 600; font-size: 0.85rem; color: var(--primary);">📜 รายการ${isRule ? 'ระเบียบ' : 'ข้อบังคับ'}ที่ ${num}</span>
         ${hasRemoveBtn ? `
           <button type="button" class="btn btn-danger btn-sm" onclick="removeRegulationRow(this)" style="padding: 2px 8px; font-size: 0.75rem;">
             ✕ ลบออก
@@ -2193,12 +2640,12 @@ function renderRegulationRowHtml(num, hasRemoveBtn = false) {
         <div class="form-group" style="margin-bottom: 0; flex: 1;">
           <label style="font-size: 0.82rem;">ประเภทรายการ <span style="color: red;">*</span></label>
           <select name="itemDocCategory" class="form-control" onchange="onRegCategoryChange(this)" required>
-            <option value="ระเบียบสหกรณ์" selected>📙 ระเบียบสหกรณ์</option>
-            <option value="ข้อบังคับสหกรณ์">📘 ข้อบังคับสหกรณ์</option>
+            <option value="ระเบียบสหกรณ์" ${isRule ? 'selected' : ''}>📙 ระเบียบสหกรณ์</option>
+            <option value="ข้อบังคับสหกรณ์" ${!isRule ? 'selected' : ''}>📘 ข้อบังคับสหกรณ์</option>
           </select>
         </div>
 
-        <div class="form-group reg-sub-type-wrap" style="margin-bottom: 0; flex: 1.2;">
+        <div class="form-group reg-sub-type-wrap" style="margin-bottom: 0; flex: 1.2; display: ${isRule ? 'block' : 'none'};">
           <label style="font-size: 0.82rem;">ลักษณะระเบียบ / กำหนดเวลา <span style="color: red;">*</span></label>
           <select name="itemDocSubType" class="form-control" style="font-weight: 500;">
             <option value="ระเบียบสหกรณ์ (รับทราบ)" selected>📙 ระเบียบรับทราบ (กำหนด 30 วัน)</option>
@@ -2206,10 +2653,10 @@ function renderRegulationRowHtml(num, hasRemoveBtn = false) {
           </select>
         </div>
 
-        <div class="form-group reg-bylaw-hint" style="margin-bottom: 0; flex: 1.2; display: none;">
+        <div class="form-group reg-bylaw-hint" style="margin-bottom: 0; flex: 1.2; display: ${isRule ? 'none' : 'block'};">
           <label style="font-size: 0.82rem;">กรอบเวลาพิจารณา (SLA)</label>
           <div style="padding: 8px 12px; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 6px; color: #0369a1; font-size: 0.82rem; font-weight: 600;">
-            ⏱️ ข้อบังคับกำหนดรับจดทะเบียนใน 14 วัน
+            ⏱️ ข้อบังคับกำหนดรับจดทะเบียนใน 14 วันทำการ
           </div>
         </div>
 
@@ -2225,8 +2672,8 @@ function renderRegulationRowHtml(num, hasRemoveBtn = false) {
       </div>
 
       <div class="form-group" style="margin-bottom: 0;">
-        <label style="font-size: 0.82rem;">ชื่อระเบียบ / ข้อบังคับ <span style="color: red;">*</span></label>
-        <input type="text" name="itemTitle" class="form-control" placeholder="เช่น ระเบียบว่าด้วยการให้เงินกู้แก่สมาชิก พ.ศ. 2567" required>
+        <label style="font-size: 0.82rem;">ชื่อ${isRule ? 'ระเบียบ' : 'ข้อบังคับ'} <span style="color: red;">*</span></label>
+        <input type="text" name="itemTitle" class="form-control" placeholder="${isRule ? 'เช่น ระเบียบว่าด้วยการให้เงินกู้แก่สมาชิก พ.ศ. 2567' : 'เช่น ข้อบังคับสหกรณ์การเกษตรเมืองระยอง จำกัด พ.ศ. 2567'}" required>
       </div>
     </div>
   `;
@@ -2252,10 +2699,11 @@ function onEditRegCategoryChange() {
   if (bLawHint) bLawHint.style.display = isRule ? 'none' : 'block';
 }
 
-function resetCreateRegItems() {
+function resetCreateRegItems(defaultCategory = currentCreateRegModule) {
+  currentCreateRegModule = defaultCategory;
   const container = document.getElementById('createRegItemsList');
   if (!container) return;
-  container.innerHTML = renderRegulationRowHtml(1, false);
+  container.innerHTML = renderRegulationRowHtml(1, false, defaultCategory);
 }
 
 function addRegulationRowToCreateForm() {
@@ -2265,7 +2713,7 @@ function addRegulationRowToCreateForm() {
   const nextNum = currentCount + 1;
 
   const wrapper = document.createElement('div');
-  wrapper.innerHTML = renderRegulationRowHtml(nextNum, true);
+  wrapper.innerHTML = renderRegulationRowHtml(nextNum, true, currentCreateRegModule);
   const newRow = wrapper.firstElementChild;
   if (newRow) {
     newRow.style.animation = 'fadeIn 0.2s ease-in';
@@ -2280,19 +2728,46 @@ function removeRegulationRow(btn) {
     const rows = document.querySelectorAll('#createRegItemsList .reg-input-row');
     rows.forEach((r, idx) => {
       const title = r.querySelector('.reg-row-title');
-      if (title) title.innerText = `📜 รายการระเบียบ / ข้อบังคับที่ ${idx + 1}`;
+      if (title) title.innerText = `📜 รายการ${currentCreateRegModule === 'ระเบียบสหกรณ์' ? 'ระเบียบ' : 'ข้อบังคับ'}ที่ ${idx + 1}`;
     });
   }
 }
 
-function openCreateRegModal() {
+function openCreateRegModal(moduleType) {
   if (!AppState.currentUser) {
     showToast('กรุณาเข้าสู่ระบบในฐานะ Admin ก่อน', 'warning');
     openModal('loginModal');
     return;
   }
+
+  // กำหนดประเภทเริ่มต้นตามโมดูลที่เปิด
+  let defaultCategory = 'ระเบียบสหกรณ์';
+  if (moduleType === 'bylaw' || moduleType === 'ข้อบังคับ' || AppState.currentView === 'bylaws') {
+    defaultCategory = 'ข้อบังคับสหกรณ์';
+  }
+
+  const modalTitle = document.getElementById('createRegModalTitle');
+  const itemsHeaderTitle = document.getElementById('createRegItemsHeaderTitle');
+  const addRowBtn = document.getElementById('btnAddRegRowBtn');
+
+  if (modalTitle) {
+    modalTitle.innerHTML = defaultCategory === 'ข้อบังคับสหกรณ์'
+      ? '📘 บันทึกรับเรื่องข้อบังคับสหกรณ์ใหม่'
+      : '📗 บันทึกรับเรื่องระเบียบสหกรณ์ใหม่';
+  }
+  if (itemsHeaderTitle) {
+    itemsHeaderTitle.innerText = defaultCategory === 'ข้อบังคับสหกรณ์'
+      ? '📜 รายการข้อบังคับที่ยื่นขอจดทะเบียน'
+      : '📜 รายการระเบียบที่ยื่นเสนอ';
+  }
+  if (addRowBtn) {
+    addRowBtn.innerHTML = defaultCategory === 'ข้อบังคับสหกรณ์'
+      ? '+ เพิ่มข้อบังคับอีกรายการ'
+      : '+ เพิ่มระเบียบอีกรายการ';
+  }
+
   document.getElementById('createRegForm').reset();
-  resetCreateRegItems();
+  resetCreateRegItems(defaultCategory);
   document.getElementById('createRegSubmitDate').value = todayThaiDate();
   openModal('createRegModal');
 }
@@ -2811,6 +3286,7 @@ function logout() {
 
   renderCasesList();
   renderRegulationsList();
+  renderBylawsList();
 }
 
 function updateAuthUI() {
@@ -2818,6 +3294,7 @@ function updateAuthUI() {
   const userProfile = document.getElementById('navUserProfile');
   const adminAddCaseBtn = document.getElementById('adminAddCaseBtn');
   const adminAddRegBtn = document.getElementById('adminAddRegBtn');
+  const adminAddBylawBtn = document.getElementById('adminAddBylawBtn');
   const adminAuditLogBtn = document.getElementById('adminAuditLogBtn');
 
   const coopDirBatchImportBtn = document.getElementById('coopDirBatchImportBtn');
@@ -2832,6 +3309,7 @@ function updateAuthUI() {
     }
     if (adminAddCaseBtn) adminAddCaseBtn.style.display = AppState.currentView === 'liquidation' ? 'inline-flex' : 'none';
     if (adminAddRegBtn) adminAddRegBtn.style.display = AppState.currentView === 'regulations' ? 'inline-flex' : 'none';
+    if (adminAddBylawBtn) adminAddBylawBtn.style.display = AppState.currentView === 'bylaws' ? 'inline-flex' : 'none';
     if (adminAuditLogBtn) adminAuditLogBtn.style.display = 'inline-flex';
     if (coopDirBatchImportBtn) coopDirBatchImportBtn.style.display = 'inline-flex';
     if (coopDirClearAllBtn) coopDirClearAllBtn.style.display = 'inline-flex';
@@ -2840,6 +3318,7 @@ function updateAuthUI() {
     if (userProfile) userProfile.style.display = 'none';
     if (adminAddCaseBtn) adminAddCaseBtn.style.display = 'none';
     if (adminAddRegBtn) adminAddRegBtn.style.display = 'none';
+    if (adminAddBylawBtn) adminAddBylawBtn.style.display = 'none';
     if (adminAuditLogBtn) adminAuditLogBtn.style.display = 'none';
     if (coopDirBatchImportBtn) coopDirBatchImportBtn.style.display = 'none';
     if (coopDirClearAllBtn) coopDirClearAllBtn.style.display = 'none';
@@ -2920,6 +3399,36 @@ function setupEventListeners() {
       btnRegGridView.classList.remove('active');
       renderRegulationsList();
     });
+  }
+
+  // Bylaws Filters
+  const bylawSearchInput = document.getElementById('bylawSearchInput');
+  const bylawSearchBtn = document.getElementById('bylawSearchBtn');
+  if (bylawSearchInput) {
+    bylawSearchInput.addEventListener('input', (e) => {
+      AppState.bylawSearchTerm = e.target.value;
+      applyBylawFilters();
+    });
+    bylawSearchInput.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') handleBylawSearch();
+    });
+  }
+  if (bylawSearchBtn) {
+    bylawSearchBtn.addEventListener('click', () => handleBylawSearch());
+  }
+
+  // Bylaws View Toggle
+  const btnBylawGridView = document.getElementById('btnBylawGridView');
+  const btnBylawTableView = document.getElementById('btnBylawTableView');
+  if (btnBylawGridView && btnBylawTableView) {
+    btnBylawGridView.addEventListener('click', () => changeBylawViewMode('grid'));
+    btnBylawTableView.addEventListener('click', () => changeBylawViewMode('table'));
+  }
+
+  // Bylaws Admin Add Button
+  const adminAddBylawBtn = document.getElementById('adminAddBylawBtn');
+  if (adminAddBylawBtn) {
+    adminAddBylawBtn.addEventListener('click', () => openCreateRegModal('bylaw'));
   }
 
   // Forms
@@ -4706,13 +5215,147 @@ function exportActiveRegulationsOnlyPdf() {
     </div>
 
     <div class="report-footer">
-      <div>ระบบติดตามการพิจารณาระเบียบและข้อบังคับสหกรณ์ (พบ ${totalCount} เรื่อง)</div>
+      <div>ระบบติดตามระเบียบสหกรณ์ (พบ ${totalCount} เรื่อง)</div>
       <div>พิมพ์เมื่อ ${printDateStr}</div>
     </div>
   `;
 
-  const filename = `รายงานสรุประเบียบข้อบังคับ_${todayThaiDate().replace(/\//g, '-')}.pdf`;
-  openPdfPreview(html, filename, 'รายงานระเบียบและข้อบังคับตามตัวกรอง', `จำนวนทั้งสิ้น ${totalCount} เรื่อง`, 'landscape');
+  const filename = `รายงานสรุประเบียบสหกรณ์_${todayThaiDate().replace(/\//g, '-')}.pdf`;
+  openPdfPreview(html, filename, 'รายงานระเบียบสหกรณ์ตามตัวกรอง', `จำนวนทั้งสิ้น ${totalCount} เรื่อง`, 'landscape');
+}
+
+function exportActiveBylawsOnlyPdf() {
+  const filteredBylaws = getFilteredExportBylaws();
+  if (filteredBylaws.length === 0) {
+    showToast('ไม่มีรายการข้อบังคับสหกรณ์ตรงตามตัวกรองที่เลือกสำหรับการส่งออก PDF', 'warning');
+    return;
+  }
+
+  const printDateStr = formatThaiDateTime(new Date());
+  const totalCount = filteredBylaws.length;
+  const returnedCount = filteredBylaws.filter(b => b.status === 'ส่งคืนแก้ไข').length;
+  const filterSummary = getActiveFilterSummaryText();
+
+  const rows = filteredBylaws.map((item, idx) => {
+    const curStepNum = parseInt(item.currentStep, 10) || 1;
+    const dur = getRegDuration(item);
+    const isReturned = item.status === 'ส่งคืนแก้ไข';
+    const sla = dur.sla;
+
+    return `
+      <tr>
+        <td style="text-align: center;">${idx + 1}</td>
+        <td>
+          <div style="font-weight: 600; color: #0284c7;">${escapeHtml(item.title)}</div>
+          <div style="font-size: 0.74rem; color: #64748b;">${escapeHtml(item.coopName)} (${escapeHtml(item.regNumber || '-')})</div>
+        </td>
+        <td style="text-align: center; font-size: 0.76rem;">
+          <span class="report-badge" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd;">
+            📘 ข้อบังคับสหกรณ์
+          </span>
+          <div style="font-size: 0.68rem; color: #64748b; margin-top: 2px;">SLA: 14 วันทำการ</div>
+        </td>
+        <td style="font-size: 0.76rem;">
+          <div>${escapeHtml(item.docNumber || '-')}</div>
+          <div style="color: #64748b;">ลงรับ: ${formatThaiDate(item.receiveDate || item.submitDate)}</div>
+        </td>
+        <td style="text-align: center; font-size: 0.76rem;">
+          <div style="font-weight: 600; color: #0284c7;">ขั้นที่ ${curStepNum}/${CONFIG.REGULATION_STEPS?.length || 4}</div>
+          <div style="font-size: 0.7rem; color: #64748b;">${escapeHtml(CONFIG.REGULATION_STEPS[curStepNum - 1]?.title || '')}</div>
+        </td>
+        <td style="font-size: 0.76rem;">
+          <div>${escapeHtml(item.officerName || '-')}</div>
+          ${item.officerContact ? `<div style="color: #64748b; font-size: 0.7rem;">${escapeHtml(item.officerContact)}</div>` : ''}
+        </td>
+        <td style="text-align: center; font-size: 0.76rem; font-weight: 600; color: #0284c7;">
+          ${dur.hasData ? `${dur.workingDays} วันทำการ` : '-'}
+          ${sla && sla.hasData ? `<div style="margin-top: 3px;"><span class="sla-badge ${sla.badgeClass}" style="font-size: 0.65rem;">${sla.badgeText}</span></div>` : ''}
+        </td>
+        <td style="text-align: center;">
+          <span class="report-badge ${isReturned ? 'report-badge-issue' : 'report-badge-active'}">
+            ${isReturned ? '⚠️ ส่งคืนแก้ไข' : '● ' + escapeHtml(item.status || 'อยู่ระหว่างพิจารณา')}
+          </span>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  const html = `
+    <div class="report-header">
+      <div class="report-brand-wrap">
+        <div class="report-emblem">📘</div>
+        <div class="report-header-text">
+          <h2>กรมส่งเสริมสหกรณ์ กระทรวงเกษตรและสหกรณ์</h2>
+          <p>ระบบติดตามข้อบังคับสหกรณ์ (Cooperative Bylaws Tracking System)</p>
+        </div>
+      </div>
+      <div class="report-meta-box">
+        <div><strong>วันที่พิมพ์รายงาน:</strong></div>
+        <div>${printDateStr}</div>
+      </div>
+    </div>
+
+    <div class="report-title-banner" style="background: linear-gradient(135deg, #0284c7, #0369a1);">
+      <h3>รายงานสรุปการพิจารณาข้อบังคับสหกรณ์ (ตามตัวกรอง)</h3>
+      <div class="report-subtitle">เงื่อนไขตัวกรอง: <strong>${escapeHtml(filterSummary)}</strong></div>
+    </div>
+
+    <div class="report-kpi-row">
+      <div class="report-kpi-card">
+        <div class="report-kpi-val" style="color: #0284c7;">${totalCount}</div>
+        <div class="report-kpi-lbl">ข้อบังคับตรงตามตัวกรอง (เรื่อง)</div>
+      </div>
+      <div class="report-kpi-card">
+        <div class="report-kpi-val" style="color: #059669;">${totalCount - returnedCount}</div>
+        <div class="report-kpi-lbl">ปกติ / รับจดทะเบียนแล้ว (เรื่อง)</div>
+      </div>
+      <div class="report-kpi-card">
+        <div class="report-kpi-val" style="color: #dc2626;">${returnedCount}</div>
+        <div class="report-kpi-lbl">ส่งคืนแก้ไขปรับปรุง (เรื่อง)</div>
+      </div>
+    </div>
+
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th style="width: 35px;">ที่</th>
+          <th>ชื่อข้อบังคับ / สหกรณ์</th>
+          <th style="width: 100px;">ประเภท</th>
+          <th style="width: 110px;">เลขที่/วันยื่น</th>
+          <th style="width: 130px;">ขั้นตอนปัจจุบัน</th>
+          <th style="width: 120px;">จนท. ผู้รับผิดชอบ</th>
+          <th style="width: 90px;">วันทำการที่ใช้</th>
+          <th style="width: 110px;">สถานะ</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows}
+      </tbody>
+    </table>
+
+    <div class="report-signature-section">
+      <div class="report-sig-box">
+        <div>ลงชื่อ...................................................................เจ้าหน้าที่ผู้รวบรวม</div>
+        <div class="report-sig-line"></div>
+        <div>(...................................................................)</div>
+        <div>ตำแหน่ง นักวิชาการสหกรณ์ / นิติกร</div>
+      </div>
+      <div class="report-sig-box">
+        <div>ลงชื่อ...................................................................นายทะเบียนสหกรณ์</div>
+        <div class="report-sig-line"></div>
+        <div>(...................................................................)</div>
+        <div>ตำแหน่ง นายทะเบียนสหกรณ์ / ผู้ได้รับมอบอำนาจ</div>
+      </div>
+    </div>
+
+    <div class="report-footer">
+      <div>ระบบติดตามข้อบังคับสหกรณ์ (พบ ${totalCount} เรื่อง)</div>
+      <div>พิมพ์เมื่อ ${printDateStr}</div>
+    </div>
+  `;
+
+  const filename = `รายงานสรุปข้อบังคับสหกรณ์_${todayThaiDate().replace(/\//g, '-')}.pdf`;
+  openPdfPreview(html, filename, 'รายงานข้อบังคับสหกรณ์ตามตัวกรอง', `จำนวนทั้งสิ้น ${totalCount} เรื่อง`, 'landscape');
 }
 
 // ==============================================================================
@@ -4721,14 +5364,14 @@ function exportActiveRegulationsOnlyPdf() {
 
 const ExportFilterState = {
   scope: 'ACTIVE',       // 'ACTIVE' | 'DONE' | 'ALL'
-  module: 'ALL',        // 'ALL' | 'CASES' | 'REGS'
+  module: 'ALL',        // 'ALL' | 'CASES' | 'REGS' | 'BYLAWS'
   coopType: 'ALL',      // 'ALL' | specific type
   caseStep: 'ALL',      // 'ALL' | 'PHASE_1' | 'PHASE_2' | 'PHASE_3' | 'PHASE_4' | '1'..'10'
   regStep: 'ALL',       // 'ALL' | '1'..'4'
   docType: 'ALL',       // 'ALL' | specific doc type
   issue: 'ALL',         // 'ALL' | 'ISSUES' | 'NORMAL' | 'OVERDUE'
   search: '',           // search query
-  activeTab: 'cases',   // 'cases' | 'regs'
+  activeTab: 'cases',   // 'cases' | 'regs' | 'bylaws'
 
   // Executive Date & Period Filters
   dateCriterion: 'RECEIVE_DATE', // 'RECEIVE_DATE' | 'APPROVE_DATE' | 'LAST_UPDATED'
@@ -4963,7 +5606,7 @@ function getFilteredExportRegulations() {
 
   return allRegs.filter(item => {
     // 1. Module check
-    if (ExportFilterState.module === 'CASES') return false;
+    if (ExportFilterState.module === 'CASES' || ExportFilterState.module === 'BYLAWS') return false;
 
     // 2. Scope / Status check
     const stepNum = parseInt(item.currentStep, 10) || 1;
@@ -5027,6 +5670,71 @@ function getFilteredExportRegulations() {
   });
 }
 
+function getFilteredExportBylaws() {
+  const allBylaws = AppState.bylaws || [];
+  const dateRange = getExportCalculatedDateRange();
+
+  return allBylaws.filter(item => {
+    // 1. Module check
+    if (ExportFilterState.module === 'CASES' || ExportFilterState.module === 'REGS') return false;
+
+    // 2. Scope / Status check
+    const stepNum = parseInt(item.currentStep, 10) || 1;
+    const isDone = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || stepNum >= 4;
+    if (ExportFilterState.scope === 'ACTIVE' && isDone) return false;
+    if (ExportFilterState.scope === 'DONE' && !isDone) return false;
+
+    // 3. Coop Type
+    if (ExportFilterState.coopType !== 'ALL') {
+      if (ExportFilterState.coopType === 'กลุ่มเกษตรกร') {
+        if (!item.coopType || !item.coopType.includes('กลุ่มเกษตรกร')) return false;
+      } else {
+        if (item.coopType && item.coopType !== ExportFilterState.coopType) return false;
+      }
+    }
+
+    // 4. Reg Step
+    if (ExportFilterState.regStep !== 'ALL') {
+      if (stepNum !== parseInt(ExportFilterState.regStep, 10)) return false;
+    }
+
+    // 5. Issues / SLA
+    const dur = getRegDuration(item);
+    const isReturned = item.status === 'ส่งคืนแก้ไข';
+    const isOverdue = dur.sla && dur.sla.isOverdue;
+    if (ExportFilterState.issue === 'ISSUES' && !isReturned) return false;
+    if (ExportFilterState.issue === 'NORMAL' && (isReturned || isOverdue)) return false;
+    if (ExportFilterState.issue === 'OVERDUE' && !isOverdue) return false;
+
+    // 6. Executive Date & Period Filter
+    if (dateRange) {
+      const itemDate = getEffectiveItemDate(item, 'REGS', ExportFilterState.dateCriterion);
+      if (!itemDate) return false;
+      if (dateRange.start && itemDate < dateRange.start) return false;
+      if (dateRange.end && itemDate > dateRange.end) return false;
+    }
+
+    // 7. Search keyword
+    if (ExportFilterState.search) {
+      const q = ExportFilterState.search.toLowerCase();
+      const match = (
+        (item.title && item.title.toLowerCase().includes(q)) ||
+        (item.coopName && item.coopName.toLowerCase().includes(q)) ||
+        (item.regNumber && item.regNumber.toLowerCase().includes(q)) ||
+        (item.docNumber && item.docNumber.toLowerCase().includes(q)) ||
+        (item.docType && item.docType.toLowerCase().includes(q)) ||
+        (item.officerName && item.officerName.toLowerCase().includes(q)) ||
+        (item.officerContact && item.officerContact.toLowerCase().includes(q)) ||
+        (item.remarks && item.remarks.toLowerCase().includes(q)) ||
+        (item.reviewNotes && item.reviewNotes.toLowerCase().includes(q))
+      );
+      if (!match) return false;
+    }
+
+    return true;
+  });
+}
+
 function getActiveFilterSummaryText() {
   const parts = [];
 
@@ -5049,8 +5757,9 @@ function getActiveFilterSummaryText() {
 
   // 3. Module
   if (ExportFilterState.module === 'CASES') parts.push('หมวด: ชำระบัญชี');
-  else if (ExportFilterState.module === 'REGS') parts.push('หมวด: ระเบียบข้อบังคับ');
-  else parts.push('หมวด: รวม 2 ด้าน');
+  else if (ExportFilterState.module === 'REGS') parts.push('หมวด: ระเบียบสหกรณ์');
+  else if (ExportFilterState.module === 'BYLAWS') parts.push('หมวด: ข้อบังคับสหกรณ์');
+  else parts.push('หมวด: รวมทุกโมดูล');
 
   // 4. Coop Type
   if (ExportFilterState.coopType !== 'ALL') parts.push(`ประเภท: ${ExportFilterState.coopType}`);
@@ -5482,45 +6191,55 @@ function clearExportSearchInput() {
 function updateExportModalView() {
   const filteredCases = getFilteredExportCases();
   const filteredRegs = getFilteredExportRegulations();
+  const filteredBylaws = getFilteredExportBylaws();
 
-  const totalCount = filteredCases.length + filteredRegs.length;
+  const totalCount = filteredCases.length + filteredRegs.length + filteredBylaws.length;
   const casesIssues = filteredCases.filter(c => hasCaseIssues(c)).length;
   const regsIssues = filteredRegs.filter(r => r.status === 'ส่งคืนแก้ไข').length;
-  const totalIssues = casesIssues + regsIssues;
+  const bylawsIssues = filteredBylaws.filter(b => b.status === 'ส่งคืนแก้ไข').length;
+  const totalIssues = casesIssues + regsIssues + bylawsIssues;
 
   // Update KPI counters
   const elTotal = document.getElementById('exportKpiTotalActive');
   const elCases = document.getElementById('exportKpiActiveCases');
   const elRegs = document.getElementById('exportKpiActiveRegs');
+  const elBylaws = document.getElementById('exportKpiActiveBylaws');
   const elIssues = document.getElementById('exportKpiTotalIssues');
+
   const badgeCases = document.getElementById('exportTabCasesBadge');
   const badgeRegs = document.getElementById('exportTabRegsBadge');
+  const badgeBylaws = document.getElementById('exportTabBylawsBadge');
   const matchedText = document.getElementById('exportFilterMatchedText');
 
   if (elTotal) elTotal.innerText = totalCount;
   if (elCases) elCases.innerText = filteredCases.length;
   if (elRegs) elRegs.innerText = filteredRegs.length;
+  if (elBylaws) elBylaws.innerText = filteredBylaws.length;
   if (elIssues) elIssues.innerText = totalIssues;
+
   if (badgeCases) badgeCases.innerText = filteredCases.length;
   if (badgeRegs) badgeRegs.innerText = filteredRegs.length;
+  if (badgeBylaws) badgeBylaws.innerText = filteredBylaws.length;
   if (matchedText) matchedText.innerText = `พบ ${totalCount} รายการ`;
 
   // Render Table Previews
-  renderActiveExportTables(filteredCases, filteredRegs);
+  renderActiveExportTables(filteredCases, filteredRegs, filteredBylaws);
 
   // Render Active Filter Tag Chips
   renderExportFilterTags();
 
-  // If user selected only CASES or only REGS, switch tab appropriately
-  if (ExportFilterState.module === 'CASES' && ExportFilterState.activeTab === 'regs') {
+  // If user selected specific module, switch tab appropriately
+  if (ExportFilterState.module === 'CASES') {
     switchActiveExportTab('cases');
-  } else if (ExportFilterState.module === 'REGS' && ExportFilterState.activeTab === 'cases') {
+  } else if (ExportFilterState.module === 'REGS') {
     switchActiveExportTab('regs');
+  } else if (ExportFilterState.module === 'BYLAWS') {
+    switchActiveExportTab('bylaws');
   }
 }
 
 async function openActiveExportModal() {
-  if ((!AppState.cases || AppState.cases.length === 0) || (!AppState.regulations || AppState.regulations.length === 0)) {
+  if ((!AppState.cases || AppState.cases.length === 0) || (!AppState.allRegulations || AppState.allRegulations.length === 0)) {
     setLoading(true);
     try {
       await Promise.all([loadCasesData(), loadRegulationsData()]);
@@ -5537,15 +6256,22 @@ async function openActiveExportModal() {
   // Update view (KPIs, Badges, Tables, Filter Tags)
   updateExportModalView();
 
-  // Default to Tab 1 (Cases)
-  switchActiveExportTab('cases');
+  // Default Tab based on current view
+  if (AppState.currentView === 'bylaws') {
+    switchActiveExportTab('bylaws');
+  } else if (AppState.currentView === 'regulations') {
+    switchActiveExportTab('regs');
+  } else {
+    switchActiveExportTab('cases');
+  }
 
   openModal('activeExportModal');
 }
 
-function renderActiveExportTables(casesToRender, regsToRender) {
+function renderActiveExportTables(casesToRender, regsToRender, bylawsToRender = []) {
   const tbodyCases = document.getElementById('exportCasesTableBody');
   const tbodyRegs = document.getElementById('exportRegsTableBody');
+  const tbodyBylaws = document.getElementById('exportBylawsTableBody');
 
   if (tbodyCases) {
     if (casesToRender.length === 0) {
@@ -5608,7 +6334,7 @@ function renderActiveExportTables(casesToRender, regsToRender) {
         <tr>
           <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">
             <div style="font-size: 1.5rem; margin-bottom: 6px;">🔍</div>
-            <div style="font-weight: 600;">ไม่พบข้อมูลระเบียบและข้อบังคับที่ตรงตามตัวกรอง</div>
+            <div style="font-weight: 600;">ไม่พบข้อมูลระเบียบสหกรณ์ที่ตรงตามตัวกรอง</div>
             <div style="font-size: 0.78rem; margin-top: 4px;">ลองปรับเปลี่ยนตัวกรอง หรือกดปุ่ม <a href="javascript:void(0)" onclick="resetExportFilters()" style="color: #0284c7; text-decoration: underline;">ล้างตัวกรอง</a></div>
           </td>
         </tr>
@@ -5618,7 +6344,7 @@ function renderActiveExportTables(casesToRender, regsToRender) {
         const curStepNum = parseInt(item.currentStep, 10) || 1;
         const dur = getRegDuration(item);
         const isReturned = item.status === 'ส่งคืนแก้ไข';
-        const typeBadgeClass = item.docType === 'ข้อบังคับสหกรณ์' ? 'reg-type-bylaw' : 'reg-type-rule';
+        const typeBadgeClass = 'reg-type-rule';
 
         return `
           <tr>
@@ -5627,7 +6353,7 @@ function renderActiveExportTables(casesToRender, regsToRender) {
               <div style="font-weight: 600; color: var(--primary);">${escapeHtml(item.title)}</div>
               <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(item.coopName)} (${escapeHtml(item.regNumber || '-')})</div>
             </td>
-            <td><span class="case-type-badge ${typeBadgeClass}">${escapeHtml(item.docType || 'ข้อบังคับ')}</span></td>
+            <td><span class="case-type-badge ${typeBadgeClass}">${escapeHtml(item.docType || 'ระเบียบสหกรณ์')}</span></td>
             <td>
               <div><strong>${escapeHtml(item.docNumber || '-')}</strong></div>
               <div style="font-size: 0.75rem; color: var(--text-muted);">ยื่น: ${formatThaiDate(item.submitDate)}</div>
@@ -5653,25 +6379,88 @@ function renderActiveExportTables(casesToRender, regsToRender) {
       }).join('');
     }
   }
+
+  if (tbodyBylaws) {
+    if (bylawsToRender.length === 0) {
+      tbodyBylaws.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">
+            <div style="font-size: 1.5rem; margin-bottom: 6px;">🔍</div>
+            <div style="font-weight: 600;">ไม่พบข้อมูลข้อบังคับสหกรณ์ที่ตรงตามตัวกรอง</div>
+            <div style="font-size: 0.78rem; margin-top: 4px;">ลองปรับเปลี่ยนตัวกรอง หรือกดปุ่ม <a href="javascript:void(0)" onclick="resetExportFilters()" style="color: #0284c7; text-decoration: underline;">ล้างตัวกรอง</a></div>
+          </td>
+        </tr>
+      `;
+    } else {
+      tbodyBylaws.innerHTML = bylawsToRender.map((item, idx) => {
+        const curStepNum = parseInt(item.currentStep, 10) || 1;
+        const dur = getRegDuration(item);
+        const isReturned = item.status === 'ส่งคืนแก้ไข';
+        const sla = dur.sla;
+
+        return `
+          <tr>
+            <td style="text-align: center; color: var(--text-muted); font-weight: 500;">${idx + 1}</td>
+            <td>
+              <div style="font-weight: 600; color: #0284c7;">${escapeHtml(item.title)}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(item.coopName)} (${escapeHtml(item.regNumber || '-')})</div>
+            </td>
+            <td>
+              <span class="case-type-badge reg-type-bylaw">📘 ข้อบังคับสหกรณ์</span>
+              ${sla && sla.hasData ? `<div style="margin-top: 2px;"><span class="sla-badge ${sla.badgeClass}" style="font-size: 0.68rem;">${sla.badgeText}</span></div>` : ''}
+            </td>
+            <td>
+              <div><strong>${escapeHtml(item.docNumber || '-')}</strong></div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">ยื่น: ${formatThaiDate(item.submitDate)}</div>
+            </td>
+            <td>
+              <div style="font-weight: 600; color: #0284c7; font-size: 0.8rem;">ขั้นที่ ${curStepNum}/${CONFIG.REGULATION_STEPS?.length || 4}</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">${escapeHtml(CONFIG.REGULATION_STEPS[curStepNum - 1]?.title || '')}</div>
+            </td>
+            <td style="font-size: 0.78rem;">
+              <div>${escapeHtml(item.officerName || '-')}</div>
+              ${item.officerContact ? `<div style="font-size: 0.7rem; color: var(--text-muted);">${escapeHtml(item.officerContact)}</div>` : ''}
+            </td>
+            <td style="text-align: center; font-weight: 600; color: #0284c7;">
+              ${dur.hasData ? `${dur.workingDays} วัน` : '-'}
+            </td>
+            <td style="text-align: center;">
+              <span class="status-badge ${isReturned ? 'issue' : 'active'}" style="font-size: 0.72rem;">
+                ${isReturned ? '⚠️ ส่งคืนแก้ไข' : '● ' + escapeHtml(item.status || 'อยู่ระหว่างพิจารณา')}
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
 }
 
 function switchActiveExportTab(tabName) {
   ExportFilterState.activeTab = tabName;
   const btnCases = document.getElementById('btnExportTabCases');
   const btnRegs = document.getElementById('btnExportTabRegs');
+  const btnBylaws = document.getElementById('btnExportTabBylaws');
+
   const contentCases = document.getElementById('exportTabContentCases');
   const contentRegs = document.getElementById('exportTabContentRegs');
+  const contentBylaws = document.getElementById('exportTabContentBylaws');
 
-  if (tabName === 'cases') {
-    if (btnCases) btnCases.classList.add('active');
-    if (btnRegs) btnRegs.classList.remove('active');
-    if (contentCases) { contentCases.style.display = 'block'; contentCases.classList.add('active'); }
-    if (contentRegs) { contentRegs.style.display = 'none'; contentRegs.classList.remove('active'); }
-  } else {
-    if (btnRegs) btnRegs.classList.add('active');
-    if (btnCases) btnCases.classList.remove('active');
-    if (contentRegs) { contentRegs.style.display = 'block'; contentRegs.classList.add('active'); }
-    if (contentCases) { contentCases.style.display = 'none'; contentCases.classList.remove('active'); }
+  if (btnCases) btnCases.classList.toggle('active', tabName === 'cases');
+  if (btnRegs) btnRegs.classList.toggle('active', tabName === 'regs');
+  if (btnBylaws) btnBylaws.classList.toggle('active', tabName === 'bylaws');
+
+  if (contentCases) {
+    contentCases.style.display = tabName === 'cases' ? 'block' : 'none';
+    contentCases.classList.toggle('active', tabName === 'cases');
+  }
+  if (contentRegs) {
+    contentRegs.style.display = tabName === 'regs' ? 'block' : 'none';
+    contentRegs.classList.toggle('active', tabName === 'regs');
+  }
+  if (contentBylaws) {
+    contentBylaws.style.display = tabName === 'bylaws' ? 'block' : 'none';
+    contentBylaws.classList.toggle('active', tabName === 'bylaws');
   }
 }
 
@@ -5691,7 +6480,7 @@ async function exportCombinedActiveExcel() {
     return;
   }
 
-  if ((!AppState.cases || AppState.cases.length === 0) || (!AppState.regulations || AppState.regulations.length === 0)) {
+  if ((!AppState.cases || AppState.cases.length === 0) || (!AppState.allRegulations || AppState.allRegulations.length === 0)) {
     setLoading(true);
     try {
       await Promise.all([loadCasesData(), loadRegulationsData()]);
@@ -5704,7 +6493,8 @@ async function exportCombinedActiveExcel() {
 
   const filteredCases = getFilteredExportCases();
   const filteredRegs = getFilteredExportRegulations();
-  const totalCount = filteredCases.length + filteredRegs.length;
+  const filteredBylaws = getFilteredExportBylaws();
+  const totalCount = filteredCases.length + filteredRegs.length + filteredBylaws.length;
 
   if (totalCount === 0) {
     showToast('ไม่มีรายการข้อมูลตรงตามตัวกรองที่เลือกสำหรับการส่งออก Excel', 'warning');
@@ -5718,7 +6508,7 @@ async function exportCombinedActiveExcel() {
   // ----------------------------------------------------
   // Sheet 1: งานชำระบัญชี (ตามตัวกรอง)
   // ----------------------------------------------------
-  if (ExportFilterState.module !== 'REGS') {
+  if (ExportFilterState.module !== 'REGS' && ExportFilterState.module !== 'BYLAWS') {
     const caseHeader = [
       ["ระบบติดตามการชำระบัญชีสหกรณ์ กรมส่งเสริมสหกรณ์"],
       ["รายงานรายการสหกรณ์ชำระบัญชี (ตามเงื่อนไขตัวกรอง)"],
@@ -5796,21 +6586,21 @@ async function exportCombinedActiveExcel() {
   }
 
   // ----------------------------------------------------
-  // Sheet 2: ระเบียบข้อบังคับ (ตามตัวกรอง)
+  // Sheet 2: ระเบียบสหกรณ์ (ตามตัวกรอง)
   // ----------------------------------------------------
-  if (ExportFilterState.module !== 'CASES') {
+  if (ExportFilterState.module !== 'CASES' && ExportFilterState.module !== 'BYLAWS') {
     const regHeader = [
-      ["ระบบติดตามการพิจารณาระเบียบและข้อบังคับสหกรณ์ กรมส่งเสริมสหกรณ์"],
-      ["รายงานรายการระเบียบและข้อบังคับ (ตามเงื่อนไขตัวกรอง)"],
+      ["ระบบติดตามการพิจารณาระเบียบสหกรณ์ กรมส่งเสริมสหกรณ์"],
+      ["รายงานรายการระเบียบสหกรณ์ (ตามเงื่อนไขตัวกรอง)"],
       [`เงื่อนไขตัวกรอง: ${filterSummary}`],
       [`ข้อมูล ณ วันที่: ${printDateStr}`, `จำนวนทั้งหมด: ${filteredRegs.length} เรื่อง`],
       [],
       [
         "ลำดับ",
-        "ชื่อเรื่อง ระเบียบ/ข้อบังคับ",
+        "ชื่อเรื่องระเบียบสหกรณ์",
         "ชื่อสหกรณ์ / สถาบันเกษตรกร",
         "เลขทะเบียนสหกรณ์",
-        "ประเภทเอกสาร",
+        "ลักษณะระเบียบ",
         "กรอบเวลา SLA (วัน)",
         "สถานะ SLA",
         "เลขที่หนังสือยื่น",
@@ -5837,8 +6627,8 @@ async function exportCombinedActiveExcel() {
         item.title || '-',
         item.coopName || '-',
         item.regNumber || '-',
-        (sla && sla.conf && sla.conf.label) || item.docType || 'ข้อบังคับ',
-        sla ? sla.slaDays : 14,
+        (sla && sla.conf && sla.conf.label) || item.docType || 'ระเบียบสหกรณ์',
+        sla ? sla.slaDays : 30,
         sla ? sla.badgeText : '-',
         item.docNumber || '-',
         formatThaiDate(item.receiveDate || item.submitDate),
@@ -5860,7 +6650,7 @@ async function exportCombinedActiveExcel() {
       { wch: 38 }, // ชื่อเรื่อง
       { wch: 35 }, // ชื่อสหกรณ์
       { wch: 18 }, // เลขทะเบียน
-      { wch: 20 }, // ประเภทเอกสาร
+      { wch: 22 }, // ลักษณะระเบียบ
       { wch: 16 }, // SLA
       { wch: 18 }, // สถานะ SLA
       { wch: 20 }, // เลขที่ยื่น
@@ -5874,25 +6664,109 @@ async function exportCombinedActiveExcel() {
       { wch: 35 }, // หมายเหตุ
       { wch: 18 }  // วันที่ปรับปรุง
     ];
-    XLSX.utils.book_append_sheet(wb, wsRegs, "งานระเบียบข้อบังคับ");
+    XLSX.utils.book_append_sheet(wb, wsRegs, "งานระเบียบสหกรณ์");
   }
 
   // ----------------------------------------------------
-  // Sheet 3: สรุปภาพรวม (Summary KPIs & Filter Info)
+  // Sheet 3: ข้อบังคับสหกรณ์ (ตามตัวกรอง)
+  // ----------------------------------------------------
+  if (ExportFilterState.module !== 'CASES' && ExportFilterState.module !== 'REGS') {
+    const bylawHeader = [
+      ["ระบบติดตามข้อบังคับสหกรณ์ กรมส่งเสริมสหกรณ์"],
+      ["รายงานรายการข้อบังคับสหกรณ์ (ตามเงื่อนไขตัวกรอง)"],
+      [`เงื่อนไขตัวกรอง: ${filterSummary}`],
+      [`ข้อมูล ณ วันที่: ${printDateStr}`, `จำนวนทั้งหมด: ${filteredBylaws.length} เรื่อง`],
+      [],
+      [
+        "ลำดับ",
+        "ชื่อเรื่องข้อบังคับสหกรณ์",
+        "ชื่อสหกรณ์ / สถาบันเกษตรกร",
+        "เลขทะเบียนสหกรณ์",
+        "ประเภทรายการ",
+        "กรอบเวลา SLA (วันทำการ)",
+        "สถานะ SLA",
+        "เลขที่หนังสือยื่น",
+        "วันที่ฝ่ายลงรับหนังสือ",
+        "ขั้นตอนปัจจุบัน",
+        "ชื่อขั้นตอนการพิจารณา",
+        "เจ้าหน้าที่ผู้รับผิดชอบ",
+        "เบอร์ติดต่อเจ้าหน้าที่",
+        "ระยะเวลาสะสม (วันทำการ)",
+        "สถานะการพิจารณา",
+        "ข้อตรวจพบ/หมายเหตุ",
+        "วันที่ปรับปรุงข้อมูลล่าสุด"
+      ]
+    ];
+
+    const bylawRows = filteredBylaws.map((item, idx) => {
+      const curStepNum = parseInt(item.currentStep, 10) || 1;
+      const dur = getRegDuration(item);
+      const stepTitle = CONFIG.REGULATION_STEPS[curStepNum - 1]?.title || `ขั้นที่ ${curStepNum}`;
+      const sla = dur.sla;
+
+      return [
+        idx + 1,
+        item.title || '-',
+        item.coopName || '-',
+        item.regNumber || '-',
+        'ข้อบังคับสหกรณ์',
+        14,
+        sla ? sla.badgeText : '-',
+        item.docNumber || '-',
+        formatThaiDate(item.receiveDate || item.submitDate),
+        `ขั้นที่ ${curStepNum}/${CONFIG.REGULATION_STEPS?.length || 4}`,
+        stepTitle,
+        item.officerName || '-',
+        item.officerContact || '-',
+        dur.hasData ? dur.workingDays : 0,
+        item.status || 'อยู่ระหว่างพิจารณา',
+        item.remarks || item.reviewNotes || '-',
+        formatThaiDate(item.updatedAt || item.createdAt)
+      ];
+    });
+
+    const wsBylawsData = [...bylawHeader, ...bylawRows];
+    const wsBylaws = XLSX.utils.aoa_to_sheet(wsBylawsData);
+    wsBylaws['!cols'] = [
+      { wch: 6 },  // ลำดับ
+      { wch: 38 }, // ชื่อเรื่อง
+      { wch: 35 }, // ชื่อสหกรณ์
+      { wch: 18 }, // เลขทะเบียน
+      { wch: 18 }, // ประเภท
+      { wch: 20 }, // SLA
+      { wch: 18 }, // สถานะ SLA
+      { wch: 20 }, // เลขที่ยื่น
+      { wch: 14 }, // วันที่ยื่น
+      { wch: 14 }, // ขั้นตอน
+      { wch: 38 }, // ชื่อขั้นตอน
+      { wch: 24 }, // เจ้าหน้าที่
+      { wch: 18 }, // เบอร์ติดต่อ
+      { wch: 22 }, // ระยะเวลาวันทำการ
+      { wch: 20 }, // สถานะ
+      { wch: 35 }, // หมายเหตุ
+      { wch: 18 }  // วันที่ปรับปรุง
+    ];
+    XLSX.utils.book_append_sheet(wb, wsBylaws, "งานข้อบังคับสหกรณ์");
+  }
+
+  // ----------------------------------------------------
+  // Sheet 4: สรุปภาพรวม (Summary KPIs & Filter Info)
   // ----------------------------------------------------
   const casesWithIssues = filteredCases.filter(c => hasCaseIssues(c)).length;
   const regsWithIssues = filteredRegs.filter(r => r.status === 'ส่งคืนแก้ไข').length;
-  const totalIssues = casesWithIssues + regsWithIssues;
+  const bylawsWithIssues = filteredBylaws.filter(b => b.status === 'ส่งคืนแก้ไข').length;
+  const totalIssues = casesWithIssues + regsWithIssues + bylawsWithIssues;
 
   const overviewData = [
     ["ระบบศูนย์บริการงานนายทะเบียนและส่งเสริมสหกรณ์ กรมส่งเสริมสหกรณ์"],
     ["รายงานสรุปภาพรวมข้อมูลตามตัวกรอง (Filtered Operations Summary)"],
     [],
     ["หัวข้อสรุป", "จำนวนตัวเลข", "หน่วยนับ", "คำอธิบาย"],
-    ["1. รายการที่ตรงตามตัวกรองทั้งหมด", totalCount, "เรื่อง", "รวมทั้งงานชำระบัญชีและงานระเบียบข้อบังคับตามตัวกรอง"],
+    ["1. รายการที่ตรงตามตัวกรองทั้งหมด", totalCount, "เรื่อง", "รวมทั้ง 3 โมดูลตามตัวกรอง"],
     ["2. รายการชำระบัญชีสหกรณ์", filteredCases.length, "แห่ง", "ตรงตามเงื่อนไขตัวกรอง"],
-    ["3. รายการระเบียบและข้อบังคับสหกรณ์", filteredRegs.length, "เรื่อง", "ตรงตามเงื่อนไขตัวกรอง"],
-    ["4. รายการที่มีปัญหาอุปสรรค / ส่งคืนแก้ไข", totalIssues, "เรื่อง", `ชำระบัญชีมีปัญหา: ${casesWithIssues} แห่ง | ระเบียบส่งคืน: ${regsWithIssues} เรื่อง`],
+    ["3. รายการระเบียบสหกรณ์", filteredRegs.length, "เรื่อง", "ตรงตามเงื่อนไขตัวกรอง"],
+    ["4. รายการข้อบังคับสหกรณ์", filteredBylaws.length, "เรื่อง", "ตรงตามเงื่อนไขตัวกรอง (SLA 14 วัน)"],
+    ["5. รายการที่มีปัญหาอุปสรรค / ส่งคืนแก้ไข", totalIssues, "เรื่อง", `ชำระบัญชีมีปัญหา: ${casesWithIssues} แห่ง | ระเบียบส่งคืน: ${regsWithIssues} เรื่อง | ข้อบังคับส่งคืน: ${bylawsWithIssues} เรื่อง`],
     [],
     ["เงื่อนไขตัวกรองที่เลือกใช้งาน", filterSummary, "", ""],
     ["วันที่ส่งออกรายงาน", printDateStr, "", ""],
@@ -5918,7 +6792,8 @@ async function exportCombinedActiveExcel() {
 function exportCombinedActiveCsv() {
   const filteredCases = getFilteredExportCases();
   const filteredRegs = getFilteredExportRegulations();
-  const totalCount = filteredCases.length + filteredRegs.length;
+  const filteredBylaws = getFilteredExportBylaws();
+  const totalCount = filteredCases.length + filteredRegs.length + filteredBylaws.length;
 
   if (totalCount === 0) {
     showToast('ไม่มีรายการข้อมูลตรงตามตัวกรองที่เลือกสำหรับการส่งออก CSV', 'warning');
@@ -5932,9 +6807,9 @@ function exportCombinedActiveCsv() {
   csvContent += `# รายงานสรุปข้อมูลศูนย์บริการงานนายทะเบียนและส่งเสริมสหกรณ์\r\n`;
   csvContent += `# วันที่ส่งออก: ${printDateStr}\r\n`;
   csvContent += `# เงื่อนไขตัวกรอง: ${filterSummary}\r\n`;
-  csvContent += `# จำนวนรายการทั้งหมด: ${totalCount} เรื่อง (ชำระบัญชี: ${filteredCases.length}, ระเบียบ: ${filteredRegs.length})\r\n\r\n`;
+  csvContent += `# จำนวนรายการทั้งหมด: ${totalCount} เรื่อง (ชำระบัญชี: ${filteredCases.length}, ระเบียบ: ${filteredRegs.length}, ข้อบังคับ: ${filteredBylaws.length})\r\n\r\n`;
 
-  if (ExportFilterState.module !== 'REGS' && filteredCases.length > 0) {
+  if (ExportFilterState.module !== 'REGS' && ExportFilterState.module !== 'BYLAWS' && filteredCases.length > 0) {
     csvContent += "=== หมวดที่ 1: รายการสหกรณ์ชำระบัญชี ===\r\n";
     csvContent += "ลำดับ,ชื่อสหกรณ์,เลขทะเบียน,ที่ตั้ง,ประเภทสถาบัน,ประเภทการเลิก,เลขที่คำสั่ง/ประกาศ,วันที่สั่งเลิก,ขั้นตอนปัจจุบัน,ความคืบหน้า,ผู้ชำระบัญชี,วันทำการสะสม,สถานะ,ปัญหาอุปสรรค\r\n";
     
@@ -5964,9 +6839,9 @@ function exportCombinedActiveCsv() {
     });
   }
 
-  if (ExportFilterState.module !== 'CASES' && filteredRegs.length > 0) {
-    csvContent += "\r\n=== หมวดที่ 2: รายการระเบียบและข้อบังคับสหกรณ์ ===\r\n";
-    csvContent += "ลำดับ,ชื่อเรื่องระเบียบ/ข้อบังคับ,ชื่อสหกรณ์,เลขทะเบียน,ประเภทเอกสาร,กรอบเวลา SLA (วัน),สถานะ SLA,เลขที่ยื่น,วันที่ฝ่ายลงรับหนังสือ,ขั้นตอนปัจจุบัน,จนท.ผู้รับผิดชอบ,เบอร์ติดต่อ,วันทำการสะสม,สถานะ,ข้อตรวจพบ/หมายเหตุ\r\n";
+  if (ExportFilterState.module !== 'CASES' && ExportFilterState.module !== 'BYLAWS' && filteredRegs.length > 0) {
+    csvContent += "\r\n=== หมวดที่ 2: รายการระเบียบสหกรณ์ ===\r\n";
+    csvContent += "ลำดับ,ชื่อเรื่องระเบียบ,ชื่อสหกรณ์,เลขทะเบียน,ลักษณะระเบียบ,กรอบเวลา SLA (วัน),สถานะ SLA,เลขที่ยื่น,วันที่ฝ่ายลงรับหนังสือ,ขั้นตอนปัจจุบัน,จนท.ผู้รับผิดชอบ,เบอร์ติดต่อ,วันทำการสะสม,สถานะ,ข้อตรวจพบ/หมายเหตุ\r\n";
 
     filteredRegs.forEach((item, idx) => {
       const curStepNum = parseInt(item.currentStep, 10) || 1;
@@ -5978,8 +6853,38 @@ function exportCombinedActiveCsv() {
         `"${(item.title || '').replace(/"/g, '""')}"`,
         `"${(item.coopName || '').replace(/"/g, '""')}"`,
         `"${(item.regNumber || '').replace(/"/g, '""')}"`,
-        `"${(sla && sla.conf && sla.conf.label) || item.docType || 'ข้อบังคับ'}"`,
-        sla ? sla.slaDays : 14,
+        `"${(sla && sla.conf && sla.conf.label) || item.docType || 'ระเบียบสหกรณ์'}"`,
+        sla ? sla.slaDays : 30,
+        `"${(sla ? sla.badgeText : '-').replace(/"/g, '""')}"`,
+        `"${(item.docNumber || '').replace(/"/g, '""')}"`,
+        `"${formatThaiDate(item.receiveDate || item.submitDate)}"`,
+        `"ขั้นที่ ${curStepNum}/${CONFIG.REGULATION_STEPS?.length || 4}"`,
+        `"${(item.officerName || '').replace(/"/g, '""')}"`,
+        `"${(item.officerContact || '').replace(/"/g, '""')}"`,
+        dur.hasData ? dur.workingDays : 0,
+        `"${item.status || 'อยู่ระหว่างพิจารณา'}"`,
+        `"${(item.remarks || item.reviewNotes || '-').replace(/"/g, '""')}"`
+      ];
+      csvContent += row.join(',') + "\r\n";
+    });
+  }
+
+  if (ExportFilterState.module !== 'CASES' && ExportFilterState.module !== 'REGS' && filteredBylaws.length > 0) {
+    csvContent += "\r\n=== หมวดที่ 3: รายการข้อบังคับสหกรณ์ ===\r\n";
+    csvContent += "ลำดับ,ชื่อเรื่องข้อบังคับ,ชื่อสหกรณ์,เลขทะเบียน,ประเภท,กรอบเวลา SLA (วัน),สถานะ SLA,เลขที่ยื่น,วันที่ฝ่ายลงรับหนังสือ,ขั้นตอนปัจจุบัน,จนท.ผู้รับผิดชอบ,เบอร์ติดต่อ,วันทำการสะสม,สถานะ,ข้อตรวจพบ/หมายเหตุ\r\n";
+
+    filteredBylaws.forEach((item, idx) => {
+      const curStepNum = parseInt(item.currentStep, 10) || 1;
+      const dur = getRegDuration(item);
+      const sla = dur.sla;
+
+      const row = [
+        idx + 1,
+        `"${(item.title || '').replace(/"/g, '""')}"`,
+        `"${(item.coopName || '').replace(/"/g, '""')}"`,
+        `"${(item.regNumber || '').replace(/"/g, '""')}"`,
+        `"ข้อบังคับสหกรณ์"`,
+        14,
         `"${(sla ? sla.badgeText : '-').replace(/"/g, '""')}"`,
         `"${(item.docNumber || '').replace(/"/g, '""')}"`,
         `"${formatThaiDate(item.receiveDate || item.submitDate)}"`,
@@ -6022,6 +6927,7 @@ window.exportRegulationsListPdf = exportRegulationsListPdf;
 window.exportAllActiveOperationsPdf = exportAllActiveOperationsPdf;
 window.exportActiveCasesOnlyPdf = exportActiveCasesOnlyPdf;
 window.exportActiveRegulationsOnlyPdf = exportActiveRegulationsOnlyPdf;
+window.exportActiveBylawsOnlyPdf = exportActiveBylawsOnlyPdf;
 window.quickExportCasePdf = quickExportCasePdf;
 window.quickExportRegPdf = quickExportRegPdf;
 window.openPdfPreview = openPdfPreview;
@@ -6045,6 +6951,13 @@ window.handleUpdateRegMilestonesSubmit = handleUpdateRegMilestonesSubmit;
 window.openUpdateRegStepModal = openUpdateRegStepModal;
 window.handleUpdateRegStepSubmit = handleUpdateRegStepSubmit;
 window.triggerActiveExportDirectPrint = triggerActiveExportDirectPrint;
+
+// Expose Bylaws Module functions to global window scope
+window.setBylawFilter = setBylawFilter;
+window.resetBylawFilters = resetBylawFilters;
+window.changeBylawPage = changeBylawPage;
+window.changeBylawViewMode = changeBylawViewMode;
+window.handleBylawSearch = handleBylawSearch;
 
 // ------------------------------------------------------------------------------
 // 15. Cooperative Directory & Smart Autocomplete Module
