@@ -1958,11 +1958,6 @@ function renderRegTable(container, items = AppState.filteredRegulations, startIn
         <td>
           <div style="font-weight: 500; font-size: 0.9rem; color: var(--text-main); line-height: 1.4;">${escapeHtml(item.title || '-')}</div>
           ${docTypeBadgeHtml ? `<div style="margin-top: 4px;">${docTypeBadgeHtml}</div>` : ''}
-          ${item.note && item.note.trim() ? `
-            <div style="margin-top: 5px; background: #fefce8; border: 1px solid #fef08a; border-left: 3px solid #eab308; border-radius: 4px; padding: 4px 8px; font-size: 0.76rem; color: #854d0e; line-height: 1.35; max-width: 320px; word-break: break-word;">
-              <strong style="color: #a16207;">📝 บันทึก:</strong> ${escapeHtml(item.note)}
-            </div>
-          ` : ''}
         </td>
         <td>
           <div style="font-weight: 500;">${escapeHtml(receiveDocNum)}</div>
@@ -1977,6 +1972,11 @@ function renderRegTable(container, items = AppState.filteredRegulations, startIn
             ${statusText}
           </span>
           ${sla && sla.hasData ? `<div style="margin-top: 4px;"><span class="sla-badge ${sla.badgeClass}" style="font-size: 0.7rem;">${sla.badgeText}</span></div>` : ''}
+          ${item.note && item.note.trim() ? `
+            <div style="margin-top: 5px; background: #fefce8; border: 1px solid #fef08a; border-left: 3px solid #eab308; border-radius: 4px; padding: 4px 8px; font-size: 0.74rem; color: #854d0e; line-height: 1.35; max-width: 220px; word-break: break-word;">
+              <strong style="color: #a16207;">📝 บันทึก:</strong> ${escapeHtml(item.note)}
+            </div>
+          ` : ''}
         </td>
         <td>
           <div style="font-weight: 500;">${escapeHtml(item.officerName || '-')}</div>
@@ -2714,11 +2714,6 @@ function renderBylawTable(container, items = AppState.filteredBylaws, startIndex
         </td>
         <td>
           <div style="font-weight: 500; font-size: 0.9rem; color: var(--text-main); line-height: 1.4;">${escapeHtml(item.title || '-')}</div>
-          ${item.note && item.note.trim() ? `
-            <div style="margin-top: 5px; background: #fefce8; border: 1px solid #fef08a; border-left: 3px solid #eab308; border-radius: 4px; padding: 4px 8px; font-size: 0.76rem; color: #854d0e; line-height: 1.35; max-width: 320px; word-break: break-word;">
-              <strong style="color: #a16207;">📝 บันทึก:</strong> ${escapeHtml(item.note)}
-            </div>
-          ` : ''}
         </td>
         <td>
           <div style="font-weight: 500;">${escapeHtml(receiveDocNum)}</div>
@@ -2733,6 +2728,11 @@ function renderBylawTable(container, items = AppState.filteredBylaws, startIndex
             ${statusText}
           </span>
           ${sla && sla.hasData ? `<div style="margin-top: 4px;"><span class="sla-badge ${sla.badgeClass}" style="font-size: 0.7rem;">${sla.badgeText}</span></div>` : ''}
+          ${item.note && item.note.trim() ? `
+            <div style="margin-top: 5px; background: #fefce8; border: 1px solid #fef08a; border-left: 3px solid #eab308; border-radius: 4px; padding: 4px 8px; font-size: 0.74rem; color: #854d0e; line-height: 1.35; max-width: 220px; word-break: break-word;">
+              <strong style="color: #a16207;">📝 บันทึก:</strong> ${escapeHtml(item.note)}
+            </div>
+          ` : ''}
         </td>
         <td>
           <div style="font-weight: 500;">${escapeHtml(item.officerName || '-')}</div>
