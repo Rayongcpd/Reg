@@ -10,7 +10,8 @@
 
   <!-- CSS Styles -->
   <link rel="stylesheet" href="styles.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏛️</text></svg>">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏛️</text></svg>">
 
   <!-- Google Identity Services (GIS) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -36,26 +37,31 @@
   <nav class="navbar" id="mainNavbar">
     <div class="container navbar-inner">
       <!-- Brand Logo & Department Title -->
-      <a href="#" class="brand" onclick="switchAppView('portal'); return false;" title="กลับสู่หน้าหลักระบบสารสนเทศนายทะเบียน">
+      <a href="#" class="brand" onclick="switchAppView('portal'); return false;"
+        title="กลับสู่หน้าหลักระบบสารสนเทศนายทะเบียน">
         <div class="brand-logo">🏛️</div>
         <div class="brand-text">
           <h1>ระบบงานนายทะเบียนสหกรณ์</h1>
-          <p>กลุ่มส่งเสริมและพัฒนาการบริหารการจัดการสหกรณ์ • จ.ระยอง</p>
+          <p>กลุ่มจัดตั้งและส่งเสริมสหกรณ์ • จ.ระยอง</p>
         </div>
       </a>
 
       <!-- Module Switcher (Segmented Control) -->
       <div class="nav-module-switcher" role="tablist" aria-label="สลับระบบงาน">
-        <button id="btnNavHub" class="nav-module-btn active" onclick="switchAppView('portal')" role="tab" title="หน้าหลักรวมระบบงาน">
+        <button id="btnNavHub" class="nav-module-btn active" onclick="switchAppView('portal')" role="tab"
+          title="หน้าหลักรวมระบบงาน">
           <span class="nav-icon">🏠</span> <span>หน้าหลัก</span>
         </button>
-        <button id="btnNavLiquidation" class="nav-module-btn" onclick="switchAppView('liquidation')" role="tab" title="ระบบติดตามงานชำระบัญชีสหกรณ์">
+        <button id="btnNavLiquidation" class="nav-module-btn" onclick="switchAppView('liquidation')" role="tab"
+          title="ระบบติดตามงานชำระบัญชีสหกรณ์">
           <span class="nav-icon">⚖️</span> <span>ชำระบัญชี</span>
         </button>
-        <button id="btnNavRegulations" class="nav-module-btn" onclick="switchAppView('regulations')" role="tab" title="ระบบติดตามการพิจารณาระเบียบสหกรณ์">
+        <button id="btnNavRegulations" class="nav-module-btn" onclick="switchAppView('regulations')" role="tab"
+          title="ระบบติดตามการพิจารณาระเบียบสหกรณ์">
           <span class="nav-icon">📗</span> <span>ระเบียบสหกรณ์</span>
         </button>
-        <button id="btnNavBylaws" class="nav-module-btn" onclick="switchAppView('bylaws')" role="tab" title="ระบบติดตามการพิจารณาข้อบังคับสหกรณ์">
+        <button id="btnNavBylaws" class="nav-module-btn" onclick="switchAppView('bylaws')" role="tab"
+          title="ระบบติดตามการพิจารณาข้อบังคับสหกรณ์">
           <span class="nav-icon">📘</span> <span>ข้อบังคับสหกรณ์</span>
         </button>
       </div>
@@ -63,7 +69,8 @@
       <!-- Navbar Actions (Public Utilities & Admin Menu Hub) -->
       <div class="navbar-actions">
         <!-- Public Utilities (for general visitors / hidden when admin logged in to prevent clutter) -->
-        <button id="btnNavCoopDir" class="btn-nav-utility" onclick="openCoopDirectoryModal()" title="ดูทำเนียบสหกรณ์และกลุ่มส่งเสริมฯ ในจังหวัดระยอง">
+        <button id="btnNavCoopDir" class="btn-nav-utility" onclick="openCoopDirectoryModal()"
+          title="ดูทำเนียบสหกรณ์และกลุ่มส่งเสริมฯ ในจังหวัดระยอง">
           <span class="nav-icon">🏛️</span> <span>ทำเนียบสหกรณ์</span>
         </button>
         <button id="btnNavExportActivePdf" class="btn-nav-utility" onclick="openActiveExportModal()"
@@ -72,26 +79,31 @@
         </button>
 
         <!-- Guest Login Button -->
-        <button id="navLoginBtn" class="btn-nav-login" onclick="openModal('loginModal')" title="เข้าสู่ระบบสำหรับเจ้าหน้าที่ผู้ดูแลระบบ">
+        <button id="navLoginBtn" class="btn-nav-login" onclick="openModal('loginModal')"
+          title="เข้าสู่ระบบสำหรับเจ้าหน้าที่ผู้ดูแลระบบ">
           <span class="login-icon">🔑</span> <span>เข้าสู่ระบบ Admin</span>
         </button>
 
         <!-- Admin Consolidated Menu Area (Visible when logged in) -->
         <div id="navUserProfile" class="nav-admin-area" style="display: none;">
           <!-- Quick Add Context Button (Compact & Context-aware) -->
-          <button id="adminAddCaseBtn" class="btn-nav-quickadd btn-liq" onclick="openCreateCaseModal()" style="display: none;" title="เพิ่มรายการชำระบัญชีใหม่">
+          <button id="adminAddCaseBtn" class="btn-nav-quickadd btn-liq" onclick="openCreateCaseModal()"
+            style="display: none;" title="เพิ่มรายการชำระบัญชีใหม่">
             <span>➕</span> เพิ่มรายการ
           </button>
-          <button id="adminAddRegBtn" class="btn-nav-quickadd btn-reg" onclick="openCreateRegModal('ระเบียบ')" style="display: none;" title="ยื่นเรื่องระเบียบใหม่">
+          <button id="adminAddRegBtn" class="btn-nav-quickadd btn-reg" onclick="openCreateRegModal('ระเบียบ')"
+            style="display: none;" title="ยื่นเรื่องระเบียบใหม่">
             <span>➕</span> ยื่นเรื่องระเบียบ
           </button>
-          <button id="adminAddBylawBtn" class="btn-nav-quickadd btn-bylaw" onclick="openCreateRegModal('ข้อบังคับ')" style="display: none;" title="ยื่นเรื่องข้อบังคับใหม่">
+          <button id="adminAddBylawBtn" class="btn-nav-quickadd btn-bylaw" onclick="openCreateRegModal('ข้อบังคับ')"
+            style="display: none;" title="ยื่นเรื่องข้อบังคับใหม่">
             <span>➕</span> ยื่นเรื่องข้อบังคับ
           </button>
 
           <!-- Consolidated Admin Dropdown Hub -->
           <div class="admin-menu-dropdown-container" id="adminMenuDropdownContainer">
-            <button id="adminDropdownToggle" class="admin-profile-pill" onclick="toggleAdminDropdown(event)" aria-expanded="false" aria-haspopup="true" title="เมนูผู้ดูแลระบบ (Admin Hub)">
+            <button id="adminDropdownToggle" class="admin-profile-pill" onclick="toggleAdminDropdown(event)"
+              aria-expanded="false" aria-haspopup="true" title="เมนูผู้ดูแลระบบ (Admin Hub)">
               <div class="admin-avatar-chip">
                 <span>🛡️</span>
                 <span class="avatar-online-dot"></span>
@@ -120,21 +132,24 @@
               <div class="admin-menu-section-label">⚡ บันทึกข้อมูล / ยื่นเรื่องใหม่</div>
               <div class="admin-menu-group">
                 <button type="button" class="admin-menu-item" onclick="handleAdminMenuAction('createCase')">
-                  <span class="admin-item-icon" style="background: #fef3c7; color: #b45309; border-color: #fde68a;">⚖️</span>
+                  <span class="admin-item-icon"
+                    style="background: #fef3c7; color: #b45309; border-color: #fde68a;">⚖️</span>
                   <div class="admin-item-text">
                     <div class="admin-item-title">เพิ่มรายการชำระบัญชี</div>
                     <div class="admin-item-desc">บันทึกข้อมูลสหกรณ์เลิก/ชำระบัญชี</div>
                   </div>
                 </button>
                 <button type="button" class="admin-menu-item" onclick="handleAdminMenuAction('createReg')">
-                  <span class="admin-item-icon" style="background: #d1fae5; color: #047857; border-color: #a7f3d0;">📗</span>
+                  <span class="admin-item-icon"
+                    style="background: #d1fae5; color: #047857; border-color: #a7f3d0;">📗</span>
                   <div class="admin-item-text">
                     <div class="admin-item-title">ยื่นเรื่องระเบียบสหกรณ์</div>
                     <div class="admin-item-desc">ยื่นขอความเห็นชอบระเบียบใหม่</div>
                   </div>
                 </button>
                 <button type="button" class="admin-menu-item" onclick="handleAdminMenuAction('createBylaw')">
-                  <span class="admin-item-icon" style="background: #e0f2fe; color: #0369a1; border-color: #bae6fd;">📘</span>
+                  <span class="admin-item-icon"
+                    style="background: #e0f2fe; color: #0369a1; border-color: #bae6fd;">📘</span>
                   <div class="admin-item-text">
                     <div class="admin-item-title">ยื่นเรื่องข้อบังคับสหกรณ์</div>
                     <div class="admin-item-desc">ยื่นขอจดทะเบียนแก้ไขข้อบังคับ</div>
@@ -147,22 +162,26 @@
               <!-- Group 2: Management Tools -->
               <div class="admin-menu-section-label">🛠️ เครื่องมือและการจัดการระบบ</div>
               <div class="admin-menu-group">
-                <button type="button" id="adminAuditLogBtn" class="admin-menu-item" onclick="handleAdminMenuAction('auditLog')" title="ดูประวัติการบันทึกข้อมูล">
-                  <span class="admin-item-icon" style="background: #f1f5f9; color: #475569; border-color: #cbd5e1;">📋</span>
+                <button type="button" id="adminAuditLogBtn" class="admin-menu-item"
+                  onclick="handleAdminMenuAction('auditLog')" title="ดูประวัติการบันทึกข้อมูล">
+                  <span class="admin-item-icon"
+                    style="background: #f1f5f9; color: #475569; border-color: #cbd5e1;">📋</span>
                   <div class="admin-item-text">
                     <div class="admin-item-title">ประวัติการบันทึก (Audit Log)</div>
                     <div class="admin-item-desc">ตรวจสอบประวัติการแก้ไขและบันทึกข้อมูล</div>
                   </div>
                 </button>
                 <button type="button" class="admin-menu-item" onclick="handleAdminMenuAction('coopDir')">
-                  <span class="admin-item-icon" style="background: #ede9fe; color: #6d28d9; border-color: #ddd6fe;">🏛️</span>
+                  <span class="admin-item-icon"
+                    style="background: #ede9fe; color: #6d28d9; border-color: #ddd6fe;">🏛️</span>
                   <div class="admin-item-text">
                     <div class="admin-item-title">ฐานข้อมูลและทำเนียบสหกรณ์</div>
                     <div class="admin-item-desc">จัดการรายชื่อสหกรณ์และกลุ่มส่งเสริมฯ</div>
                   </div>
                 </button>
                 <button type="button" class="admin-menu-item" onclick="handleAdminMenuAction('export')">
-                  <span class="admin-item-icon" style="background: #f0fdf4; color: #15803d; border-color: #bbf7d0;">📑</span>
+                  <span class="admin-item-icon"
+                    style="background: #f0fdf4; color: #15803d; border-color: #bbf7d0;">📑</span>
                   <div class="admin-item-text">
                     <div class="admin-item-title">ศูนย์ส่งออกข้อมูลสรุป</div>
                     <div class="admin-item-desc">ส่งออกข้อมูล PDF, Excel, CSV</div>
@@ -174,8 +193,10 @@
 
               <!-- Group 3: Logout -->
               <div class="admin-menu-footer">
-                <button type="button" class="admin-menu-item admin-logout-item" onclick="handleAdminMenuAction('logout')">
-                  <span class="admin-item-icon" style="background: #fee2e2; color: #dc2626; border-color: #fecaca;">🚪</span>
+                <button type="button" class="admin-menu-item admin-logout-item"
+                  onclick="handleAdminMenuAction('logout')">
+                  <span class="admin-item-icon"
+                    style="background: #fee2e2; color: #dc2626; border-color: #fecaca;">🚪</span>
                   <div class="admin-item-text">
                     <div class="admin-item-title" style="color: #dc2626;">ออกจากระบบ (Logout)</div>
                     <div class="admin-item-desc">สิ้นสุดการทำงานของผู้ดูแลระบบ</div>
@@ -326,9 +347,11 @@
         <div class="hub-announcement-content">
           <span style="font-size: 2.5rem;">💡</span>
           <div>
-            <h4 style="margin: 0; color: var(--primary); font-size: 1.05rem;">คำแนะนำสำหรับเจ้าหน้าที่ส่งเสริมสหกรณ์</h4>
+            <h4 style="margin: 0; color: var(--primary); font-size: 1.05rem;">คำแนะนำสำหรับเจ้าหน้าที่ส่งเสริมสหกรณ์
+            </h4>
             <p style="margin: 4px 0 0; font-size: 0.88rem; color: var(--text-muted);">
-              ท่านสามารถใช้ระบบนี้ในการกำกับดูแลและติดตามงานได้ทั้ง 3 ด้าน (งานชำระบัญชี, ระเบียบสหกรณ์, และข้อบังคับสหกรณ์) โดยข้อมูลจะถูกแยกส่วนกันอย่างชัดเจน
+              ท่านสามารถใช้ระบบนี้ในการกำกับดูแลและติดตามงานได้ทั้ง 3 ด้าน (งานชำระบัญชี, ระเบียบสหกรณ์,
+              และข้อบังคับสหกรณ์) โดยข้อมูลจะถูกแยกส่วนกันอย่างชัดเจน
             </p>
           </div>
         </div>
@@ -502,16 +525,20 @@
               <button class="filter-chip active" data-case-group="ALL" onclick="setCaseFilter('group', 'ALL')">
                 <span class="chip-check">✓</span> ทั้งหมด
               </button>
-              <button class="filter-chip group-chip" data-case-group="กลุ่มส่งเสริมสหกรณ์ 1" onclick="setCaseFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 1')">
+              <button class="filter-chip group-chip" data-case-group="กลุ่มส่งเสริมสหกรณ์ 1"
+                onclick="setCaseFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 1')">
                 <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 1
               </button>
-              <button class="filter-chip group-chip" data-case-group="กลุ่มส่งเสริมสหกรณ์ 2" onclick="setCaseFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 2')">
+              <button class="filter-chip group-chip" data-case-group="กลุ่มส่งเสริมสหกรณ์ 2"
+                onclick="setCaseFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 2')">
                 <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 2
               </button>
-              <button class="filter-chip group-chip" data-case-group="กลุ่มส่งเสริมสหกรณ์ 3" onclick="setCaseFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 3')">
+              <button class="filter-chip group-chip" data-case-group="กลุ่มส่งเสริมสหกรณ์ 3"
+                onclick="setCaseFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 3')">
                 <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 3
               </button>
-              <button class="filter-chip group-chip" data-case-group="นิคมสหกรณ์ชะแวะ" onclick="setCaseFilter('group', 'นิคมสหกรณ์ชะแวะ')">
+              <button class="filter-chip group-chip" data-case-group="นิคมสหกรณ์ชะแวะ"
+                onclick="setCaseFilter('group', 'นิคมสหกรณ์ชะแวะ')">
                 <span class="chip-check">✓</span> 🌾 นิคมสหกรณ์ชะแวะ
               </button>
             </div>
@@ -635,10 +662,12 @@
         <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 0.5rem;">
           <span class="status-badge"
             style="background: rgba(255,255,255,0.2); color: #fff; font-size: 0.85rem;">โมดูลที่ 2</span>
-          <span style="color: rgba(255,255,255,0.8); font-size: 0.85rem;">• 4 ขั้นตอนการพิจารณาเห็นชอบ (7 วัน) / รับทราบ (30 วัน)</span>
+          <span style="color: rgba(255,255,255,0.8); font-size: 0.85rem;">• 4 ขั้นตอนการพิจารณาเห็นชอบ (7 วัน) / รับทราบ
+            (30 วัน)</span>
         </div>
         <h2 class="hero-title">ระบบติดตาม ระเบียบสหกรณ์</h2>
-        <p class="hero-subtitle">ตรวจสอบสถานะการยื่นขอความเห็นชอบ (7 วัน) และรับทราบ (30 วัน) ระเบียบสหกรณ์สำหรับเจ้าหน้าที่ส่งเสริม</p>
+        <p class="hero-subtitle">ตรวจสอบสถานะการยื่นขอความเห็นชอบ (7 วัน) และรับทราบ (30 วัน)
+          ระเบียบสหกรณ์สำหรับเจ้าหน้าที่ส่งเสริม</p>
 
         <!-- Search Bar -->
         <div class="hero-search-box">
@@ -795,16 +824,20 @@
               <button class="filter-chip active" data-reg-group="ALL" onclick="setRegFilter('group', 'ALL')">
                 <span class="chip-check">✓</span> ทั้งหมด
               </button>
-              <button class="filter-chip group-chip" data-reg-group="กลุ่มส่งเสริมสหกรณ์ 1" onclick="setRegFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 1')">
+              <button class="filter-chip group-chip" data-reg-group="กลุ่มส่งเสริมสหกรณ์ 1"
+                onclick="setRegFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 1')">
                 <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 1
               </button>
-              <button class="filter-chip group-chip" data-reg-group="กลุ่มส่งเสริมสหกรณ์ 2" onclick="setRegFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 2')">
+              <button class="filter-chip group-chip" data-reg-group="กลุ่มส่งเสริมสหกรณ์ 2"
+                onclick="setRegFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 2')">
                 <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 2
               </button>
-              <button class="filter-chip group-chip" data-reg-group="กลุ่มส่งเสริมสหกรณ์ 3" onclick="setRegFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 3')">
+              <button class="filter-chip group-chip" data-reg-group="กลุ่มส่งเสริมสหกรณ์ 3"
+                onclick="setRegFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 3')">
                 <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 3
               </button>
-              <button class="filter-chip group-chip" data-reg-group="นิคมสหกรณ์ชะแวะ" onclick="setRegFilter('group', 'นิคมสหกรณ์ชะแวะ')">
+              <button class="filter-chip group-chip" data-reg-group="นิคมสหกรณ์ชะแวะ"
+                onclick="setRegFilter('group', 'นิคมสหกรณ์ชะแวะ')">
                 <span class="chip-check">✓</span> 🌾 นิคมสหกรณ์ชะแวะ
               </button>
             </div>
@@ -927,16 +960,19 @@
         <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 0.5rem;">
           <span class="status-badge"
             style="background: rgba(255,255,255,0.2); color: #fff; font-size: 0.85rem;">โมดูลที่ 3</span>
-          <span style="color: rgba(255,255,255,0.8); font-size: 0.85rem;">• 4 ขั้นตอนการพิจารณารับจดทะเบียนข้อบังคับ (14 วันทำการ)</span>
+          <span style="color: rgba(255,255,255,0.8); font-size: 0.85rem;">• 4 ขั้นตอนการพิจารณารับจดทะเบียนข้อบังคับ (14
+            วันทำการ)</span>
         </div>
         <h2 class="hero-title">ระบบติดตาม ข้อบังคับสหกรณ์</h2>
-        <p class="hero-subtitle">ตรวจสอบสถานะการยื่นขอรับจดทะเบียนข้อบังคับสหกรณ์ตาม พ.ร.บ. สหกรณ์ (กรอบเวลา SLA 14 วันทำการ)</p>
+        <p class="hero-subtitle">ตรวจสอบสถานะการยื่นขอรับจดทะเบียนข้อบังคับสหกรณ์ตาม พ.ร.บ. สหกรณ์ (กรอบเวลา SLA 14
+          วันทำการ)</p>
 
         <!-- Search Bar -->
         <div class="hero-search-box">
           <input type="text" id="bylawSearchInput"
             placeholder="พิมพ์ชื่อสหกรณ์, ข้อบังคับ, เลขรับ ฝบท, เลขส่ง ฝบท, หรือชื่อผู้รับผิดชอบ...">
-          <button id="bylawSearchBtn" class="hero-search-btn" style="background: #0284c7;" onclick="applyBylawFilters()">
+          <button id="bylawSearchBtn" class="hero-search-btn" style="background: #0284c7;"
+            onclick="applyBylawFilters()">
             🔍 ค้นหา
           </button>
         </div>
@@ -1026,7 +1062,8 @@
               <span class="filter-section-label">🚀 ความคืบหน้า / ขั้นตอนการพิจารณา (Progress)</span>
             </div>
             <div class="filter-chip-group">
-              <button class="filter-chip step-chip active" data-bylaw-step="ALL" onclick="setBylawFilter('step', 'ALL')">
+              <button class="filter-chip step-chip active" data-bylaw-step="ALL"
+                onclick="setBylawFilter('step', 'ALL')">
                 <span class="chip-check">✓</span> ทั้งหมด
               </button>
               <button class="filter-chip step-chip" data-bylaw-step="1" onclick="setBylawFilter('step', '1')">
@@ -1095,16 +1132,20 @@
               <button class="filter-chip active" data-bylaw-group="ALL" onclick="setBylawFilter('group', 'ALL')">
                 <span class="chip-check">✓</span> ทั้งหมด
               </button>
-              <button class="filter-chip group-chip" data-bylaw-group="กลุ่มส่งเสริมสหกรณ์ 1" onclick="setBylawFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 1')">
+              <button class="filter-chip group-chip" data-bylaw-group="กลุ่มส่งเสริมสหกรณ์ 1"
+                onclick="setBylawFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 1')">
                 <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 1
               </button>
-              <button class="filter-chip group-chip" data-bylaw-group="กลุ่มส่งเสริมสหกรณ์ 2" onclick="setBylawFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 2')">
+              <button class="filter-chip group-chip" data-bylaw-group="กลุ่มส่งเสริมสหกรณ์ 2"
+                onclick="setBylawFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 2')">
                 <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 2
               </button>
-              <button class="filter-chip group-chip" data-bylaw-group="กลุ่มส่งเสริมสหกรณ์ 3" onclick="setBylawFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 3')">
+              <button class="filter-chip group-chip" data-bylaw-group="กลุ่มส่งเสริมสหกรณ์ 3"
+                onclick="setBylawFilter('group', 'กลุ่มส่งเสริมสหกรณ์ 3')">
                 <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 3
               </button>
-              <button class="filter-chip group-chip" data-bylaw-group="นิคมสหกรณ์ชะแวะ" onclick="setBylawFilter('group', 'นิคมสหกรณ์ชะแวะ')">
+              <button class="filter-chip group-chip" data-bylaw-group="นิคมสหกรณ์ชะแวะ"
+                onclick="setBylawFilter('group', 'นิคมสหกรณ์ชะแวะ')">
                 <span class="chip-check">✓</span> 🌾 นิคมสหกรณ์ชะแวะ
               </button>
             </div>
@@ -1119,25 +1160,30 @@
               <button class="filter-chip active" data-bylaw-type="ALL" onclick="setBylawFilter('type', 'ALL')">
                 <span class="chip-check">✓</span> ทั้งหมด
               </button>
-              <button class="filter-chip" data-bylaw-type="สหกรณ์การเกษตร" onclick="setBylawFilter('type', 'สหกรณ์การเกษตร')">
+              <button class="filter-chip" data-bylaw-type="สหกรณ์การเกษตร"
+                onclick="setBylawFilter('type', 'สหกรณ์การเกษตร')">
                 <span class="chip-check">✓</span> สหกรณ์การเกษตร
               </button>
-              <button class="filter-chip" data-bylaw-type="สหกรณ์ออมทรัพย์" onclick="setBylawFilter('type', 'สหกรณ์ออมทรัพย์')">
+              <button class="filter-chip" data-bylaw-type="สหกรณ์ออมทรัพย์"
+                onclick="setBylawFilter('type', 'สหกรณ์ออมทรัพย์')">
                 <span class="chip-check">✓</span> สหกรณ์ออมทรัพย์
               </button>
-              <button class="filter-chip" data-bylaw-type="สหกรณ์บริการ" onclick="setBylawFilter('type', 'สหกรณ์บริการ')">
+              <button class="filter-chip" data-bylaw-type="สหกรณ์บริการ"
+                onclick="setBylawFilter('type', 'สหกรณ์บริการ')">
                 <span class="chip-check">✓</span> สหกรณ์บริการ
               </button>
               <button class="filter-chip" data-bylaw-type="สหกรณ์นิคม" onclick="setBylawFilter('type', 'สหกรณ์นิคม')">
                 <span class="chip-check">✓</span> สหกรณ์นิคม
               </button>
-              <button class="filter-chip" data-bylaw-type="สหกรณ์ร้านค้า" onclick="setBylawFilter('type', 'สหกรณ์ร้านค้า')">
+              <button class="filter-chip" data-bylaw-type="สหกรณ์ร้านค้า"
+                onclick="setBylawFilter('type', 'สหกรณ์ร้านค้า')">
                 <span class="chip-check">✓</span> สหกรณ์ร้านค้า
               </button>
               <button class="filter-chip" data-bylaw-type="สหกรณ์ประมง" onclick="setBylawFilter('type', 'สหกรณ์ประมง')">
                 <span class="chip-check">✓</span> สหกรณ์ประมง
               </button>
-              <button class="filter-chip" data-bylaw-type="สหกรณ์เครดิตยูเนี่ยน" onclick="setBylawFilter('type', 'สหกรณ์เครดิตยูเนี่ยน')">
+              <button class="filter-chip" data-bylaw-type="สหกรณ์เครดิตยูเนี่ยน"
+                onclick="setBylawFilter('type', 'สหกรณ์เครดิตยูเนี่ยน')">
                 <span class="chip-check">✓</span> สหกรณ์เครดิตยูเนี่ยน
               </button>
             </div>
@@ -1149,25 +1195,32 @@
               <span class="filter-section-label">🌾 ประเภทกลุ่มเกษตรกร (Farmer Groups)</span>
             </div>
             <div class="filter-chip-group">
-              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกร" onclick="setBylawFilter('type', 'กลุ่มเกษตรกร')">
+              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกร"
+                onclick="setBylawFilter('type', 'กลุ่มเกษตรกร')">
                 <span class="chip-check">✓</span> 🌾 กลุ่มเกษตรกร (ทุกประเภท)
               </button>
-              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกรทำนา" onclick="setBylawFilter('type', 'กลุ่มเกษตรกรทำนา')">
+              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกรทำนา"
+                onclick="setBylawFilter('type', 'กลุ่มเกษตรกรทำนา')">
                 <span class="chip-check">✓</span> กลุ่มเกษตรกรทำนา
               </button>
-              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกรทำไร่" onclick="setBylawFilter('type', 'กลุ่มเกษตรกรทำไร่')">
+              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกรทำไร่"
+                onclick="setBylawFilter('type', 'กลุ่มเกษตรกรทำไร่')">
                 <span class="chip-check">✓</span> กลุ่มเกษตรกรทำไร่
               </button>
-              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกรทำสวน" onclick="setBylawFilter('type', 'กลุ่มเกษตรกรทำสวน')">
+              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกรทำสวน"
+                onclick="setBylawFilter('type', 'กลุ่มเกษตรกรทำสวน')">
                 <span class="chip-check">✓</span> กลุ่มเกษตรกรทำสวน
               </button>
-              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกรเลี้ยงสัตว์" onclick="setBylawFilter('type', 'กลุ่มเกษตรกรเลี้ยงสัตว์')">
+              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกรเลี้ยงสัตว์"
+                onclick="setBylawFilter('type', 'กลุ่มเกษตรกรเลี้ยงสัตว์')">
                 <span class="chip-check">✓</span> กลุ่มเกษตรกรเลี้ยงสัตว์
               </button>
-              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกรประมง" onclick="setBylawFilter('type', 'กลุ่มเกษตรกรประมง')">
+              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกรประมง"
+                onclick="setBylawFilter('type', 'กลุ่มเกษตรกรประมง')">
                 <span class="chip-check">✓</span> กลุ่มเกษตรกรประมง
               </button>
-              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกรอื่นๆ" onclick="setBylawFilter('type', 'กลุ่มเกษตรกรอื่นๆ')">
+              <button class="filter-chip" data-bylaw-type="กลุ่มเกษตรกรอื่นๆ"
+                onclick="setBylawFilter('type', 'กลุ่มเกษตรกรอื่นๆ')">
                 <span class="chip-check">✓</span> กลุ่มเกษตรกรอื่นๆ
               </button>
             </div>
@@ -1226,7 +1279,8 @@
       <div class="modal-header">
         <div>
           <span class="case-type-badge" id="detailCoopType">สหกรณ์การเกษตร</span>
-          <span id="detailCasePromotionGroupBadge" class="group-badge group-badge-1" style="display: none; margin-left: 6px;"></span>
+          <span id="detailCasePromotionGroupBadge" class="group-badge group-badge-1"
+            style="display: none; margin-left: 6px;"></span>
           <h3 id="detailCoopName" style="margin-top: 4px; font-size: 1.3rem;">ชื่อสหกรณ์</h3>
         </div>
         <button class="modal-close-btn" onclick="closeModal('caseDetailModal')">&times;</button>
@@ -1319,8 +1373,8 @@
         <div class="modal-body">
           <div class="form-group coop-autocomplete-wrapper">
             <label>ชื่อสหกรณ์ที่เลิก <span style="color: red;">*</span></label>
-            <input type="text" id="createCaseCoopName" name="coopName" class="form-control" placeholder="พิมพ์ชื่อสหกรณ์เพื่อค้นหา..."
-              autocomplete="off" required>
+            <input type="text" id="createCaseCoopName" name="coopName" class="form-control"
+              placeholder="พิมพ์ชื่อสหกรณ์เพื่อค้นหา..." autocomplete="off" required>
             <div id="createCaseCoopDropdown" class="coop-autocomplete-dropdown"></div>
           </div>
 
@@ -1331,7 +1385,8 @@
                 <option value="">-- ไม่ระบุ / นอกพื้นที่ --</option>
                 <option value="กลุ่มส่งเสริมสหกรณ์ 1">กลุ่มส่งเสริมสหกรณ์ 1 (อ.เมืองระยอง, อ.บ้านฉาง)</option>
                 <option value="กลุ่มส่งเสริมสหกรณ์ 2">กลุ่มส่งเสริมสหกรณ์ 2 (อ.แกลง, อ.เขาชะเมา)</option>
-                <option value="กลุ่มส่งเสริมสหกรณ์ 3">กลุ่มส่งเสริมสหกรณ์ 3 (อ.บ้านค่าย, อ.ปลวกแดง, อ.นิคมพัฒนา)</option>
+                <option value="กลุ่มส่งเสริมสหกรณ์ 3">กลุ่มส่งเสริมสหกรณ์ 3 (อ.บ้านค่าย, อ.ปลวกแดง, อ.นิคมพัฒนา)
+                </option>
                 <option value="นิคมสหกรณ์ชะแวะ">นิคมสหกรณ์ชะแวะ (อ.วังจันทร์)</option>
               </select>
             </div>
@@ -1362,11 +1417,13 @@
           <div class="form-row">
             <div class="form-group">
               <label>เลขทะเบียนสหกรณ์</label>
-              <input type="text" id="createCaseRegNumber" name="regNumber" class="form-control" placeholder="เช่น ก.0123/2545">
+              <input type="text" id="createCaseRegNumber" name="regNumber" class="form-control"
+                placeholder="เช่น ก.0123/2545">
             </div>
             <div class="form-group">
               <label>ที่ตั้ง / อำเภอ / จังหวัด</label>
-              <input type="text" id="createCaseLocation" name="location" class="form-control" placeholder="เช่น อ.เมือง จ.ระยอง">
+              <input type="text" id="createCaseLocation" name="location" class="form-control"
+                placeholder="เช่น อ.เมือง จ.ระยอง">
             </div>
           </div>
 
@@ -1647,7 +1704,8 @@
                 <option value="">-- ไม่ระบุ / นอกพื้นที่ --</option>
                 <option value="กลุ่มส่งเสริมสหกรณ์ 1">กลุ่มส่งเสริมสหกรณ์ 1 (อ.เมืองระยอง, อ.บ้านฉาง)</option>
                 <option value="กลุ่มส่งเสริมสหกรณ์ 2">กลุ่มส่งเสริมสหกรณ์ 2 (อ.แกลง, อ.เขาชะเมา)</option>
-                <option value="กลุ่มส่งเสริมสหกรณ์ 3">กลุ่มส่งเสริมสหกรณ์ 3 (อ.บ้านค่าย, อ.ปลวกแดง, อ.นิคมพัฒนา)</option>
+                <option value="กลุ่มส่งเสริมสหกรณ์ 3">กลุ่มส่งเสริมสหกรณ์ 3 (อ.บ้านค่าย, อ.ปลวกแดง, อ.นิคมพัฒนา)
+                </option>
                 <option value="นิคมสหกรณ์ชะแวะ">นิคมสหกรณ์ชะแวะ (อ.วังจันทร์)</option>
               </select>
             </div>
@@ -1798,7 +1856,8 @@
       <div class="modal-header">
         <div>
           <span class="case-type-badge reg-type-bylaw" id="detailRegDocType">ข้อบังคับสหกรณ์</span>
-          <span id="detailRegPromotionGroupBadge" class="group-badge group-badge-1" style="display: none; margin-left: 6px;"></span>
+          <span id="detailRegPromotionGroupBadge" class="group-badge group-badge-1"
+            style="display: none; margin-left: 6px;"></span>
           <h3 id="detailRegTitle" style="margin-top: 4px; font-size: 1.3rem;">ชื่อระเบียบ/ข้อบังคับ</h3>
           <span id="detailRegCoopName" style="font-size: 0.9rem; color: var(--text-muted);">ชื่อสหกรณ์</span>
         </div>
@@ -1834,7 +1893,8 @@
         </div>
 
         <!-- Note Banner in Detail Modal -->
-        <div id="detailRegNoteWrap" style="display: none; margin: 0 1.5rem 1rem 1.5rem; background: #fefce8; border: 1px solid #fef08a; border-left: 4px solid #eab308; border-radius: 8px; padding: 10px 14px; font-size: 0.85rem; color: #854d0e; line-height: 1.5;">
+        <div id="detailRegNoteWrap"
+          style="display: none; margin: 0 1.5rem 1rem 1.5rem; background: #fefce8; border: 1px solid #fef08a; border-left: 4px solid #eab308; border-radius: 8px; padding: 10px 14px; font-size: 0.85rem; color: #854d0e; line-height: 1.5;">
           <strong style="color: #a16207; display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">
             <span>📝 บันทึกเพิ่มเติม:</span>
           </strong>
@@ -1895,8 +1955,8 @@
           <div class="form-row">
             <div class="form-group coop-autocomplete-wrapper">
               <label>ชื่อสหกรณ์ที่ยื่นเรื่อง <span style="color: red;">*</span></label>
-              <input type="text" id="createRegCoopName" name="coopName" class="form-control" placeholder="พิมพ์ชื่อสหกรณ์เพื่อค้นหา..."
-                autocomplete="off" required>
+              <input type="text" id="createRegCoopName" name="coopName" class="form-control"
+                placeholder="พิมพ์ชื่อสหกรณ์เพื่อค้นหา..." autocomplete="off" required>
               <div id="createRegCoopDropdown" class="coop-autocomplete-dropdown"></div>
             </div>
             <div class="form-group">
@@ -1930,7 +1990,8 @@
                 <option value="">-- ไม่ระบุ / นอกพื้นที่ --</option>
                 <option value="กลุ่มส่งเสริมสหกรณ์ 1">กลุ่มส่งเสริมสหกรณ์ 1 (อ.เมืองระยอง, อ.บ้านฉาง)</option>
                 <option value="กลุ่มส่งเสริมสหกรณ์ 2">กลุ่มส่งเสริมสหกรณ์ 2 (อ.แกลง, อ.เขาชะเมา)</option>
-                <option value="กลุ่มส่งเสริมสหกรณ์ 3">กลุ่มส่งเสริมสหกรณ์ 3 (อ.บ้านค่าย, อ.ปลวกแดง, อ.นิคมพัฒนา)</option>
+                <option value="กลุ่มส่งเสริมสหกรณ์ 3">กลุ่มส่งเสริมสหกรณ์ 3 (อ.บ้านค่าย, อ.ปลวกแดง, อ.นิคมพัฒนา)
+                </option>
                 <option value="นิคมสหกรณ์ชะแวะ">นิคมสหกรณ์ชะแวะ (อ.วังจันทร์)</option>
               </select>
             </div>
@@ -1964,11 +2025,14 @@
 
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
             <div>
-              <h4 id="createRegItemsHeaderTitle" style="font-size: 1rem; color: var(--primary); margin: 0;">📜 รายการที่ยื่นเรื่อง
+              <h4 id="createRegItemsHeaderTitle" style="font-size: 1rem; color: var(--primary); margin: 0;">📜
+                รายการที่ยื่นเรื่อง
               </h4>
-              <span id="createRegItemsHeaderDesc" style="font-size: 0.78rem; color: var(--text-muted);">สามารถเพิ่มได้มากกว่า 1 รายการในคราวเดียว</span>
+              <span id="createRegItemsHeaderDesc"
+                style="font-size: 0.78rem; color: var(--text-muted);">สามารถเพิ่มได้มากกว่า 1 รายการในคราวเดียว</span>
             </div>
-            <button type="button" id="btnAddRegRowBtn" class="btn btn-secondary btn-sm" onclick="addRegulationRowToCreateForm()">
+            <button type="button" id="btnAddRegRowBtn" class="btn btn-secondary btn-sm"
+              onclick="addRegulationRowToCreateForm()">
               + เพิ่มอีกรายการ
             </button>
           </div>
@@ -2005,7 +2069,8 @@
           <div
             style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; margin-bottom: 1rem; font-size: 0.82rem; color: #166534; line-height: 1.5;">
             ⏱️ <strong>การนับระยะเวลาพิจารณา (SLA):</strong> เริ่มนับจาก <strong>วันที่ฝ่ายรับหนังสือ</strong>
-            จนถึง <strong><span id="updateRegMilestonesSlaEndLabel">วันที่นายทะเบียนรับจดทะเบียน / เห็นชอบ / รับทราบ</span></strong>
+            จนถึง <strong><span id="updateRegMilestonesSlaEndLabel">วันที่นายทะเบียนรับจดทะเบียน / เห็นชอบ /
+                รับทราบ</span></strong>
           </div>
 
           <!-- 1. วันที่ฝ่ายรับหนังสือ -->
@@ -2035,12 +2100,14 @@
             </label>
             <input type="text" id="regMilestoneApproveDate" name="regApproveDate" class="form-control thai-date-input"
               placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
-            <small id="regMilestoneApproveHelp" style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 4px;">
+            <small id="regMilestoneApproveHelp"
+              style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 4px;">
               เมื่อกรอกวันที่นี้ ขั้นตอนจะ "เสร็จสิ้น" และระบบจะหยุดนับเวลาทันที
             </small>
 
             <!-- ช่องติ๊กส่งเอกสาร -->
-            <div style="margin-top: 12px; padding: 10px 12px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; display: flex; align-items: center; gap: 10px;">
+            <div
+              style="margin-top: 12px; padding: 10px 12px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; display: flex; align-items: center; gap: 10px;">
               <input type="checkbox" id="regMilestoneDocDispatched" name="docDispatched"
                 style="width: 18px; height: 18px; cursor: pointer;">
               <label for="regMilestoneDocDispatched"
@@ -2048,25 +2115,31 @@
                 📦 ส่งมอบเอกสารให้สหกรณ์และหน่วยงานเรียบร้อยแล้ว
               </label>
             </div>
-            <div id="regMilestoneDispatchWrap" style="margin-top: 8px; display: none; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div id="regMilestoneDispatchWrap"
+              style="margin-top: 8px; display: none; grid-template-columns: 1fr 1fr; gap: 8px;">
               <div>
-                <label style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 2px; display: block;">เลขส่ง ฝบท (ถ้ามี):</label>
+                <label style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 2px; display: block;">เลขส่ง
+                  ฝบท (ถ้ามี):</label>
                 <input type="text" id="regMilestoneSendDocNumber" name="sendDocNumber" class="form-control"
                   placeholder="เช่น รย 0011/...">
               </div>
               <div>
-                <label style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 2px; display: block;">วันที่ส่งหนังสือออก (ถ้ามี):</label>
-                <input type="text" id="regMilestoneDispatchDate" name="dispatchDate" class="form-control thai-date-input"
-                  placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
+                <label
+                  style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 2px; display: block;">วันที่ส่งหนังสือออก
+                  (ถ้ามี):</label>
+                <input type="text" id="regMilestoneDispatchDate" name="dispatchDate"
+                  class="form-control thai-date-input" placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
               </div>
             </div>
           </div>
 
           <!-- กล่องข้อความบันทึกเพิ่มเติม -->
           <div class="form-group" style="margin-bottom: 6px;">
-            <label style="font-weight: 600; font-size: 0.88rem; color: #334155; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+            <label
+              style="font-weight: 600; font-size: 0.88rem; color: #334155; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
               <span>📝 กล่องข้อความบันทึกเพิ่มเติม</span>
-              <span style="font-weight: normal; font-size: 0.75rem; color: var(--text-muted);">(นำมาแสดงบนการ์ดและตาราง)</span>
+              <span
+                style="font-weight: normal; font-size: 0.75rem; color: var(--text-muted);">(นำมาแสดงบนการ์ดและตาราง)</span>
             </label>
             <textarea id="regMilestoneNote" name="note" class="form-control" rows="3"
               placeholder="ระบุข้อความบันทึกเพิ่มเติม ผลการพิจารณา หรือรายละเอียดที่ต้องการบันทึก..."></textarea>
@@ -2168,11 +2241,13 @@
           <div class="form-row">
             <div class="form-group">
               <label>เลขรับ ฝบท</label>
-              <input type="text" id="editRegDocNumber" name="docNumber" class="form-control" placeholder="เช่น รับที่ 124/67">
+              <input type="text" id="editRegDocNumber" name="docNumber" class="form-control"
+                placeholder="เช่น รับที่ 124/67">
             </div>
             <div class="form-group">
               <label>เลขส่ง ฝบท</label>
-              <input type="text" id="editRegSendDocNumber" name="sendDocNumber" class="form-control" placeholder="เช่น รย 0011/...">
+              <input type="text" id="editRegSendDocNumber" name="sendDocNumber" class="form-control"
+                placeholder="เช่น รย 0011/...">
             </div>
             <div class="form-group">
               <label>วันที่ยื่นเรื่อง</label>
@@ -2409,11 +2484,16 @@
               </div>
               <div class="export-time-presets">
                 <span class="time-preset-label">ลัด:</span>
-                <button type="button" class="time-preset-btn" onclick="setExportTimePreset('THIS_MONTH')" title="กรองเฉพาะเดือนปัจจุบัน">เดือนนี้</button>
-                <button type="button" class="time-preset-btn" onclick="setExportTimePreset('LAST_MONTH')" title="กรองเฉพาะเดือนที่แล้ว">เดือนก่อน</button>
-                <button type="button" class="time-preset-btn" onclick="setExportTimePreset('THIS_QUARTER')" title="กรองเฉพาะไตรมาสปัจจุบัน">ไตรมาสนี้</button>
-                <button type="button" class="time-preset-btn" onclick="setExportTimePreset('THIS_FISCAL_YEAR')" title="กรองตลอดปีงบประมาณปัจจุบัน">ปีงบฯ นี้</button>
-                <button type="button" class="time-preset-btn time-preset-clear" onclick="setExportTimePreset('ALL')" title="ไม่จำกัดช่วงเวลา">ทุกช่วงเวลา</button>
+                <button type="button" class="time-preset-btn" onclick="setExportTimePreset('THIS_MONTH')"
+                  title="กรองเฉพาะเดือนปัจจุบัน">เดือนนี้</button>
+                <button type="button" class="time-preset-btn" onclick="setExportTimePreset('LAST_MONTH')"
+                  title="กรองเฉพาะเดือนที่แล้ว">เดือนก่อน</button>
+                <button type="button" class="time-preset-btn" onclick="setExportTimePreset('THIS_QUARTER')"
+                  title="กรองเฉพาะไตรมาสปัจจุบัน">ไตรมาสนี้</button>
+                <button type="button" class="time-preset-btn" onclick="setExportTimePreset('THIS_FISCAL_YEAR')"
+                  title="กรองตลอดปีงบประมาณปัจจุบัน">ปีงบฯ นี้</button>
+                <button type="button" class="time-preset-btn time-preset-clear" onclick="setExportTimePreset('ALL')"
+                  title="ไม่จำกัดช่วงเวลา">ทุกช่วงเวลา</button>
               </div>
             </div>
 
@@ -2510,7 +2590,8 @@
 
                 <!-- Mode: ALL helper text -->
                 <div id="timeInputsAll" class="time-dynamic-group" style="display: flex;">
-                  <span class="time-all-note">🌐 ประมวลผลข้อมูลทุกช่วงเวลา (สามารถเลือกกดปุ่มลัดด้านบน เช่น "เดือนนี้", "ไตรมาสนี้" ได้)</span>
+                  <span class="time-all-note">🌐 ประมวลผลข้อมูลทุกช่วงเวลา (สามารถเลือกกดปุ่มลัดด้านบน เช่น "เดือนนี้",
+                    "ไตรมาสนี้" ได้)</span>
                 </div>
               </div>
             </div>
@@ -2775,16 +2856,19 @@
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
           <button class="btn btn-secondary" onclick="closeModal('activeExportModal')">ปิดหน้าต่าง</button>
-          <button class="btn btn-outline-secondary" onclick="triggerActiveExportDirectPrint()" title="สั่งพิมพ์รายงานสรุปตามเงื่อนไขตัวกรองออกเครื่องพิมพ์ทันที">
+          <button class="btn btn-outline-secondary" onclick="triggerActiveExportDirectPrint()"
+            title="สั่งพิมพ์รายงานสรุปตามเงื่อนไขตัวกรองออกเครื่องพิมพ์ทันที">
             🖨️ สั่งพิมพ์ (Print)
           </button>
           <button class="btn btn-outline-primary" onclick="exportCombinedActiveCsv()" title="ส่งออกเป็นไฟล์ CSV">
             📄 ส่งออก CSV (.csv)
           </button>
-          <button class="btn btn-success" onclick="exportCombinedActiveExcel()" title="ดาวน์โหลดเป็นไฟล์ Excel (.xlsx) แยกชีตชำระบัญชี + ระเบียบข้อบังคับ">
+          <button class="btn btn-success" onclick="exportCombinedActiveExcel()"
+            title="ดาวน์โหลดเป็นไฟล์ Excel (.xlsx) แยกชีตชำระบัญชี + ระเบียบข้อบังคับ">
             📊 ส่งออก Excel (.xlsx)
           </button>
-          <button class="btn btn-primary" onclick="exportAllActiveOperationsPdf()" title="ดูตัวอย่างเอกสารรายงานทางการและบันทึกเป็น PDF">
+          <button class="btn btn-primary" onclick="exportAllActiveOperationsPdf()"
+            title="ดูตัวอย่างเอกสารรายงานทางการและบันทึกเป็น PDF">
             📑 ดูตัวอย่าง & พิมพ์ PDF
           </button>
         </div>
@@ -2850,23 +2934,28 @@
 
       <div class="modal-body" style="padding: 1.25rem;">
         <!-- Top Action Bar: Search & Batch Import Button -->
-        <div style="display: flex; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+        <div
+          style="display: flex; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
           <div style="display: flex; gap: 10px; flex: 1; min-width: 260px;">
             <input type="text" id="coopDirectorySearchInput" class="form-control"
-              placeholder="🔍 ค้นหารายชื่อสหกรณ์ในระบบ..."
-              oninput="renderCoopDirectoryList()">
+              placeholder="🔍 ค้นหารายชื่อสหกรณ์ในระบบ..." oninput="renderCoopDirectoryList()">
           </div>
           <div style="display: flex; gap: 8px; align-items: center;">
-            <span id="coopDirSyncBadge" style="background: #e0f2fe; color: #0369a1; font-size: 0.8rem; font-weight: 500; padding: 6px 12px; border-radius: 20px; border: 1px solid #bae6fd; display: inline-flex; align-items: center; gap: 5px;">
+            <span id="coopDirSyncBadge"
+              style="background: #e0f2fe; color: #0369a1; font-size: 0.8rem; font-weight: 500; padding: 6px 12px; border-radius: 20px; border: 1px solid #bae6fd; display: inline-flex; align-items: center; gap: 5px;">
               ☁️ ซิงค์ Google Sheets (CoopDirectory) แล้ว
             </span>
-            <button class="btn btn-outline-secondary btn-sm" onclick="syncCoopDirectoryWithRemote(true)" title="ดึงข้อมูลล่าสุดจาก Google Sheets">
+            <button class="btn btn-outline-secondary btn-sm" onclick="syncCoopDirectoryWithRemote(true)"
+              title="ดึงข้อมูลล่าสุดจาก Google Sheets">
               <span id="coopSyncSpin">🔄</span> ซิงค์ข้อมูล
             </button>
-            <button id="coopDirBatchImportBtn" class="btn btn-primary" onclick="toggleBatchImportForm(true)" style="display: none;">
+            <button id="coopDirBatchImportBtn" class="btn btn-primary" onclick="toggleBatchImportForm(true)"
+              style="display: none;">
               📥 นำเข้ารายชื่อสหกรณ์ (แบบชุด)
             </button>
-            <button id="coopDirClearAllBtn" class="btn btn-outline-danger btn-sm" onclick="handleClearAllCoops()" title="ล้างรายชื่อสหกรณ์ทั้งหมดออกจากระบบ (เฉพาะผู้ดูแลระบบ)" style="border-color: #fca5a5; color: #dc2626; display: none;">
+            <button id="coopDirClearAllBtn" class="btn btn-outline-danger btn-sm" onclick="handleClearAllCoops()"
+              title="ล้างรายชื่อสหกรณ์ทั้งหมดออกจากระบบ (เฉพาะผู้ดูแลระบบ)"
+              style="border-color: #fca5a5; color: #dc2626; display: none;">
               🗑️ ล้างทั้งหมด
             </button>
           </div>
@@ -2877,29 +2966,35 @@
           <button class="filter-chip active" data-dir-group="ALL" onclick="setCoopDirectoryGroupFilter('ALL')">
             <span class="chip-check">✓</span> ทั้งหมด (<span id="coopDirTotalCount">0</span>)
           </button>
-          <button class="filter-chip group-chip" data-dir-group="กลุ่มส่งเสริมสหกรณ์ 1" onclick="setCoopDirectoryGroupFilter('กลุ่มส่งเสริมสหกรณ์ 1')">
+          <button class="filter-chip group-chip" data-dir-group="กลุ่มส่งเสริมสหกรณ์ 1"
+            onclick="setCoopDirectoryGroupFilter('กลุ่มส่งเสริมสหกรณ์ 1')">
             <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 1 (<span id="coopDirG1Count">0</span>)
           </button>
-          <button class="filter-chip group-chip" data-dir-group="กลุ่มส่งเสริมสหกรณ์ 2" onclick="setCoopDirectoryGroupFilter('กลุ่มส่งเสริมสหกรณ์ 2')">
+          <button class="filter-chip group-chip" data-dir-group="กลุ่มส่งเสริมสหกรณ์ 2"
+            onclick="setCoopDirectoryGroupFilter('กลุ่มส่งเสริมสหกรณ์ 2')">
             <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 2 (<span id="coopDirG2Count">0</span>)
           </button>
-          <button class="filter-chip group-chip" data-dir-group="กลุ่มส่งเสริมสหกรณ์ 3" onclick="setCoopDirectoryGroupFilter('กลุ่มส่งเสริมสหกรณ์ 3')">
+          <button class="filter-chip group-chip" data-dir-group="กลุ่มส่งเสริมสหกรณ์ 3"
+            onclick="setCoopDirectoryGroupFilter('กลุ่มส่งเสริมสหกรณ์ 3')">
             <span class="chip-check">✓</span> 🏢 กลุ่มส่งเสริมสหกรณ์ 3 (<span id="coopDirG3Count">0</span>)
           </button>
-          <button class="filter-chip group-chip" data-dir-group="นิคมสหกรณ์ชะแวะ" onclick="setCoopDirectoryGroupFilter('นิคมสหกรณ์ชะแวะ')">
+          <button class="filter-chip group-chip" data-dir-group="นิคมสหกรณ์ชะแวะ"
+            onclick="setCoopDirectoryGroupFilter('นิคมสหกรณ์ชะแวะ')">
             <span class="chip-check">✓</span> 🌾 นิคมสหกรณ์ชะแวะ (<span id="coopDirGChawoeCount">0</span>)
           </button>
         </div>
 
         <!-- Batch Import Card (Prominent & Simple) -->
-        <div id="batchImportCoopCard" style="display: none; background: #f0fdfa; border: 1.5px solid #0d9488; border-radius: 10px; padding: 1.25rem; margin-bottom: 1.25rem; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.08);">
+        <div id="batchImportCoopCard"
+          style="display: none; background: #f0fdfa; border: 1.5px solid #0d9488; border-radius: 10px; padding: 1.25rem; margin-bottom: 1.25rem; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.08);">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
             <div>
               <h4 style="margin: 0; font-size: 1.05rem; color: #0f766e; display: flex; align-items: center; gap: 6px;">
                 <span>📥</span> นำเข้ารายชื่อสหกรณ์เข้ากลุ่มส่งเสริมฯ (ใส่ได้พร้อมกันหลายชื่อ)
               </h4>
               <p style="margin: 4px 0 0; font-size: 0.82rem; color: var(--text-muted);">
-                ขั้นตอนที่ 1: เลือกกลุ่มส่งเสริมสหกรณ์ ➔ ขั้นตอนที่ 2: วางหรือพิมพ์รายชื่อสหกรณ์ (บรรทัดละ 1 ชื่อ) แล้วกดปุ่มนำเข้า
+                ขั้นตอนที่ 1: เลือกกลุ่มส่งเสริมสหกรณ์ ➔ ขั้นตอนที่ 2: วางหรือพิมพ์รายชื่อสหกรณ์ (บรรทัดละ 1 ชื่อ)
+                แล้วกดปุ่มนำเข้า
               </p>
             </div>
             <button type="button" class="btn btn-secondary btn-sm" onclick="toggleBatchImportForm(false)">✕ ปิด</button>
@@ -2908,16 +3003,20 @@
           <form id="batchImportCoopForm" onsubmit="handleBatchImportCoops(event)">
             <div class="form-row" style="margin-bottom: 0.75rem;">
               <div class="form-group" style="flex: 1;">
-                <label style="font-weight: 600; color: #0f766e;">1. เลือกกลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ <span style="color: red;">*</span></label>
-                <select id="batchImportTargetGroup" class="form-control" required style="font-weight: 600; font-size: 0.95rem; border: 1.5px solid #0d9488;">
+                <label style="font-weight: 600; color: #0f766e;">1. เลือกกลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ <span
+                    style="color: red;">*</span></label>
+                <select id="batchImportTargetGroup" class="form-control" required
+                  style="font-weight: 600; font-size: 0.95rem; border: 1.5px solid #0d9488;">
                   <option value="กลุ่มส่งเสริมสหกรณ์ 1">🏢 กลุ่มส่งเสริมสหกรณ์ 1 (อ.เมืองระยอง, อ.บ้านฉาง)</option>
                   <option value="กลุ่มส่งเสริมสหกรณ์ 2">🏢 กลุ่มส่งเสริมสหกรณ์ 2 (อ.แกลง, อ.เขาชะเมา)</option>
-                  <option value="กลุ่มส่งเสริมสหกรณ์ 3">🏢 กลุ่มส่งเสริมสหกรณ์ 3 (อ.บ้านค่าย, อ.ปลวกแดง, อ.นิคมพัฒนา)</option>
+                  <option value="กลุ่มส่งเสริมสหกรณ์ 3">🏢 กลุ่มส่งเสริมสหกรณ์ 3 (อ.บ้านค่าย, อ.ปลวกแดง, อ.นิคมพัฒนา)
+                  </option>
                   <option value="นิคมสหกรณ์ชะแวะ">🌾 นิคมสหกรณ์ชะแวะ (อ.วังจันทร์)</option>
                 </select>
               </div>
               <div class="form-group" style="flex: 1;">
-                <label style="font-size: 0.82rem; color: var(--text-muted);">ประเภทสถาบันตั้งต้น (ระบบจะตรวจจับอัตโนมัติจากชื่อ)</label>
+                <label style="font-size: 0.82rem; color: var(--text-muted);">ประเภทสถาบันตั้งต้น
+                  (ระบบจะตรวจจับอัตโนมัติจากชื่อ)</label>
                 <select id="batchImportDefaultType" class="form-control">
                   <option value="สหกรณ์การเกษตร">สหกรณ์การเกษตร (ค่าเริ่มต้น)</option>
                   <option value="สหกรณ์ออมทรัพย์">สหกรณ์ออมทรัพย์</option>
@@ -2933,24 +3032,26 @@
 
             <div class="form-group" style="margin-bottom: 0.75rem;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                <label style="font-weight: 600; color: #0f766e;">2. รายชื่อสหกรณ์ / สถาบัน (วางหรือพิมพ์ได้พร้อมกันหลายชื่อ) <span style="color: red;">*</span></label>
-                <span id="batchNamesCountPreview" style="font-size: 0.82rem; font-weight: 600; color: #0d9488;">0 รายชื่อ</span>
+                <label style="font-weight: 600; color: #0f766e;">2. รายชื่อสหกรณ์ / สถาบัน
+                  (วางหรือพิมพ์ได้พร้อมกันหลายชื่อ) <span style="color: red;">*</span></label>
+                <span id="batchNamesCountPreview" style="font-size: 0.82rem; font-weight: 600; color: #0d9488;">0
+                  รายชื่อ</span>
               </div>
-              <textarea id="batchCoopNamesInput" class="form-control" rows="6" required
-                placeholder="วางรายชื่อสหกรณ์ที่นี่ (บรรทัดละ 1 ชื่อ) เช่น:
+              <textarea id="batchCoopNamesInput" class="form-control" rows="6" required placeholder="วางรายชื่อสหกรณ์ที่นี่ (บรรทัดละ 1 ชื่อ) เช่น:
 สหกรณ์การเกษตรเมืองระยอง จำกัด
 สหกรณ์ประมงปากน้ำระยอง จำกัด
 สหกรณ์ออมทรัพย์ครูระยอง จำกัด
-กลุ่มเกษตรกรทำสวนเมืองระยอง"
-                style="font-family: inherit; font-size: 0.9rem; line-height: 1.5; resize: vertical;"
+กลุ่มเกษตรกรทำสวนเมืองระยอง" style="font-family: inherit; font-size: 0.9rem; line-height: 1.5; resize: vertical;"
                 oninput="updateBatchNamesCountPreview()"></textarea>
               <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 4px;">
-                💡 เคล็ดลับ: สามารถคัดลอกจาก Excel หรือเอกสารมาวางได้ทันที ระบบจะตัดเลขข้อ (1., 2.) และบรรทัดว่างออกให้อัตโนมัติ
+                💡 เคล็ดลับ: สามารถคัดลอกจาก Excel หรือเอกสารมาวางได้ทันที ระบบจะตัดเลขข้อ (1., 2.)
+                และบรรทัดว่างออกให้อัตโนมัติ
               </div>
             </div>
 
             <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="toggleBatchImportForm(false)">ยกเลิก</button>
+              <button type="button" class="btn btn-secondary btn-sm"
+                onclick="toggleBatchImportForm(false)">ยกเลิก</button>
               <button type="submit" id="btnSubmitBatchImport" class="btn btn-primary">
                 📥 บันทึกนำเข้ารายชื่อเข้ากลุ่มนี้
               </button>
@@ -2959,7 +3060,8 @@
         </div>
 
         <!-- Table of Cooperatives -->
-        <div class="table-responsive" style="max-height: 460px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+        <div class="table-responsive"
+          style="max-height: 460px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
           <table class="data-table" style="width: 100%; font-size: 0.83rem;">
             <thead style="position: sticky; top: 0; z-index: 2; background: #f8fafc;">
               <tr>
