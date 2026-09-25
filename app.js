@@ -177,11 +177,13 @@ function escapeHtml(str) {
 
 function getResolvedGroup(item) {
   if (!item) return '';
-  if (item.promotionGroup && item.promotionGroup.trim() !== '') return item.promotionGroup.trim();
-  if (item.group && item.group.trim() !== '') return item.group.trim();
+  const promo = item.promotionGroup != null ? String(item.promotionGroup).trim() : '';
+  if (promo !== '') return promo;
+  const grp = item.group != null ? String(item.group).trim() : '';
+  if (grp !== '') return grp;
   if (typeof CoopDatabaseUtil !== 'undefined' && item.coopName) {
-    const matched = CoopDatabaseUtil.findByName(item.coopName);
-    if (matched && matched.group) return matched.group;
+    const matched = CoopDatabaseUtil.findByName(String(item.coopName));
+    if (matched && matched.group) return String(matched.group).trim();
   }
   return '';
 }
@@ -300,18 +302,18 @@ function handleHubGlobalSearch() {
 
   const q = query.toLowerCase();
   const liqMatches = AppState.cases.filter(c =>
-    (c.coopName && c.coopName.toLowerCase().includes(q)) ||
-    (c.regNumber && c.regNumber.toLowerCase().includes(q))
+    (c.coopName && String(c.coopName).toLowerCase().includes(q)) ||
+    (c.regNumber && String(c.regNumber).toLowerCase().includes(q))
   );
 
   const regMatches = AppState.regulations.filter(r =>
-    (r.coopName && r.coopName.toLowerCase().includes(q)) ||
-    (r.title && r.title.toLowerCase().includes(q))
+    (r.coopName && String(r.coopName).toLowerCase().includes(q)) ||
+    (r.title && String(r.title).toLowerCase().includes(q))
   );
 
   const bylawMatches = AppState.bylaws.filter(b =>
-    (b.coopName && b.coopName.toLowerCase().includes(q)) ||
-    (b.title && b.title.toLowerCase().includes(q))
+    (b.coopName && String(b.coopName).toLowerCase().includes(q)) ||
+    (b.title && String(b.title).toLowerCase().includes(q))
   );
 
   if (bylawMatches.length > 0 && regMatches.length === 0 && liqMatches.length === 0) {
@@ -359,10 +361,50 @@ async function initializeApp() {
   }
 }
 
+function normalizeCaseItem(item) {
+  if (!item || typeof item !== 'object') return item;
+  return {
+    ...item,
+    id: item.id != null ? String(item.id) : '',
+    regNumber: item.regNumber != null ? String(item.regNumber) : '',
+    orderNumber: item.orderNumber != null ? String(item.orderNumber) : '',
+    coopName: item.coopName != null ? String(item.coopName) : '',
+    coopType: item.coopType != null ? String(item.coopType) : '',
+    group: item.group != null ? String(item.group) : '',
+    promotionGroup: item.promotionGroup != null ? String(item.promotionGroup) : '',
+    location: item.location != null ? String(item.location) : '',
+    liquidators: item.liquidators != null ? String(item.liquidators) : '',
+    liquidatorPhone: item.liquidatorPhone != null ? String(item.liquidatorPhone) : '',
+    status: item.status != null ? String(item.status) : ''
+  };
+}
+
+function normalizeRegulationItem(item) {
+  if (!item || typeof item !== 'object') return item;
+  return {
+    ...item,
+    id: item.id != null ? String(item.id) : '',
+    docNumber: item.docNumber != null ? String(item.docNumber) : '',
+    regNumber: item.regNumber != null ? String(item.regNumber) : '',
+    title: item.title != null ? String(item.title) : '',
+    coopName: item.coopName != null ? String(item.coopName) : '',
+    coopType: item.coopType != null ? String(item.coopType) : '',
+    officerName: item.officerName != null ? String(item.officerName) : '',
+    officerContact: item.officerContact != null ? String(item.officerContact) : '',
+    docType: item.docType != null ? String(item.docType) : '',
+    group: item.group != null ? String(item.group) : '',
+    promotionGroup: item.promotionGroup != null ? String(item.promotionGroup) : '',
+    remarks: item.remarks != null ? String(item.remarks) : '',
+    reviewNotes: item.reviewNotes != null ? String(item.reviewNotes) : '',
+    status: item.status != null ? String(item.status) : ''
+  };
+}
+
 async function loadCasesData() {
   try {
     const cases = await ApiClient.get('listCases');
-    AppState.cases = Array.isArray(cases) ? cases : [];
+    const all = Array.isArray(cases) ? cases : [];
+    AppState.cases = all.map(normalizeCaseItem);
     applyFilters();
     updateStatsDisplay();
   } catch (err) {
@@ -374,11 +416,11 @@ async function loadCasesData() {
 async function loadRegulationsData() {
   try {
     const regs = await ApiClient.get('listRegulations');
-    const all = Array.isArray(regs) ? regs : [];
+    const all = (Array.isArray(regs) ? regs : []).map(normalizeRegulationItem);
     AppState.allRegulations = all;
     // แยกโมดูล: ระเบียบสหกรณ์ (เฉพาะระเบียบ) vs ข้อบังคับสหกรณ์ (เฉพาะข้อบังคับ)
-    AppState.regulations = all.filter(r => !(r.docType && r.docType.includes('ข้อบังคับ')));
-    AppState.bylaws = all.filter(r => r.docType && r.docType.includes('ข้อบังคับ'));
+    AppState.regulations = all.filter(r => !(r.docType && String(r.docType).includes('ข้อบังคับ')));
+    AppState.bylaws = all.filter(r => r.docType && String(r.docType).includes('ข้อบังคับ'));
 
     applyRegFilters();
     updateRegStatsDisplay();
@@ -402,19 +444,19 @@ function applyFilters() {
   if (AppState.searchTerm.trim() !== '') {
     const q = AppState.searchTerm.toLowerCase().trim();
     list = list.filter(c =>
-      (c.coopName && c.coopName.toLowerCase().includes(q)) ||
-      (c.regNumber && c.regNumber.toLowerCase().includes(q)) ||
-      (c.orderNumber && c.orderNumber.toLowerCase().includes(q)) ||
-      (c.liquidators && c.liquidators.toLowerCase().includes(q)) ||
-      (c.location && c.location.toLowerCase().includes(q)) ||
-      (getResolvedGroup(c).toLowerCase().includes(q))
+      (c.coopName && String(c.coopName).toLowerCase().includes(q)) ||
+      (c.regNumber && String(c.regNumber).toLowerCase().includes(q)) ||
+      (c.orderNumber && String(c.orderNumber).toLowerCase().includes(q)) ||
+      (c.liquidators && String(c.liquidators).toLowerCase().includes(q)) ||
+      (c.location && String(c.location).toLowerCase().includes(q)) ||
+      (String(getResolvedGroup(c) || '').toLowerCase().includes(q))
     );
   }
 
   // Filter by Group (กลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ)
   if (AppState.filterGroup && AppState.filterGroup !== 'ALL') {
     list = list.filter(c => {
-      const g = getResolvedGroup(c);
+      const g = String(getResolvedGroup(c) || '');
       return g === AppState.filterGroup || g.includes(AppState.filterGroup);
     });
   }
@@ -440,9 +482,9 @@ function applyFilters() {
   // Filter by Type
   if (AppState.filterType !== 'ALL') {
     if (AppState.filterType === 'กลุ่มเกษตรกร') {
-      list = list.filter(c => c.coopType && c.coopType.includes('กลุ่มเกษตรกร'));
+      list = list.filter(c => c.coopType && String(c.coopType).includes('กลุ่มเกษตรกร'));
     } else {
-      list = list.filter(c => c.coopType === AppState.filterType || (c.coopType && c.coopType.includes(AppState.filterType)));
+      list = list.filter(c => c.coopType === AppState.filterType || (c.coopType && String(c.coopType).includes(AppState.filterType)));
     }
   }
 
@@ -1508,12 +1550,12 @@ function applyRegFilters() {
     const q = AppState.regSearchTerm.toLowerCase().trim();
     list = list.filter(r => {
       const g = getResolvedGroup(r);
-      return (r.coopName && r.coopName.toLowerCase().includes(q)) ||
-        (r.title && r.title.toLowerCase().includes(q)) ||
-        (r.docNumber && r.docNumber.toLowerCase().includes(q)) ||
-        (r.officerName && r.officerName.toLowerCase().includes(q)) ||
-        (r.regNumber && r.regNumber.toLowerCase().includes(q)) ||
-        (g && g.toLowerCase().includes(q));
+      return (r.coopName && String(r.coopName).toLowerCase().includes(q)) ||
+        (r.title && String(r.title).toLowerCase().includes(q)) ||
+        (r.docNumber && String(r.docNumber).toLowerCase().includes(q)) ||
+        (r.officerName && String(r.officerName).toLowerCase().includes(q)) ||
+        (r.regNumber && String(r.regNumber).toLowerCase().includes(q)) ||
+        (g && String(g).toLowerCase().includes(q));
     });
   }
 
@@ -1532,9 +1574,9 @@ function applyRegFilters() {
 
   if (AppState.regFilterCoopType && AppState.regFilterCoopType !== 'ALL') {
     if (AppState.regFilterCoopType === 'กลุ่มเกษตรกร') {
-      list = list.filter(r => r.coopType && r.coopType.includes('กลุ่มเกษตรกร'));
+      list = list.filter(r => r.coopType && String(r.coopType).includes('กลุ่มเกษตรกร'));
     } else {
-      list = list.filter(r => r.coopType === AppState.regFilterCoopType || (r.coopType && r.coopType.includes(AppState.regFilterCoopType)));
+      list = list.filter(r => r.coopType === AppState.regFilterCoopType || (r.coopType && String(r.coopType).includes(AppState.regFilterCoopType)));
     }
   }
 
@@ -2250,12 +2292,12 @@ function applyBylawFilters() {
     const q = AppState.bylawSearchTerm.toLowerCase().trim();
     list = list.filter(r => {
       const g = getResolvedGroup(r);
-      return (r.coopName && r.coopName.toLowerCase().includes(q)) ||
-        (r.title && r.title.toLowerCase().includes(q)) ||
-        (r.docNumber && r.docNumber.toLowerCase().includes(q)) ||
-        (r.officerName && r.officerName.toLowerCase().includes(q)) ||
-        (r.regNumber && r.regNumber.toLowerCase().includes(q)) ||
-        (g && g.toLowerCase().includes(q));
+      return (r.coopName && String(r.coopName).toLowerCase().includes(q)) ||
+        (r.title && String(r.title).toLowerCase().includes(q)) ||
+        (r.docNumber && String(r.docNumber).toLowerCase().includes(q)) ||
+        (r.officerName && String(r.officerName).toLowerCase().includes(q)) ||
+        (r.regNumber && String(r.regNumber).toLowerCase().includes(q)) ||
+        (g && String(g).toLowerCase().includes(q));
     });
   }
 
@@ -2275,9 +2317,9 @@ function applyBylawFilters() {
   // Filter by Coop Type
   if (AppState.bylawFilterCoopType && AppState.bylawFilterCoopType !== 'ALL') {
     if (AppState.bylawFilterCoopType === 'กลุ่มเกษตรกร') {
-      list = list.filter(r => r.coopType && r.coopType.includes('กลุ่มเกษตรกร'));
+      list = list.filter(r => r.coopType && String(r.coopType).includes('กลุ่มเกษตรกร'));
     } else {
-      list = list.filter(r => r.coopType === AppState.bylawFilterCoopType || (r.coopType && r.coopType.includes(AppState.bylawFilterCoopType)));
+      list = list.filter(r => r.coopType === AppState.bylawFilterCoopType || (r.coopType && String(r.coopType).includes(AppState.bylawFilterCoopType)));
     }
   }
 
@@ -5580,16 +5622,16 @@ function getFilteredExportCases() {
     // 7. Search keyword
     if (ExportFilterState.search) {
       const q = ExportFilterState.search.toLowerCase();
-      const dissolutionType = item.dissolutionType || (item.orderNumber && item.orderNumber.includes('ประกาศ') ? 'ประกาศเลิก' : 'คำสั่งเลิก');
-      const liqText = getLiquidatorsSummaryText(item).toLowerCase();
-      const issueText = getIssuesSummaryText(item).toLowerCase();
+      const dissolutionType = item.dissolutionType || (item.orderNumber && String(item.orderNumber).includes('ประกาศ') ? 'ประกาศเลิก' : 'คำสั่งเลิก');
+      const liqText = String(getLiquidatorsSummaryText(item) || '').toLowerCase();
+      const issueText = String(getIssuesSummaryText(item) || '').toLowerCase();
       const match = (
-        (item.coopName && item.coopName.toLowerCase().includes(q)) ||
-        (item.regNumber && item.regNumber.toLowerCase().includes(q)) ||
-        (item.orderNumber && item.orderNumber.toLowerCase().includes(q)) ||
-        (item.location && item.location.toLowerCase().includes(q)) ||
-        (item.coopType && item.coopType.toLowerCase().includes(q)) ||
-        (dissolutionType && dissolutionType.toLowerCase().includes(q)) ||
+        (item.coopName && String(item.coopName).toLowerCase().includes(q)) ||
+        (item.regNumber && String(item.regNumber).toLowerCase().includes(q)) ||
+        (item.orderNumber && String(item.orderNumber).toLowerCase().includes(q)) ||
+        (item.location && String(item.location).toLowerCase().includes(q)) ||
+        (item.coopType && String(item.coopType).toLowerCase().includes(q)) ||
+        (dissolutionType && String(dissolutionType).toLowerCase().includes(q)) ||
         liqText.includes(q) ||
         issueText.includes(q)
       );
@@ -5617,7 +5659,7 @@ function getFilteredExportRegulations() {
     // 3. Coop Type
     if (ExportFilterState.coopType !== 'ALL') {
       if (ExportFilterState.coopType === 'กลุ่มเกษตรกร') {
-        if (!item.coopType || !item.coopType.includes('กลุ่มเกษตรกร')) return false;
+        if (!item.coopType || !String(item.coopType).includes('กลุ่มเกษตรกร')) return false;
       } else {
         if (item.coopType && item.coopType !== ExportFilterState.coopType) return false;
       }
@@ -5653,15 +5695,15 @@ function getFilteredExportRegulations() {
     if (ExportFilterState.search) {
       const q = ExportFilterState.search.toLowerCase();
       const match = (
-        (item.title && item.title.toLowerCase().includes(q)) ||
-        (item.coopName && item.coopName.toLowerCase().includes(q)) ||
-        (item.regNumber && item.regNumber.toLowerCase().includes(q)) ||
-        (item.docNumber && item.docNumber.toLowerCase().includes(q)) ||
-        (item.docType && item.docType.toLowerCase().includes(q)) ||
-        (item.officerName && item.officerName.toLowerCase().includes(q)) ||
-        (item.officerContact && item.officerContact.toLowerCase().includes(q)) ||
-        (item.remarks && item.remarks.toLowerCase().includes(q)) ||
-        (item.reviewNotes && item.reviewNotes.toLowerCase().includes(q))
+        (item.title && String(item.title).toLowerCase().includes(q)) ||
+        (item.coopName && String(item.coopName).toLowerCase().includes(q)) ||
+        (item.regNumber && String(item.regNumber).toLowerCase().includes(q)) ||
+        (item.docNumber && String(item.docNumber).toLowerCase().includes(q)) ||
+        (item.docType && String(item.docType).toLowerCase().includes(q)) ||
+        (item.officerName && String(item.officerName).toLowerCase().includes(q)) ||
+        (item.officerContact && String(item.officerContact).toLowerCase().includes(q)) ||
+        (item.remarks && String(item.remarks).toLowerCase().includes(q)) ||
+        (item.reviewNotes && String(item.reviewNotes).toLowerCase().includes(q))
       );
       if (!match) return false;
     }
@@ -5687,7 +5729,7 @@ function getFilteredExportBylaws() {
     // 3. Coop Type
     if (ExportFilterState.coopType !== 'ALL') {
       if (ExportFilterState.coopType === 'กลุ่มเกษตรกร') {
-        if (!item.coopType || !item.coopType.includes('กลุ่มเกษตรกร')) return false;
+        if (!item.coopType || !String(item.coopType).includes('กลุ่มเกษตรกร')) return false;
       } else {
         if (item.coopType && item.coopType !== ExportFilterState.coopType) return false;
       }
@@ -5718,15 +5760,15 @@ function getFilteredExportBylaws() {
     if (ExportFilterState.search) {
       const q = ExportFilterState.search.toLowerCase();
       const match = (
-        (item.title && item.title.toLowerCase().includes(q)) ||
-        (item.coopName && item.coopName.toLowerCase().includes(q)) ||
-        (item.regNumber && item.regNumber.toLowerCase().includes(q)) ||
-        (item.docNumber && item.docNumber.toLowerCase().includes(q)) ||
-        (item.docType && item.docType.toLowerCase().includes(q)) ||
-        (item.officerName && item.officerName.toLowerCase().includes(q)) ||
-        (item.officerContact && item.officerContact.toLowerCase().includes(q)) ||
-        (item.remarks && item.remarks.toLowerCase().includes(q)) ||
-        (item.reviewNotes && item.reviewNotes.toLowerCase().includes(q))
+        (item.title && String(item.title).toLowerCase().includes(q)) ||
+        (item.coopName && String(item.coopName).toLowerCase().includes(q)) ||
+        (item.regNumber && String(item.regNumber).toLowerCase().includes(q)) ||
+        (item.docNumber && String(item.docNumber).toLowerCase().includes(q)) ||
+        (item.docType && String(item.docType).toLowerCase().includes(q)) ||
+        (item.officerName && String(item.officerName).toLowerCase().includes(q)) ||
+        (item.officerContact && String(item.officerContact).toLowerCase().includes(q)) ||
+        (item.remarks && String(item.remarks).toLowerCase().includes(q)) ||
+        (item.reviewNotes && String(item.reviewNotes).toLowerCase().includes(q))
       );
       if (!match) return false;
     }
@@ -6814,26 +6856,26 @@ function exportCombinedActiveCsv() {
     csvContent += "ลำดับ,ชื่อสหกรณ์,เลขทะเบียน,ที่ตั้ง,ประเภทสถาบัน,ประเภทการเลิก,เลขที่คำสั่ง/ประกาศ,วันที่สั่งเลิก,ขั้นตอนปัจจุบัน,ความคืบหน้า,ผู้ชำระบัญชี,วันทำการสะสม,สถานะ,ปัญหาอุปสรรค\r\n";
     
     filteredCases.forEach((item, idx) => {
-      const dissolutionType = item.dissolutionType || (item.orderNumber && item.orderNumber.includes('ประกาศ') ? 'ประกาศเลิก' : 'คำสั่งเลิก');
+      const dissolutionType = item.dissolutionType || (item.orderNumber && String(item.orderNumber).includes('ประกาศ') ? 'ประกาศเลิก' : 'คำสั่งเลิก');
       const liqName = getLiquidatorsSummaryText(item);
       const curStepNum = parseInt(item.currentStep, 10) || 1;
       const dur = WorkingDaysUtil.calculate(item.orderDate, null, item.caseStatus || 'กำลังชำระบัญชี');
 
       const row = [
         idx + 1,
-        `"${(item.coopName || '').replace(/"/g, '""')}"`,
-        `"${(item.regNumber || '').replace(/"/g, '""')}"`,
-        `"${(item.location || '').replace(/"/g, '""')}"`,
-        `"${(item.coopType || '').replace(/"/g, '""')}"`,
+        `"${String(item.coopName || '').replace(/"/g, '""')}"`,
+        `"${String(item.regNumber || '').replace(/"/g, '""')}"`,
+        `"${String(item.location || '').replace(/"/g, '""')}"`,
+        `"${String(item.coopType || '').replace(/"/g, '""')}"`,
         `"${dissolutionType}"`,
-        `"${(item.orderNumber || '').replace(/"/g, '""')}"`,
+        `"${String(item.orderNumber || '').replace(/"/g, '""')}"`,
         `"${formatThaiDate(item.orderDate)}"`,
         `"ขั้นที่ ${curStepNum}/10"`,
         `"${curStepNum * 10}%"`,
-        `"${liqName.replace(/"/g, '""')}"`,
+        `"${String(liqName || '').replace(/"/g, '""')}"`,
         dur.hasData ? dur.workingDays : 0,
         `"${item.caseStatus || 'กำลังชำระบัญชี'}"`,
-        `"${(getIssuesSummaryText(item) || 'ปกติ').replace(/"/g, '""')}"`
+        `"${String(getIssuesSummaryText(item) || 'ปกติ').replace(/"/g, '""')}"`
       ];
       csvContent += row.join(',') + "\r\n";
     });
@@ -6850,20 +6892,20 @@ function exportCombinedActiveCsv() {
 
       const row = [
         idx + 1,
-        `"${(item.title || '').replace(/"/g, '""')}"`,
-        `"${(item.coopName || '').replace(/"/g, '""')}"`,
-        `"${(item.regNumber || '').replace(/"/g, '""')}"`,
-        `"${(sla && sla.conf && sla.conf.label) || item.docType || 'ระเบียบสหกรณ์'}"`,
+        `"${String(item.title || '').replace(/"/g, '""')}"`,
+        `"${String(item.coopName || '').replace(/"/g, '""')}"`,
+        `"${String(item.regNumber || '').replace(/"/g, '""')}"`,
+        `"${String((sla && sla.conf && sla.conf.label) || item.docType || 'ระเบียบสหกรณ์').replace(/"/g, '""')}"`,
         sla ? sla.slaDays : 30,
-        `"${(sla ? sla.badgeText : '-').replace(/"/g, '""')}"`,
-        `"${(item.docNumber || '').replace(/"/g, '""')}"`,
+        `"${String(sla ? sla.badgeText : '-').replace(/"/g, '""')}"`,
+        `"${String(item.docNumber || '').replace(/"/g, '""')}"`,
         `"${formatThaiDate(item.receiveDate || item.submitDate)}"`,
         `"ขั้นที่ ${curStepNum}/${CONFIG.REGULATION_STEPS?.length || 4}"`,
-        `"${(item.officerName || '').replace(/"/g, '""')}"`,
-        `"${(item.officerContact || '').replace(/"/g, '""')}"`,
+        `"${String(item.officerName || '').replace(/"/g, '""')}"`,
+        `"${String(item.officerContact || '').replace(/"/g, '""')}"`,
         dur.hasData ? dur.workingDays : 0,
         `"${item.status || 'อยู่ระหว่างพิจารณา'}"`,
-        `"${(item.remarks || item.reviewNotes || '-').replace(/"/g, '""')}"`
+        `"${String(item.remarks || item.reviewNotes || '-').replace(/"/g, '""')}"`
       ];
       csvContent += row.join(',') + "\r\n";
     });
@@ -6880,20 +6922,20 @@ function exportCombinedActiveCsv() {
 
       const row = [
         idx + 1,
-        `"${(item.title || '').replace(/"/g, '""')}"`,
-        `"${(item.coopName || '').replace(/"/g, '""')}"`,
-        `"${(item.regNumber || '').replace(/"/g, '""')}"`,
+        `"${String(item.title || '').replace(/"/g, '""')}"`,
+        `"${String(item.coopName || '').replace(/"/g, '""')}"`,
+        `"${String(item.regNumber || '').replace(/"/g, '""')}"`,
         `"ข้อบังคับสหกรณ์"`,
         14,
-        `"${(sla ? sla.badgeText : '-').replace(/"/g, '""')}"`,
-        `"${(item.docNumber || '').replace(/"/g, '""')}"`,
+        `"${String(sla ? sla.badgeText : '-').replace(/"/g, '""')}"`,
+        `"${String(item.docNumber || '').replace(/"/g, '""')}"`,
         `"${formatThaiDate(item.receiveDate || item.submitDate)}"`,
         `"ขั้นที่ ${curStepNum}/${CONFIG.REGULATION_STEPS?.length || 4}"`,
-        `"${(item.officerName || '').replace(/"/g, '""')}"`,
-        `"${(item.officerContact || '').replace(/"/g, '""')}"`,
+        `"${String(item.officerName || '').replace(/"/g, '""')}"`,
+        `"${String(item.officerContact || '').replace(/"/g, '""')}"`,
         dur.hasData ? dur.workingDays : 0,
         `"${item.status || 'อยู่ระหว่างพิจารณา'}"`,
-        `"${(item.remarks || item.reviewNotes || '-').replace(/"/g, '""')}"`
+        `"${String(item.remarks || item.reviewNotes || '-').replace(/"/g, '""')}"`
       ];
       csvContent += row.join(',') + "\r\n";
     });
@@ -7485,9 +7527,9 @@ function renderCoopDirectoryList() {
   const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
   if (query) {
     list = list.filter(c =>
-      (c.name && c.name.toLowerCase().includes(query)) ||
-      (c.type && c.type.toLowerCase().includes(query)) ||
-      (c.group && c.group.toLowerCase().includes(query))
+      (c.name && String(c.name).toLowerCase().includes(query)) ||
+      (c.type && String(c.type).toLowerCase().includes(query)) ||
+      (c.group && String(c.group).toLowerCase().includes(query))
     );
   }
 
