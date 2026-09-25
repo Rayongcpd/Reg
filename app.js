@@ -298,10 +298,11 @@ function updateHubStatsDisplay() {
   if (elLiqIssues) elLiqIssues.innerText = liqIssues;
 
   // 2. Regulations Stats on Hub (ระเบียบสหกรณ์)
+  const maxRegSteps = CONFIG.REGULATION_STEPS?.length || 4;
   const regTotal = AppState.regulations.length;
-  const regReview = AppState.regulations.filter(r => r.status === 'อยู่ระหว่างพิจารณา').length;
-  const regDone = AppState.regulations.filter(r => isRegApprovedStatus(r.status, r.currentStep, CONFIG.REGULATION_STEPS?.length || 4)).length;
-  const regIssues = AppState.regulations.filter(r => r.status === 'ส่งคืนแก้ไข').length;
+  const regDone = AppState.regulations.filter(r => isRegApprovedStatus(r.status, r.currentStep, maxRegSteps)).length;
+  const regIssues = AppState.regulations.filter(r => !isRegApprovedStatus(r.status, r.currentStep, maxRegSteps) && r.status === 'ส่งคืนแก้ไข').length;
+  const regReview = AppState.regulations.filter(r => !isRegApprovedStatus(r.status, r.currentStep, maxRegSteps) && r.status !== 'ส่งคืนแก้ไข').length;
 
   const elRegTotal = document.getElementById('hubStatRegTotal');
   const elRegReview = document.getElementById('hubStatRegReview');
@@ -314,9 +315,9 @@ function updateHubStatsDisplay() {
 
   // 3. Bylaws Stats on Hub (ข้อบังคับสหกรณ์)
   const bylawTotal = AppState.bylaws.length;
-  const bylawReview = AppState.bylaws.filter(b => b.status === 'อยู่ระหว่างพิจารณา').length;
-  const bylawDone = AppState.bylaws.filter(b => isRegApprovedStatus(b.status, b.currentStep, CONFIG.REGULATION_STEPS?.length || 4)).length;
-  const bylawIssues = AppState.bylaws.filter(b => b.status === 'ส่งคืนแก้ไข').length;
+  const bylawDone = AppState.bylaws.filter(b => isRegApprovedStatus(b.status, b.currentStep, maxRegSteps)).length;
+  const bylawIssues = AppState.bylaws.filter(b => !isRegApprovedStatus(b.status, b.currentStep, maxRegSteps) && b.status === 'ส่งคืนแก้ไข').length;
+  const bylawReview = AppState.bylaws.filter(b => !isRegApprovedStatus(b.status, b.currentStep, maxRegSteps) && b.status !== 'ส่งคืนแก้ไข').length;
 
   const elBylawTotal = document.getElementById('hubStatBylawTotal');
   const elBylawReview = document.getElementById('hubStatBylawReview');
@@ -1635,12 +1636,13 @@ function applyRegFilters() {
     });
   }
 
+  const maxRegSteps = CONFIG.REGULATION_STEPS?.length || 4;
   if (AppState.regFilterStatus === 'IN_REVIEW') {
-    list = list.filter(r => r.status === 'อยู่ระหว่างพิจารณา');
+    list = list.filter(r => !isRegApprovedStatus(r.status, r.currentStep, maxRegSteps) && r.status !== 'ส่งคืนแก้ไข');
   } else if (AppState.regFilterStatus === 'APPROVED') {
-    list = list.filter(r => isRegApprovedStatus(r.status, r.currentStep, CONFIG.REGULATION_STEPS?.length || 4));
+    list = list.filter(r => isRegApprovedStatus(r.status, r.currentStep, maxRegSteps));
   } else if (AppState.regFilterStatus === 'NEED_FIX') {
-    list = list.filter(r => r.status === 'ส่งคืนแก้ไข');
+    list = list.filter(r => !isRegApprovedStatus(r.status, r.currentStep, maxRegSteps) && r.status === 'ส่งคืนแก้ไข');
   }
 
   AppState.filteredRegulations = list;
@@ -1741,10 +1743,11 @@ function updateRegFilterChipUI() {
 }
 
 function updateRegStatsDisplay() {
+  const maxSteps = CONFIG.REGULATION_STEPS?.length || 4;
   const total = AppState.regulations.length;
-  const inReview = AppState.regulations.filter(r => r.status === 'อยู่ระหว่างพิจารณา').length;
-  const approved = AppState.regulations.filter(r => isRegApprovedStatus(r.status, r.currentStep, CONFIG.REGULATION_STEPS?.length || 4)).length;
-  const needFix = AppState.regulations.filter(r => r.status === 'ส่งคืนแก้ไข').length;
+  const approved = AppState.regulations.filter(r => isRegApprovedStatus(r.status, r.currentStep, maxSteps)).length;
+  const needFix = AppState.regulations.filter(r => !isRegApprovedStatus(r.status, r.currentStep, maxSteps) && r.status === 'ส่งคืนแก้ไข').length;
+  const inReview = AppState.regulations.filter(r => !isRegApprovedStatus(r.status, r.currentStep, maxSteps) && r.status !== 'ส่งคืนแก้ไข').length;
 
   document.getElementById('regStatTotal').innerText = total;
   document.getElementById('regStatReview').innerText = inReview;
@@ -2410,12 +2413,13 @@ function applyBylawFilters() {
   }
 
   // Filter by Status
+  const maxRegSteps = CONFIG.REGULATION_STEPS?.length || 4;
   if (AppState.bylawFilterStatus === 'IN_REVIEW') {
-    list = list.filter(r => r.status === 'อยู่ระหว่างพิจารณา');
+    list = list.filter(r => !isRegApprovedStatus(r.status, r.currentStep, maxRegSteps) && r.status !== 'ส่งคืนแก้ไข');
   } else if (AppState.bylawFilterStatus === 'APPROVED') {
-    list = list.filter(r => isRegApprovedStatus(r.status, r.currentStep, CONFIG.REGULATION_STEPS?.length || 4));
+    list = list.filter(r => isRegApprovedStatus(r.status, r.currentStep, maxRegSteps));
   } else if (AppState.bylawFilterStatus === 'NEED_FIX') {
-    list = list.filter(r => r.status === 'ส่งคืนแก้ไข');
+    list = list.filter(r => !isRegApprovedStatus(r.status, r.currentStep, maxRegSteps) && r.status === 'ส่งคืนแก้ไข');
   }
 
   AppState.filteredBylaws = list;
@@ -2488,14 +2492,15 @@ function updateBylawFilterChipUI() {
 }
 
 function updateBylawStatsDisplay() {
+  const maxSteps = CONFIG.REGULATION_STEPS?.length || 4;
   const total = AppState.bylaws.length;
-  const inReview = AppState.bylaws.filter(r => r.status === 'อยู่ระหว่างพิจารณา').length;
-  const approved = AppState.bylaws.filter(r => isRegApprovedStatus(r.status, r.currentStep, CONFIG.REGULATION_STEPS?.length || 4)).length;
-  const needFix = AppState.bylaws.filter(r => r.status === 'ส่งคืนแก้ไข').length;
+  const approved = AppState.bylaws.filter(r => isRegApprovedStatus(r.status, r.currentStep, maxSteps)).length;
+  const needFix = AppState.bylaws.filter(r => !isRegApprovedStatus(r.status, r.currentStep, maxSteps) && r.status === 'ส่งคืนแก้ไข').length;
+  const inReview = AppState.bylaws.filter(r => !isRegApprovedStatus(r.status, r.currentStep, maxSteps) && r.status !== 'ส่งคืนแก้ไข').length;
 
-  // SLA Alert: ใกล้ครบกำหนดหรือเกินกำหนด 14 วันทำการ
+  // SLA Alert: ใกล้ครบกำหนดหรือเกินกำหนด 14 วันทำการ (เฉพาะเรื่องที่ยังอยู่ระหว่างพิจารณา)
   const slaAlert = AppState.bylaws.filter(r => {
-    const isDone = isRegApprovedStatus(r.status, r.currentStep, 4);
+    const isDone = isRegApprovedStatus(r.status, r.currentStep, maxSteps);
     if (isDone) return false;
     const dur = getRegDuration(r);
     return dur.sla && (dur.sla.isNearDue || dur.sla.isOverdue);
@@ -2578,8 +2583,8 @@ function handleBylawSearch() {
 function renderBylawGrid(container, items = AppState.filteredBylaws) {
   const maxRegSteps = CONFIG.REGULATION_STEPS?.length || 4;
   container.innerHTML = items.map(item => {
-    const isApproved = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || item.currentStep >= maxRegSteps;
-    const isNeedFix = item.status === 'ส่งคืนแก้ไข';
+    const isApproved = isRegApprovedStatus(item.status, item.currentStep, maxRegSteps);
+    const isNeedFix = !isApproved && item.status === 'ส่งคืนแก้ไข';
     const progressPercent = Math.min(100, Math.round((item.currentStep / maxRegSteps) * 100));
     const stepObj = CONFIG.REGULATION_STEPS.find(s => s.number === item.currentStep) || { title: `ขั้นตอนที่ ${item.currentStep}` };
     const isFarmerGroup = item.coopType && item.coopType.includes('กลุ่มเกษตรกร');
@@ -2678,8 +2683,8 @@ function renderBylawTable(container, items = AppState.filteredBylaws, startIndex
 
   const maxRegSteps = CONFIG.REGULATION_STEPS?.length || 4;
   tbody.innerHTML = items.map((item, idx) => {
-    const isApproved = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || item.currentStep >= maxRegSteps;
-    const isNeedFix = item.status === 'ส่งคืนแก้ไข';
+    const isApproved = isRegApprovedStatus(item.status, item.currentStep, maxRegSteps);
+    const isNeedFix = !isApproved && item.status === 'ส่งคืนแก้ไข';
     const progressPercent = Math.min(100, Math.round((item.currentStep / maxRegSteps) * 100));
     const isFarmerGroup = item.coopType && item.coopType.includes('กลุ่มเกษตรกร');
     const dur = getRegDuration(item);
