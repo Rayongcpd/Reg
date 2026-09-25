@@ -1754,6 +1754,14 @@
           </div>
         </div>
 
+        <!-- Note Banner in Detail Modal -->
+        <div id="detailRegNoteWrap" style="display: none; margin: 0 1.5rem 1rem 1.5rem; background: #fefce8; border: 1px solid #fef08a; border-left: 4px solid #eab308; border-radius: 8px; padding: 10px 14px; font-size: 0.85rem; color: #854d0e; line-height: 1.5;">
+          <strong style="color: #a16207; display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">
+            <span>📝 บันทึกเพิ่มเติม:</span>
+          </strong>
+          <span id="detailRegNoteText" style="white-space: pre-wrap; word-break: break-word;"></span>
+        </div>
+
         <div class="modal-tabs">
           <div class="modal-tab active" data-tab="regTimeline" onclick="switchRegDetailTab('regTimeline')">
             ⏱️ 4 ขั้นตอนการพิจารณา
@@ -1917,74 +1925,51 @@
 
           <div
             style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; margin-bottom: 1rem; font-size: 0.82rem; color: #166534; line-height: 1.5;">
-            ⏱️ <strong>การนับระยะเวลาพิจารณา (SLA):</strong> เริ่มนับจาก <strong>วันที่ฝ่ายบริหารลงรับหนังสือ</strong>
-            จนถึง <strong>วันที่นายทะเบียนรับจดทะเบียน (ขั้นตอนที่ 3)</strong>
+            ⏱️ <strong>การนับระยะเวลาพิจารณา (SLA):</strong> เริ่มนับจาก <strong>วันที่ฝ่ายรับหนังสือ</strong>
+            จนถึง <strong><span id="updateRegMilestonesSlaEndLabel">วันที่นายทะเบียนรับจดทะเบียน / เห็นชอบ / รับทราบ</span></strong>
           </div>
 
-          <!-- Milestone 1 -->
+          <!-- 1. วันที่ฝ่ายรับหนังสือ -->
           <div class="form-group"
-            style="margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+            style="margin-bottom: 14px; background: #f8fafc; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
             <label
               style="font-weight: 600; color: #0f766e; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
-              <span>📥 1. วันที่ฝ่ายบริหารลงรับหนังสือ <span style="color: red;">*</span></span>
+              <span>📥 1. วันที่ฝ่ายรับหนังสือ <span style="color: red;">*</span></span>
               <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(เริ่มกระบวนการ)</span>
             </label>
             <input type="text" id="regMilestoneReceiveDate" name="receiveDate" class="form-control thai-date-input"
               placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10" required>
-            <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 3px;">
-              เมื่อกรอกวันที่นี้ ขั้นตอนที่ 1 (ฝ่ายบริหารรับเอกสาร) จะปรับเป็น "เสร็จสิ้น"
+            <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 4px;">
+              เมื่อกรอกวันที่นี้ ขั้นตอนที่ 1 (ฝ่ายรับหนังสือ) จะปรับเป็น "เสร็จสิ้น"
             </small>
           </div>
 
-          <!-- Milestone 2 -->
+          <!-- 2. วันที่นายทะเบียนรับจดทะเบียน / รับทราบ หรือเห็นชอบ + ส่งเอกสาร -->
           <div class="form-group"
-            style="margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-            <label
-              style="font-weight: 600; color: #0284c7; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
-              <span>📤 2. วันที่หนังสือออกจากกลุ่มจัดตั้ง</span>
-              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(ตรวจเสร็จ &
-                ส่งเสนอนายทะเบียน)</span>
-            </label>
-            <input type="text" id="regMilestoneGroupExitDate" name="groupExitDate" class="form-control thai-date-input"
-              placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
-            <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 3px;">
-              เมื่อกรอกวันที่นี้ ขั้นตอนที่ 2 (กลุ่มจัดตั้งฯ ตรวจสอบ) จะปรับเป็น "เสร็จสิ้น"
-            </small>
-          </div>
-
-          <!-- Milestone 3 -->
-          <div class="form-group"
-            style="margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+            style="margin-bottom: 14px; background: #f8fafc; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
             <label
               style="font-weight: 600; color: #059669; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
-              <span>✍️ 3. วันที่นายทะเบียนรับจดทะเบียน / พิจารณา</span>
+              <span id="regMilestoneApproveLabel">✍️ 2. วันที่นายทะเบียนรับจดทะเบียน</span>
               <span
-                style="font-size: 0.75rem; color: #059669; font-weight: 600; background: #dcfce7; padding: 1px 6px; border-radius: 4px;">🏁
+                style="font-size: 0.75rem; color: #059669; font-weight: 600; background: #dcfce7; padding: 2px 8px; border-radius: 4px;">🏁
                 สิ้นสุดการนับระยะเวลา</span>
             </label>
             <input type="text" id="regMilestoneApproveDate" name="regApproveDate" class="form-control thai-date-input"
               placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
-            <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 3px;">
-              เมื่อกรอกวันที่นี้ ขั้นตอนที่ 3 จะ "เสร็จสิ้น" และระบบจะหยุดนับเวลาทันที สถานะหลักจะเปลี่ยนเป็น
-              "รับจดทะเบียนแล้ว"
+            <small id="regMilestoneApproveHelp" style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 4px;">
+              เมื่อกรอกวันที่นี้ ขั้นตอนจะ "เสร็จสิ้น" และระบบจะหยุดนับเวลาทันที
             </small>
-          </div>
 
-          <!-- Step 4 Dispatch -->
-          <div class="form-group"
-            style="margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-            <label style="font-weight: 600; color: #475569; margin-bottom: 6px; display: block;">
-              📦 4. การส่งเอกสารให้สหกรณ์และหน่วยงานที่เกี่ยวข้อง
-            </label>
-            <div style="display: flex; align-items: center; gap: 8px;">
+            <!-- ช่องติ๊กส่งเอกสาร -->
+            <div style="margin-top: 12px; padding: 10px 12px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; display: flex; align-items: center; gap: 10px;">
               <input type="checkbox" id="regMilestoneDocDispatched" name="docDispatched"
                 style="width: 18px; height: 18px; cursor: pointer;">
               <label for="regMilestoneDocDispatched"
-                style="cursor: pointer; font-size: 0.85rem; margin: 0; font-weight: 500;">
-                ส่งมอบเอกสารให้สหกรณ์และหน่วยงานเรียบร้อยแล้ว
+                style="cursor: pointer; font-size: 0.88rem; margin: 0; font-weight: 600; color: #334155;">
+                📦 ส่งมอบเอกสารให้สหกรณ์และหน่วยงานเรียบร้อยแล้ว
               </label>
             </div>
-            <div id="regMilestoneDispatchWrap" style="margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div id="regMilestoneDispatchWrap" style="margin-top: 8px; display: none; grid-template-columns: 1fr 1fr; gap: 8px;">
               <div>
                 <label style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 2px; display: block;">เลขส่ง ฝบท (ถ้ามี):</label>
                 <input type="text" id="regMilestoneSendDocNumber" name="sendDocNumber" class="form-control"
@@ -1998,25 +1983,23 @@
             </div>
           </div>
 
-          <!-- Issue & Note -->
-          <div class="form-group" style="margin-bottom: 10px;">
-            <label style="font-size: 0.82rem;">ข้อสังเกต / จุดที่ต้องแก้ไขปรับปรุง (ถ้ามี -
-              ใส่เมื่อต้องส่งคืนแก้ไข)</label>
-            <textarea id="regMilestoneIssue" name="issue" class="form-control" rows="2"
-              placeholder="เช่น ข้อความในข้อ 14 ขัดต่อระเบียบนายทะเบียนฯ ต้องตัดวรรคสองออก..."></textarea>
+          <!-- กล่องข้อความบันทึกเพิ่มเติม -->
+          <div class="form-group" style="margin-bottom: 6px;">
+            <label style="font-weight: 600; font-size: 0.88rem; color: #334155; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+              <span>📝 กล่องข้อความบันทึกเพิ่มเติม</span>
+              <span style="font-weight: normal; font-size: 0.75rem; color: var(--text-muted);">(นำมาแสดงบนการ์ดและตาราง)</span>
+            </label>
+            <textarea id="regMilestoneNote" name="note" class="form-control" rows="3"
+              placeholder="ระบุข้อความบันทึกเพิ่มเติม ผลการพิจารณา หรือรายละเอียดที่ต้องการบันทึก..."></textarea>
           </div>
 
-          <div class="form-group" style="margin-bottom: 0;">
-            <label style="font-size: 0.82rem;">บันทึกเพิ่มเติม</label>
-            <textarea id="regMilestoneNote" name="note" class="form-control" rows="2"
-              placeholder="บันทึกผลการตรวจ หรือรายละเอียดเพิ่มเติม..."></textarea>
-          </div>
+          <input type="hidden" id="regMilestoneIssue" name="issue">
         </div>
 
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary"
             onclick="closeModal('updateRegMilestonesModal')">ยกเลิก</button>
-          <button type="submit" class="btn btn-primary">💾 บันทึกวันสำคัญ</button>
+          <button type="submit" class="btn btn-primary">💾 บันทึกข้อมูล</button>
         </div>
       </form>
     </div>

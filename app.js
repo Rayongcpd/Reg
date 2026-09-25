@@ -1856,6 +1856,16 @@ function renderRegGrid(container, items = AppState.filteredRegulations) {
         <!-- Issue Alert -->
         ${renderRegCardIssuesHtml(item)}
 
+        <!-- Additional Note -->
+        ${item.note && item.note.trim() ? `
+          <div class="case-note-badge" style="margin-top: 8px; background: #fefce8; border: 1px solid #fef08a; border-left: 3px solid #eab308; border-radius: 6px; padding: 6px 10px; font-size: 0.8rem; color: #854d0e; line-height: 1.4;">
+            <div style="font-weight: 600; display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">
+              <span>📝 บันทึกเพิ่มเติม:</span>
+            </div>
+            <div style="white-space: pre-wrap; word-break: break-word; color: #713f12;">${escapeHtml(item.note)}</div>
+          </div>
+        ` : ''}
+
         <div class="case-card-footer">
           <span style="font-size: 0.78rem; color: var(--text-muted);">
             ${dur.hasData ? `ใช้ไป ${dur.workingDays} วันทำการ` : `อัพเดต: ${formatThaiDate(item.lastUpdated)}`}
@@ -1913,6 +1923,11 @@ function renderRegTable(container, items = AppState.filteredRegulations, startIn
         <td>
           <div style="font-weight: 500; font-size: 0.9rem; color: var(--text-main); line-height: 1.4;">${escapeHtml(item.title || '-')}</div>
           ${docTypeBadgeHtml ? `<div style="margin-top: 4px;">${docTypeBadgeHtml}</div>` : ''}
+          ${item.note && item.note.trim() ? `
+            <div style="margin-top: 5px; background: #fefce8; border: 1px solid #fef08a; border-left: 3px solid #eab308; border-radius: 4px; padding: 4px 8px; font-size: 0.76rem; color: #854d0e; line-height: 1.35; max-width: 320px; word-break: break-word;">
+              <strong style="color: #a16207;">📝 บันทึก:</strong> ${escapeHtml(item.note)}
+            </div>
+          ` : ''}
         </td>
         <td>
           <div style="font-weight: 500;">${escapeHtml(receiveDocNum)}</div>
@@ -1998,6 +2013,17 @@ async function openRegDetail(regId) {
 
     const adminActions = document.getElementById('detailRegAdminActions');
     if (adminActions) adminActions.style.display = AppState.currentUser ? 'flex' : 'none';
+
+    const noteWrap = document.getElementById('detailRegNoteWrap');
+    const noteText = document.getElementById('detailRegNoteText');
+    if (noteWrap && noteText) {
+      if (regData.note && regData.note.trim()) {
+        noteText.innerText = regData.note;
+        noteWrap.style.display = 'block';
+      } else {
+        noteWrap.style.display = 'none';
+      }
+    }
 
     renderRegDetailTimeline();
     renderRegDetailDocuments();
@@ -2107,11 +2133,16 @@ function renderRegDetailTimeline() {
           <strong class="item-val">${s4?.status === 'เสร็จสิ้น' ? '✓ ส่งให้สหกรณ์แล้ว' : 'รอดำเนินการส่งมอบ'}</strong>
         </div>
       </div>
+      ${regData.note && regData.note.trim() ? `
+        <div style="margin-top: 12px; background: #fefce8; border: 1px solid #fef08a; border-left: 4px solid #eab308; border-radius: 6px; padding: 8px 12px; font-size: 0.82rem; color: #854d0e; line-height: 1.4;">
+          <strong>📝 บันทึกเพิ่มเติม:</strong> ${escapeHtml(regData.note)}
+        </div>
+      ` : ''}
     </div>
     ${AppState.currentUser ? `
       <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
         <button class="btn btn-primary btn-sm" onclick="openUpdateRegMilestonesModal()" style="display: flex; align-items: center; gap: 6px; font-weight: 600;">
-          📅 บันทึกวันสำคัญ 3 ขั้นตอน / ปรับปรุงสถานะ
+          📅 บันทึกวันสำคัญในกระบวนการพิจารณา
         </button>
       </div>
     ` : ''}
@@ -2583,6 +2614,16 @@ function renderBylawGrid(container, items = AppState.filteredBylaws) {
         <!-- Issue Alert -->
         ${renderRegCardIssuesHtml(item)}
 
+        <!-- Additional Note -->
+        ${item.note && item.note.trim() ? `
+          <div class="case-note-badge" style="margin-top: 8px; background: #fefce8; border: 1px solid #fef08a; border-left: 3px solid #eab308; border-radius: 6px; padding: 6px 10px; font-size: 0.8rem; color: #854d0e; line-height: 1.4;">
+            <div style="font-weight: 600; display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">
+              <span>📝 บันทึกเพิ่มเติม:</span>
+            </div>
+            <div style="white-space: pre-wrap; word-break: break-word; color: #713f12;">${escapeHtml(item.note)}</div>
+          </div>
+        ` : ''}
+
         <div class="case-card-footer">
           <span style="font-size: 0.78rem; color: var(--text-muted);">
             ${dur.hasData ? `ใช้ไป ${dur.workingDays} วันทำการ` : `อัพเดต: ${formatThaiDate(item.lastUpdated)}`}
@@ -2638,6 +2679,11 @@ function renderBylawTable(container, items = AppState.filteredBylaws, startIndex
         </td>
         <td>
           <div style="font-weight: 500; font-size: 0.9rem; color: var(--text-main); line-height: 1.4;">${escapeHtml(item.title || '-')}</div>
+          ${item.note && item.note.trim() ? `
+            <div style="margin-top: 5px; background: #fefce8; border: 1px solid #fef08a; border-left: 3px solid #eab308; border-radius: 4px; padding: 4px 8px; font-size: 0.76rem; color: #854d0e; line-height: 1.35; max-width: 320px; word-break: break-word;">
+              <strong style="color: #a16207;">📝 บันทึก:</strong> ${escapeHtml(item.note)}
+            </div>
+          ` : ''}
         </td>
         <td>
           <div style="font-weight: 500;">${escapeHtml(receiveDocNum)}</div>
@@ -2906,31 +2952,68 @@ function openUpdateRegMilestonesModal() {
     subTitle.innerText = `${regData.coopName || ''} • ${regData.title || ''}`;
   }
 
-  // 1. วันที่ฝ่ายบริหารลงรับหนังสือ
+  // 1. วันที่ฝ่ายรับหนังสือ
   const recInput = document.getElementById('regMilestoneReceiveDate');
   if (recInput) {
     recInput.value = toThaiDateInput(regData.receiveDate || regData.submitDate || '');
   }
 
-  // 2. วันที่หนังสือออกจากกลุ่มจัดตั้ง
-  const exitInput = document.getElementById('regMilestoneGroupExitDate');
-  if (exitInput) {
-    exitInput.value = toThaiDateInput(regData.groupExitDate || '');
+  // Determine docType / category for dynamic Step 2 label
+  const isBylaw = (regData.docType && regData.docType.includes('ข้อบังคับ')) || regData.category === 'ข้อบังคับ';
+  const labelEl = document.getElementById('regMilestoneApproveLabel');
+  const slaEndLabel = document.getElementById('updateRegMilestonesSlaEndLabel');
+  const helpEl = document.getElementById('regMilestoneApproveHelp');
+
+  let actionTitle = 'วันที่นายทะเบียนรับจดทะเบียน';
+  let helpAction = 'รับจดทะเบียนแล้ว';
+
+  if (isBylaw) {
+    actionTitle = 'วันที่นายทะเบียนรับจดทะเบียน';
+    helpAction = 'รับจดทะเบียนแล้ว';
+  } else {
+    // ระเบียบ
+    if (regData.docType && regData.docType.includes('เห็นชอบ')) {
+      actionTitle = 'วันที่นายทะเบียนเห็นชอบ';
+      helpAction = 'เห็นชอบแล้ว';
+    } else if (regData.docType && regData.docType.includes('รับทราบ')) {
+      actionTitle = 'วันที่นายทะเบียนรับทราบ';
+      helpAction = 'รับทราบแล้ว';
+    } else {
+      actionTitle = 'วันที่นายทะเบียนรับทราบ หรือเห็นชอบ';
+      helpAction = 'รับทราบ หรือเห็นชอบแล้ว';
+    }
   }
 
-  // 3. วันที่นายทะเบียนรับจดทะเบียน (จุดสิ้นสุดการนับวันทำการ)
+  if (labelEl) {
+    labelEl.innerHTML = `✍️ 2. ${actionTitle}`;
+  }
+  if (slaEndLabel) {
+    slaEndLabel.textContent = actionTitle;
+  }
+  if (helpEl) {
+    helpEl.textContent = `เมื่อกรอกวันที่นี้ ขั้นตอนจะ "เสร็จสิ้น" และระบบจะหยุดนับเวลาทันที สถานะหลักจะเปลี่ยนเป็น "${helpAction}"`;
+  }
+
+  // 2. วันที่นายทะเบียนรับจดทะเบียน (หากเป็นข้อบังคับ) / รับทราบ หรือเห็นชอบ (หากเป็นระเบียบ)
   const appInput = document.getElementById('regMilestoneApproveDate');
   if (appInput) {
     appInput.value = toThaiDateInput(regData.approveDate || regData.regApproveDate || '');
   }
 
-  // 4. การส่งเอกสารให้สหกรณ์
+  // ช่องติ๊กส่งเอกสาร
   const dispCheck = document.getElementById('regMilestoneDocDispatched');
-  const dispDateInput = document.getElementById('regMilestoneDispatchDate');
-  const isDispatched = !!(regData.dispatchDate || (regData.steps && regData.steps.some(s => parseInt(s.stepNumber, 10) === 4 && s.status === 'เสร็จสิ้น')));
+  const dispWrap = document.getElementById('regMilestoneDispatchWrap');
+  const isDispatched = !!(regData.docDispatched || regData.dispatchDate || (regData.steps && regData.steps.some(s => parseInt(s.stepNumber, 10) === 4 && s.status === 'เสร็จสิ้น')));
   if (dispCheck) {
     dispCheck.checked = isDispatched;
+    if (dispWrap) {
+      dispWrap.style.display = isDispatched ? 'grid' : 'none';
+      dispCheck.onchange = () => {
+        dispWrap.style.display = dispCheck.checked ? 'grid' : 'none';
+      };
+    }
   }
+  const dispDateInput = document.getElementById('regMilestoneDispatchDate');
   if (dispDateInput) {
     dispDateInput.value = toThaiDateInput(regData.dispatchDate || '');
   }
@@ -2939,7 +3022,7 @@ function openUpdateRegMilestonesModal() {
     dispSendDocInput.value = regData.sendDocNumber || '';
   }
 
-  // ข้อสังเกต / จุดที่ต้องแก้ไข
+  // ข้อสังเกต / จุดที่ต้องแก้ไข (hidden compatibility)
   const issueInput = document.getElementById('regMilestoneIssue');
   if (issueInput) {
     let issueVal = regData.issue || '';
@@ -2951,7 +3034,7 @@ function openUpdateRegMilestonesModal() {
     issueInput.value = issueVal;
   }
 
-  // หมายเหตุ
+  // กล่องข้อความบันทึกเพิ่มเติม
   const noteInput = document.getElementById('regMilestoneNote');
   if (noteInput) {
     noteInput.value = regData.note || '';
