@@ -384,7 +384,8 @@ function normalizeRegulationItem(item) {
   return {
     ...item,
     id: item.id != null ? String(item.id) : '',
-    docNumber: item.docNumber != null ? String(item.docNumber) : '',
+    docNumber: item.docNumber != null ? String(item.docNumber) : (item['เลขรับ ฝบท'] || item['เลขรับฝบท'] || item['เลขรับ'] || item['เลขที่รับเรื่อง'] || ''),
+    sendDocNumber: item.sendDocNumber != null ? String(item.sendDocNumber) : (item['เลขส่ง ฝบท'] || item['เลขส่งฝบท'] || item['เลขส่ง'] || item['เลขที่ส่ง'] || item['เลขที่ส่งหนังสือ'] || item.dispatchNumber || ''),
     regNumber: item.regNumber != null ? String(item.regNumber) : '',
     title: item.title != null ? String(item.title) : '',
     coopName: item.coopName != null ? String(item.coopName) : '',
@@ -1553,6 +1554,7 @@ function applyRegFilters() {
       return (r.coopName && String(r.coopName).toLowerCase().includes(q)) ||
         (r.title && String(r.title).toLowerCase().includes(q)) ||
         (r.docNumber && String(r.docNumber).toLowerCase().includes(q)) ||
+        (r.sendDocNumber && String(r.sendDocNumber).toLowerCase().includes(q)) ||
         (r.officerName && String(r.officerName).toLowerCase().includes(q)) ||
         (r.regNumber && String(r.regNumber).toLowerCase().includes(q)) ||
         (g && String(g).toLowerCase().includes(q));
@@ -1891,45 +1893,47 @@ function renderRegTable(container, items = AppState.filteredRegulations, startIn
     }
 
     const docTypeBadgeHtml = getRegDocTypeBadge(item.docType);
+    const receiveDocNum = item.docNumber || item.receiveDocNumber || '-';
+    const receiveDateStr = formatThaiDate(item.receiveDate || item.submitDate);
+    const sendDocNum = item.sendDocNumber || item.dispatchDocNumber || item.dispatchNumber || '-';
+    const sendDateStr = item.dispatchDate ? formatThaiDate(item.dispatchDate) : '';
 
     return `
       <tr>
         <td style="text-align: center; color: var(--text-muted);">${startIndex + idx + 1}</td>
         <td>
-          <strong style="color: var(--primary);">${escapeHtml(item.coopName)}</strong>
-          <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 2px;">
-            <span>${escapeHtml(item.regNumber)}</span>
+          <strong style="color: var(--primary); font-size: 0.92rem;">${escapeHtml(item.coopName)}</strong>
+          <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 2px;">
+            <span>${escapeHtml(item.regNumber || '-')}</span>
             <span>|</span>
             <span class="case-type-badge ${isFarmerGroup ? 'farmer-group' : 'coop-type-badge'}" style="font-size: 0.7rem;">${escapeHtml(item.coopType || 'สหกรณ์')}</span>
             ${getGroupBadgeHtml(getResolvedGroup(item))}
           </div>
         </td>
         <td>
-          ${docTypeBadgeHtml}
-          ${sla && sla.hasData ? `<div style="margin-top: 4px;"><span class="sla-badge ${sla.badgeClass}">${sla.badgeText}</span></div>` : ''}
+          <div style="font-weight: 500; font-size: 0.9rem; color: var(--text-main); line-height: 1.4;">${escapeHtml(item.title || '-')}</div>
+          ${docTypeBadgeHtml ? `<div style="margin-top: 4px;">${docTypeBadgeHtml}</div>` : ''}
         </td>
         <td>
-          <div style="font-weight: 500; font-size: 0.9rem;">${escapeHtml(item.title)}</div>
+          <div style="font-weight: 500;">${escapeHtml(receiveDocNum)}</div>
+          ${receiveDateStr ? `<div style="font-size: 0.76rem; color: var(--text-muted);">${receiveDateStr}</div>` : ''}
         </td>
         <td>
-          <div>${escapeHtml(item.docNumber || '-')}</div>
-          <div style="font-size: 0.78rem; color: var(--text-muted);">${formatThaiDate(item.receiveDate || item.submitDate)}</div>
+          <div style="font-weight: 500;">${escapeHtml(sendDocNum)}</div>
+          ${sendDateStr ? `<div style="font-size: 0.76rem; color: var(--text-muted);">${sendDateStr}</div>` : ''}
         </td>
-        <td>
-          <div style="font-size: 0.85rem; font-weight: 500;">ขั้นที่ ${item.currentStep}/${maxRegSteps} (${progressPercent}%)</div>
-          <div class="progress-bar-bg" style="height: 6px; width: 90px; margin-top: 4px;">
-            <div class="progress-bar-fill" style="width: ${progressPercent}%; background: #0d9488;"></div>
-          </div>
-          ${dur.hasData ? `<div style="font-size: 0.74rem; color: #0369a1; margin-top: 2px;">${dur.workingDays} วันทำการ</div>` : ''}
-        </td>
-        <td>${escapeHtml(item.officerName || '-')}</td>
         <td>
           <span class="status-badge ${statusBadgeClass}">
             ${statusText}
           </span>
+          ${sla && sla.hasData ? `<div style="margin-top: 4px;"><span class="sla-badge ${sla.badgeClass}" style="font-size: 0.7rem;">${sla.badgeText}</span></div>` : ''}
+        </td>
+        <td>
+          <div style="font-weight: 500;">${escapeHtml(item.officerName || '-')}</div>
+          ${item.officerContact && item.officerContact !== '-' ? `<div style="font-size: 0.76rem; color: var(--text-muted);">📞 ${escapeHtml(item.officerContact)}</div>` : ''}
         </td>
         <td style="text-align: right; white-space: nowrap;">
-          <button class="btn btn-outline-primary btn-sm" onclick="quickExportRegPdf('${item.regId}')" title="ส่งออกข้อมูลระเบียบ/ข้อบังคับนี้เป็น PDF" style="padding: 4px 8px; margin-right: 4px;">
+          <button class="btn btn-outline-primary btn-sm" onclick="quickExportRegPdf('${item.regId}')" title="ส่งออกข้อมูลระเบียบนี้เป็น PDF" style="padding: 4px 8px; margin-right: 4px;">
             📄 PDF
           </button>
           <button class="btn btn-secondary btn-sm" onclick="openRegDetail('${item.regId}')">
@@ -1972,6 +1976,9 @@ async function openRegDetail(regId) {
 
     const maxRegSteps = CONFIG.REGULATION_STEPS?.length || 4;
     document.getElementById('detailRegDocNumber').innerText = regData.docNumber || '-';
+    if (document.getElementById('detailRegSendDocNumber')) {
+      document.getElementById('detailRegSendDocNumber').innerText = regData.sendDocNumber || '-';
+    }
     const isApproved = regData.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || regData.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || regData.currentStep >= maxRegSteps;
     const subDur = WorkingDaysUtil.calculate(regData.receiveDate || regData.submitDate, isApproved ? (regData.regApproveDate || regData.lastUpdated) : null, regData.status);
     document.getElementById('detailRegSubmitDate').innerHTML = formatThaiDate(regData.receiveDate || regData.submitDate) + (subDur.hasData ? ` <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);" title="${escapeHtml(subDur.tooltip)}">(${subDur.workingDays} วันทำการ)</span>` : '');
@@ -2295,6 +2302,7 @@ function applyBylawFilters() {
       return (r.coopName && String(r.coopName).toLowerCase().includes(q)) ||
         (r.title && String(r.title).toLowerCase().includes(q)) ||
         (r.docNumber && String(r.docNumber).toLowerCase().includes(q)) ||
+        (r.sendDocNumber && String(r.sendDocNumber).toLowerCase().includes(q)) ||
         (r.officerName && String(r.officerName).toLowerCase().includes(q)) ||
         (r.regNumber && String(r.regNumber).toLowerCase().includes(q)) ||
         (g && String(g).toLowerCase().includes(q));
@@ -2611,41 +2619,43 @@ function renderBylawTable(container, items = AppState.filteredBylaws, startIndex
       statusText = 'ส่งคืนแก้ไข';
     }
 
+    const receiveDocNum = item.docNumber || item.receiveDocNumber || '-';
+    const receiveDateStr = formatThaiDate(item.receiveDate || item.submitDate);
+    const sendDocNum = item.sendDocNumber || item.dispatchDocNumber || item.dispatchNumber || '-';
+    const sendDateStr = item.dispatchDate ? formatThaiDate(item.dispatchDate) : '';
+
     return `
       <tr>
         <td style="text-align: center; color: var(--text-muted);">${startIndex + idx + 1}</td>
         <td>
-          <strong style="color: #0284c7;">${escapeHtml(item.coopName)}</strong>
+          <strong style="color: #0284c7; font-size: 0.92rem;">${escapeHtml(item.coopName)}</strong>
           <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 2px;">
-            <span>${escapeHtml(item.regNumber)}</span>
+            <span>${escapeHtml(item.regNumber || '-')}</span>
             <span>|</span>
             <span class="case-type-badge ${isFarmerGroup ? 'farmer-group' : 'coop-type-badge'}" style="font-size: 0.7rem;">${escapeHtml(item.coopType || 'สหกรณ์')}</span>
             ${getGroupBadgeHtml(getResolvedGroup(item))}
           </div>
         </td>
         <td>
-          <span class="case-type-badge reg-type-bylaw">📘 ข้อบังคับสหกรณ์</span>
-          ${sla && sla.hasData ? `<div style="margin-top: 4px;"><span class="sla-badge ${sla.badgeClass}">${sla.badgeText}</span></div>` : ''}
+          <div style="font-weight: 500; font-size: 0.9rem; color: var(--text-main); line-height: 1.4;">${escapeHtml(item.title || '-')}</div>
         </td>
         <td>
-          <div style="font-weight: 500; font-size: 0.9rem;">${escapeHtml(item.title)}</div>
+          <div style="font-weight: 500;">${escapeHtml(receiveDocNum)}</div>
+          ${receiveDateStr ? `<div style="font-size: 0.76rem; color: var(--text-muted);">${receiveDateStr}</div>` : ''}
         </td>
         <td>
-          <div>${escapeHtml(item.docNumber || '-')}</div>
-          <div style="font-size: 0.78rem; color: var(--text-muted);">${formatThaiDate(item.receiveDate || item.submitDate)}</div>
+          <div style="font-weight: 500;">${escapeHtml(sendDocNum)}</div>
+          ${sendDateStr ? `<div style="font-size: 0.76rem; color: var(--text-muted);">${sendDateStr}</div>` : ''}
         </td>
-        <td>
-          <div style="font-size: 0.85rem; font-weight: 500;">ขั้นที่ ${item.currentStep}/${maxRegSteps} (${progressPercent}%)</div>
-          <div class="progress-bar-bg" style="height: 6px; width: 90px; margin-top: 4px;">
-            <div class="progress-bar-fill" style="width: ${progressPercent}%; background: #0284c7;"></div>
-          </div>
-          ${dur.hasData ? `<div style="font-size: 0.74rem; color: #0369a1; margin-top: 2px;">${dur.workingDays} วันทำการ</div>` : ''}
-        </td>
-        <td>${escapeHtml(item.officerName || '-')}</td>
         <td>
           <span class="status-badge ${statusBadgeClass}">
             ${statusText}
           </span>
+          ${sla && sla.hasData ? `<div style="margin-top: 4px;"><span class="sla-badge ${sla.badgeClass}" style="font-size: 0.7rem;">${sla.badgeText}</span></div>` : ''}
+        </td>
+        <td>
+          <div style="font-weight: 500;">${escapeHtml(item.officerName || '-')}</div>
+          ${item.officerContact && item.officerContact !== '-' ? `<div style="font-size: 0.76rem; color: var(--text-muted);">📞 ${escapeHtml(item.officerContact)}</div>` : ''}
         </td>
         <td style="text-align: right; white-space: nowrap;">
           <button class="btn btn-outline-primary btn-sm" onclick="quickExportRegPdf('${item.regId}')" title="ส่งออกข้อมูลข้อบังคับนี้เป็น PDF" style="padding: 4px 8px; margin-right: 4px;">
@@ -2924,6 +2934,10 @@ function openUpdateRegMilestonesModal() {
   if (dispDateInput) {
     dispDateInput.value = toThaiDateInput(regData.dispatchDate || '');
   }
+  const dispSendDocInput = document.getElementById('regMilestoneSendDocNumber');
+  if (dispSendDocInput) {
+    dispSendDocInput.value = regData.sendDocNumber || '';
+  }
 
   // ข้อสังเกต / จุดที่ต้องแก้ไข
   const issueInput = document.getElementById('regMilestoneIssue');
@@ -2966,6 +2980,7 @@ async function handleUpdateRegMilestonesSubmit(e) {
     regApproveDate: fromThaiDateInput(form.regApproveDate ? form.regApproveDate.value : ''),
     docDispatched: form.docDispatched ? form.docDispatched.checked : false,
     dispatchDate: fromThaiDateInput(form.dispatchDate ? form.dispatchDate.value : ''),
+    sendDocNumber: form.sendDocNumber ? form.sendDocNumber.value.trim() : '',
     issue: form.issue ? form.issue.value.trim() : '',
     note: form.note ? form.note.value.trim() : ''
   };
@@ -3027,6 +3042,9 @@ function openEditRegInfoModal() {
   if (document.getElementById('editRegDocNumber')) {
     document.getElementById('editRegDocNumber').value = regData.docNumber || '';
   }
+  if (document.getElementById('editRegSendDocNumber')) {
+    document.getElementById('editRegSendDocNumber').value = regData.sendDocNumber || '';
+  }
   if (document.getElementById('editRegSubmitDate')) {
     document.getElementById('editRegSubmitDate').value = toThaiDateInput(regData.submitDate);
   }
@@ -3072,6 +3090,7 @@ async function handleEditRegSubmit(e) {
     docType: resolvedDocType,
     title: form.title ? form.title.value.trim() : '',
     docNumber: form.docNumber ? form.docNumber.value.trim() : '',
+    sendDocNumber: form.sendDocNumber ? form.sendDocNumber.value.trim() : '',
     submitDate: form.submitDate ? fromThaiDateInput(form.submitDate.value) : '',
     officerName: form.officerName ? form.officerName.value.trim() : '',
     officerContact: form.officerContact ? form.officerContact.value.trim() : (regData.officerContact || ''),

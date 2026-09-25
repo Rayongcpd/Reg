@@ -564,7 +564,7 @@
         <!-- Search Bar -->
         <div class="hero-search-box">
           <input type="text" id="regSearchInput"
-            placeholder="พิมพ์ชื่อสหกรณ์, ชื่อระเบียบสหกรณ์, เลขที่รับเรื่อง, หรือชื่อผู้รับผิดชอบ...">
+            placeholder="พิมพ์ชื่อสหกรณ์, ชื่อระเบียบ, เลขรับ ฝบท, เลขส่ง ฝบท, หรือชื่อผู้รับผิดชอบ...">
           <button id="regSearchBtn" class="hero-search-btn" style="background: #0f766e;" onclick="applyRegFilters()">
             🔍 ค้นหา
           </button>
@@ -814,13 +814,12 @@
           <thead>
             <tr>
               <th style="width: 50px; text-align: center;">ลำดับ</th>
-              <th>สหกรณ์ / เลขทะเบียน</th>
-              <th>ประเภท</th>
-              <th>ชื่อระเบียบสหกรณ์</th>
-              <th>เลขที่รับเรื่อง & วันที่</th>
-              <th>ขั้นตอนปัจจุบัน</th>
-              <th>ผู้รับผิดชอบ</th>
+              <th>ชื่อสหกรณ์/กลุ่มเกษตรกร</th>
+              <th>ชื่อระเบียบ</th>
+              <th>เลขรับ ฝบท</th>
+              <th>เลขส่ง ฝบท</th>
               <th>สถานะ</th>
+              <th>ผู้รับผิดชอบ</th>
               <th style="text-align: right;">การจัดการ</th>
             </tr>
           </thead>
@@ -857,7 +856,7 @@
         <!-- Search Bar -->
         <div class="hero-search-box">
           <input type="text" id="bylawSearchInput"
-            placeholder="พิมพ์ชื่อสหกรณ์, ชื่อข้อบังคับ, เลขที่รับเรื่อง, หรือชื่อผู้รับผิดชอบ...">
+            placeholder="พิมพ์ชื่อสหกรณ์, ข้อบังคับ, เลขรับ ฝบท, เลขส่ง ฝบท, หรือชื่อผู้รับผิดชอบ...">
           <button id="bylawSearchBtn" class="hero-search-btn" style="background: #0284c7;" onclick="applyBylawFilters()">
             🔍 ค้นหา
           </button>
@@ -1106,13 +1105,12 @@
           <thead>
             <tr>
               <th style="width: 50px; text-align: center;">ลำดับ</th>
-              <th>สหกรณ์ / เลขทะเบียน</th>
-              <th>ประเภท</th>
-              <th>ชื่อข้อบังคับสหกรณ์</th>
-              <th>เลขที่รับเรื่อง & วันที่</th>
-              <th>ขั้นตอนปัจจุบัน</th>
-              <th>ผู้รับผิดชอบ</th>
+              <th>ชื่อสหกรณ์/กลุ่มเกษตรกร</th>
+              <th>ข้อบังคับ</th>
+              <th>เลขรับ ฝบท</th>
+              <th>เลขส่ง ฝบท</th>
               <th>สถานะ</th>
+              <th>ผู้รับผิดชอบ</th>
               <th style="text-align: right;">การจัดการ</th>
             </tr>
           </thead>
@@ -1731,8 +1729,12 @@
       <div class="modal-body" style="padding: 0;">
         <div class="modal-quick-info">
           <div class="info-cell">
-            <span class="info-label">เลขที่รับเรื่อง</span>
+            <span class="info-label">เลขรับ ฝบท</span>
             <strong id="detailRegDocNumber" class="info-value">-</strong>
+          </div>
+          <div class="info-cell">
+            <span class="info-label">เลขส่ง ฝบท</span>
+            <strong id="detailRegSendDocNumber" class="info-value">-</strong>
           </div>
           <div class="info-cell">
             <span class="info-label">วันที่ยื่นเรื่อง</span>
@@ -1846,9 +1848,9 @@
               </select>
             </div>
             <div class="form-group">
-              <label>เลขที่รับเรื่อง / หนังสือส่ง</label>
+              <label>เลขรับ ฝบท</label>
               <input type="text" name="docNumber" class="form-control"
-                placeholder="เช่น สห.ขก 01/2567 หรือ รับที่ 124/67">
+                placeholder="เช่น รับที่ 124/67 หรือ สห.ขก 01/2567">
             </div>
           </div>
 
@@ -1982,12 +1984,17 @@
                 ส่งมอบเอกสารให้สหกรณ์และหน่วยงานเรียบร้อยแล้ว
               </label>
             </div>
-            <div id="regMilestoneDispatchWrap" style="margin-top: 8px;">
-              <label
-                style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 2px; display: block;">วันที่ส่งหนังสือออก
-                (ถ้ามี):</label>
-              <input type="text" id="regMilestoneDispatchDate" name="dispatchDate" class="form-control thai-date-input"
-                placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
+            <div id="regMilestoneDispatchWrap" style="margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div>
+                <label style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 2px; display: block;">เลขส่ง ฝบท (ถ้ามี):</label>
+                <input type="text" id="regMilestoneSendDocNumber" name="sendDocNumber" class="form-control"
+                  placeholder="เช่น รย 0011/...">
+              </div>
+              <div>
+                <label style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 2px; display: block;">วันที่ส่งหนังสือออก (ถ้ามี):</label>
+                <input type="text" id="regMilestoneDispatchDate" name="dispatchDate" class="form-control thai-date-input"
+                  placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
+              </div>
             </div>
           </div>
 
@@ -2098,8 +2105,12 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label>เลขที่รับเรื่อง / หนังสือส่ง</label>
-              <input type="text" id="editRegDocNumber" name="docNumber" class="form-control">
+              <label>เลขรับ ฝบท</label>
+              <input type="text" id="editRegDocNumber" name="docNumber" class="form-control" placeholder="เช่น รับที่ 124/67">
+            </div>
+            <div class="form-group">
+              <label>เลขส่ง ฝบท</label>
+              <input type="text" id="editRegSendDocNumber" name="sendDocNumber" class="form-control" placeholder="เช่น รย 0011/...">
             </div>
             <div class="form-group">
               <label>วันที่ยื่นเรื่อง</label>
