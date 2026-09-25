@@ -3504,17 +3504,28 @@ function updateAuthUI() {
   if (AppState.currentUser) {
     if (loginBtn) loginBtn.style.display = 'none';
     if (userProfile) {
-      userProfile.style.display = 'flex';
-      document.getElementById('navUserName').innerText = AppState.currentUser.name;
-      document.getElementById('navUserRole').innerText = AppState.currentUser.role || 'Admin';
+      userProfile.style.display = 'inline-flex';
+      const userName = AppState.currentUser.name || AppState.currentUser.email || 'ผู้ดูแลระบบ';
+      const userRole = AppState.currentUser.role || 'Admin';
+
+      const navUserName = document.getElementById('navUserName');
+      if (navUserName) navUserName.innerText = userName;
+
+      const navUserRole = document.getElementById('navUserRole');
+      if (navUserRole) navUserRole.innerText = userRole;
+
+      const adminMenuDisplayName = document.getElementById('adminMenuDisplayName');
+      if (adminMenuDisplayName) adminMenuDisplayName.innerText = userName;
     }
+    // Context-aware quick-add buttons in navbar
     if (adminAddCaseBtn) adminAddCaseBtn.style.display = AppState.currentView === 'liquidation' ? 'inline-flex' : 'none';
     if (adminAddRegBtn) adminAddRegBtn.style.display = AppState.currentView === 'regulations' ? 'inline-flex' : 'none';
     if (adminAddBylawBtn) adminAddBylawBtn.style.display = AppState.currentView === 'bylaws' ? 'inline-flex' : 'none';
-    if (adminAuditLogBtn) adminAuditLogBtn.style.display = 'inline-flex';
+    if (adminAuditLogBtn) adminAuditLogBtn.style.display = 'flex';
     if (coopDirBatchImportBtn) coopDirBatchImportBtn.style.display = 'inline-flex';
     if (coopDirClearAllBtn) coopDirClearAllBtn.style.display = 'inline-flex';
   } else {
+    closeAdminDropdown();
     if (loginBtn) loginBtn.style.display = 'inline-flex';
     if (userProfile) userProfile.style.display = 'none';
     if (adminAddCaseBtn) adminAddCaseBtn.style.display = 'none';
@@ -3533,9 +3544,80 @@ function updateAuthUI() {
 }
 
 // ------------------------------------------------------------------------------
+// Consolidated Admin Dropdown Hub Logic
+// ------------------------------------------------------------------------------
+function toggleAdminDropdown(event) {
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+  const dropdown = document.getElementById('adminDropdownMenu');
+  const toggleBtn = document.getElementById('adminDropdownToggle');
+  if (!dropdown) return;
+  const isOpen = dropdown.classList.contains('show');
+  if (isOpen) {
+    dropdown.classList.remove('show');
+    toggleBtn?.setAttribute('aria-expanded', 'false');
+  } else {
+    dropdown.classList.add('show');
+    toggleBtn?.setAttribute('aria-expanded', 'true');
+  }
+}
+
+function closeAdminDropdown() {
+  const dropdown = document.getElementById('adminDropdownMenu');
+  const toggleBtn = document.getElementById('adminDropdownToggle');
+  if (dropdown && dropdown.classList.contains('show')) {
+    dropdown.classList.remove('show');
+    toggleBtn?.setAttribute('aria-expanded', 'false');
+  }
+}
+
+function handleAdminMenuAction(action, param) {
+  closeAdminDropdown();
+  switch (action) {
+    case 'createCase':
+      openCreateCaseModal();
+      break;
+    case 'createReg':
+      openCreateRegModal(param || 'ระเบียบ');
+      break;
+    case 'createBylaw':
+      openCreateRegModal('ข้อบังคับ');
+      break;
+    case 'auditLog':
+      openAuditLogModal();
+      break;
+    case 'coopDir':
+      openCoopDirectoryModal();
+      break;
+    case 'export':
+      openActiveExportModal();
+      break;
+    case 'logout':
+      logout();
+      break;
+  }
+}
+
+// ------------------------------------------------------------------------------
 // 10. Event Listeners & UI Helpers
 // ------------------------------------------------------------------------------
 function setupEventListeners() {
+  // Admin Dropdown Close Outside / Escape Key
+  document.addEventListener('click', (e) => {
+    const container = document.getElementById('adminMenuDropdownContainer');
+    if (container && !container.contains(e.target)) {
+      closeAdminDropdown();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeAdminDropdown();
+    }
+  });
+
   // Global Hub Search Enter key
   document.getElementById('hubGlobalSearchInput')?.addEventListener('keyup', (e) => {
     if (e.key === 'Enter') handleHubGlobalSearch();
@@ -7828,6 +7910,9 @@ window.handleBatchImportCoops = handleBatchImportCoops;
 window.handleDeleteCoop = handleDeleteCoop;
 window.handleClearAllCoops = handleClearAllCoops;
 window.useCoopFromDirectory = useCoopFromDirectory;
+window.toggleAdminDropdown = toggleAdminDropdown;
+window.closeAdminDropdown = closeAdminDropdown;
+window.handleAdminMenuAction = handleAdminMenuAction;
 
 // Startup
 if (document.readyState === 'loading') {

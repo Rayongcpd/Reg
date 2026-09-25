@@ -33,78 +33,157 @@
   </div>
 
   <!-- Navigation Bar -->
-  <nav class="navbar">
-    <div class="container navbar-inner" style="gap: 12px;">
-      <a href="#" class="brand" onclick="switchAppView('portal'); return false;">
+  <nav class="navbar" id="mainNavbar">
+    <div class="container navbar-inner">
+      <!-- Brand Logo & Department Title -->
+      <a href="#" class="brand" onclick="switchAppView('portal'); return false;" title="กลับสู่หน้าหลักระบบสารสนเทศนายทะเบียน">
         <div class="brand-logo">🏛️</div>
         <div class="brand-text">
           <h1>ระบบงานนายทะเบียนสหกรณ์</h1>
-          <p>กรมส่งเสริมสหกรณ์ กระทรวงเกษตรและสหกรณ์</p>
+          <p>กลุ่มส่งเสริมและพัฒนาการบริหารการจัดการสหกรณ์ • จ.ระยอง</p>
         </div>
       </a>
 
-      <!-- Module Switcher (Segmented Button) -->
-      <div class="nav-module-switcher">
-        <button id="btnNavHub" class="nav-module-btn active" onclick="switchAppView('portal')">
-          🏠 หน้าหลัก
+      <!-- Module Switcher (Segmented Control) -->
+      <div class="nav-module-switcher" role="tablist" aria-label="สลับระบบงาน">
+        <button id="btnNavHub" class="nav-module-btn active" onclick="switchAppView('portal')" role="tab" title="หน้าหลักรวมระบบงาน">
+          <span class="nav-icon">🏠</span> <span>หน้าหลัก</span>
         </button>
-        <button id="btnNavLiquidation" class="nav-module-btn" onclick="switchAppView('liquidation')">
-          ⚖️ ชำระบัญชี
+        <button id="btnNavLiquidation" class="nav-module-btn" onclick="switchAppView('liquidation')" role="tab" title="ระบบติดตามงานชำระบัญชีสหกรณ์">
+          <span class="nav-icon">⚖️</span> <span>ชำระบัญชี</span>
         </button>
-        <button id="btnNavRegulations" class="nav-module-btn" onclick="switchAppView('regulations')">
-          📗 ระเบียบสหกรณ์
+        <button id="btnNavRegulations" class="nav-module-btn" onclick="switchAppView('regulations')" role="tab" title="ระบบติดตามการพิจารณาระเบียบสหกรณ์">
+          <span class="nav-icon">📗</span> <span>ระเบียบสหกรณ์</span>
         </button>
-        <button id="btnNavBylaws" class="nav-module-btn" onclick="switchAppView('bylaws')">
-          📘 ข้อบังคับสหกรณ์
+        <button id="btnNavBylaws" class="nav-module-btn" onclick="switchAppView('bylaws')" role="tab" title="ระบบติดตามการพิจารณาข้อบังคับสหกรณ์">
+          <span class="nav-icon">📘</span> <span>ข้อบังคับสหกรณ์</span>
         </button>
       </div>
 
+      <!-- Navbar Actions (Public Utilities & Admin Menu Hub) -->
       <div class="navbar-actions">
-        <!-- Export Summary Modal Button -->
-        <button id="btnNavExportActivePdf" class="btn btn-outline-primary btn-sm" onclick="openActiveExportModal()"
-          title="ส่งออกสรุปข้อมูลงานชำระบัญชี ระเบียบ และข้อบังคับ สามารถเลือกกรองข้อมูลได้ทุกเงื่อนไข (Excel / PDF / CSV)">
-          📑 ส่งออกสรุปข้อมูล
+        <!-- Public Utilities -->
+        <button class="btn-nav-utility" onclick="openCoopDirectoryModal()" title="ดูทำเนียบสหกรณ์และกลุ่มส่งเสริมฯ ในจังหวัดระยอง">
+          <span class="nav-icon">🏛️</span> <span>ทำเนียบสหกรณ์</span>
+        </button>
+        <button id="btnNavExportActivePdf" class="btn-nav-utility" onclick="openActiveExportModal()"
+          title="ส่งออกสรุปข้อมูลงานชำระบัญชี ระเบียบ และข้อบังคับ (PDF / Excel / CSV)">
+          <span class="nav-icon">📑</span> <span>ส่งออกสรุป</span>
         </button>
 
-        <!-- Audit Log Button -->
-        <button id="adminAuditLogBtn" class="btn btn-secondary btn-sm" onclick="openAuditLogModal()"
-          title="ดูประวัติการบันทึกข้อมูล" style="display: none;">
-          📋 Audit Log
+        <!-- Guest Login Button -->
+        <button id="navLoginBtn" class="btn-nav-login" onclick="openModal('loginModal')" title="เข้าสู่ระบบสำหรับเจ้าหน้าที่ผู้ดูแลระบบ">
+          <span class="login-icon">🔑</span> <span>เข้าสู่ระบบ Admin</span>
         </button>
 
-        <!-- Admin Add Buttons (Context-aware) -->
-        <button id="adminAddCaseBtn" class="btn btn-success btn-sm" onclick="openCreateCaseModal()"
-          style="display: none;">
-          + เพิ่มรายการชำระบัญชี
-        </button>
-        <button id="adminAddRegBtn" class="btn btn-success btn-sm" onclick="openCreateRegModal('ระเบียบ')"
-          style="display: none;">
-          + ยื่นเรื่องระเบียบใหม่
-        </button>
-        <button id="adminAddBylawBtn" class="btn btn-primary btn-sm" onclick="openCreateRegModal('ข้อบังคับ')"
-          style="display: none; background: #0284c7; border-color: #0284c7;">
-          + ยื่นเรื่องข้อบังคับใหม่
-        </button>
-
-        <!-- Cooperative Directory Button -->
-        <button class="btn btn-outline-primary btn-sm" onclick="openCoopDirectoryModal()" title="ดูทำเนียบสหกรณ์และกลุ่มส่งเสริมฯ ในจังหวัดระยอง">
-          🏛️ ฐานข้อมูลสหกรณ์
-        </button>
-
-        <!-- Login Button -->
-        <button id="navLoginBtn" class="btn btn-primary btn-sm" onclick="openModal('loginModal')">
-          🔑 เข้าสู่ระบบ Admin
-        </button>
-
-        <!-- User Profile (Visible when logged in) -->
-        <div id="navUserProfile" style="display: none; align-items: center; gap: 10px;">
-          <div style="text-align: right; line-height: 1.2;">
-            <div id="navUserName" style="font-weight: 600; font-size: 0.88rem; color: var(--primary);">ผู้ดูแลระบบ</div>
-            <div id="navUserRole" style="font-size: 0.75rem; color: var(--accent-emerald);">Admin</div>
-          </div>
-          <button class="btn btn-secondary btn-sm" onclick="logout()" title="ออกจากระบบ">
-            🚪 ออก
+        <!-- Admin Consolidated Menu Area (Visible when logged in) -->
+        <div id="navUserProfile" class="nav-admin-area" style="display: none;">
+          <!-- Quick Add Context Button (Context-aware 1-click addition) -->
+          <button id="adminAddCaseBtn" class="btn-nav-quickadd btn-liq" onclick="openCreateCaseModal()" style="display: none;" title="เพิ่มรายการชำระบัญชีใหม่">
+            <span>➕</span> เพิ่มรายการชำระบัญชี
           </button>
+          <button id="adminAddRegBtn" class="btn-nav-quickadd btn-reg" onclick="openCreateRegModal('ระเบียบ')" style="display: none;" title="ยื่นเรื่องระเบียบใหม่">
+            <span>➕</span> ยื่นเรื่องระเบียบใหม่
+          </button>
+          <button id="adminAddBylawBtn" class="btn-nav-quickadd btn-bylaw" onclick="openCreateRegModal('ข้อบังคับ')" style="display: none;" title="ยื่นเรื่องข้อบังคับใหม่">
+            <span>➕</span> ยื่นเรื่องข้อบังคับใหม่
+          </button>
+
+          <!-- Consolidated Admin Dropdown Hub -->
+          <div class="admin-menu-dropdown-container" id="adminMenuDropdownContainer">
+            <button id="adminDropdownToggle" class="admin-profile-pill" onclick="toggleAdminDropdown(event)" aria-expanded="false" aria-haspopup="true" title="เมนูผู้ดูแลระบบ (Admin Hub)">
+              <div class="admin-avatar-chip">
+                <span>🛡️</span>
+                <span class="avatar-online-dot"></span>
+              </div>
+              <div class="admin-pill-text">
+                <div id="navUserName" class="admin-pill-name">ผู้ดูแลระบบ</div>
+                <div class="admin-pill-sub">
+                  <span id="navUserRole" class="admin-badge-tag">Admin</span>
+                </div>
+              </div>
+              <span class="admin-pill-chevron">▼</span>
+            </button>
+
+            <!-- Dropdown Menu Card -->
+            <div class="admin-dropdown-menu" id="adminDropdownMenu">
+              <!-- Admin Header Card -->
+              <div class="admin-menu-header">
+                <div class="admin-menu-avatar-large">🏛️</div>
+                <div class="admin-menu-user-details">
+                  <div class="admin-menu-name" id="adminMenuDisplayName">ผู้ดูแลระบบ</div>
+                  <div class="admin-menu-sub"><span class="status-indicator-dot"></span> สิทธิ์ผู้ดูแลระบบ (Admin)</div>
+                </div>
+              </div>
+
+              <!-- Group 1: Quick Add -->
+              <div class="admin-menu-section-label">⚡ บันทึกข้อมูล / ยื่นเรื่องใหม่</div>
+              <div class="admin-menu-group">
+                <button type="button" class="admin-menu-item" onclick="handleAdminMenuAction('createCase')">
+                  <span class="admin-item-icon" style="background: #fef3c7; color: #b45309; border-color: #fde68a;">⚖️</span>
+                  <div class="admin-item-text">
+                    <div class="admin-item-title">เพิ่มรายการชำระบัญชี</div>
+                    <div class="admin-item-desc">บันทึกข้อมูลสหกรณ์เลิก/ชำระบัญชี</div>
+                  </div>
+                </button>
+                <button type="button" class="admin-menu-item" onclick="handleAdminMenuAction('createReg')">
+                  <span class="admin-item-icon" style="background: #d1fae5; color: #047857; border-color: #a7f3d0;">📗</span>
+                  <div class="admin-item-text">
+                    <div class="admin-item-title">ยื่นเรื่องระเบียบสหกรณ์</div>
+                    <div class="admin-item-desc">ยื่นขอความเห็นชอบระเบียบใหม่</div>
+                  </div>
+                </button>
+                <button type="button" class="admin-menu-item" onclick="handleAdminMenuAction('createBylaw')">
+                  <span class="admin-item-icon" style="background: #e0f2fe; color: #0369a1; border-color: #bae6fd;">📘</span>
+                  <div class="admin-item-text">
+                    <div class="admin-item-title">ยื่นเรื่องข้อบังคับสหกรณ์</div>
+                    <div class="admin-item-desc">ยื่นขอจดทะเบียนแก้ไขข้อบังคับ</div>
+                  </div>
+                </button>
+              </div>
+
+              <div class="admin-menu-divider"></div>
+
+              <!-- Group 2: Management Tools -->
+              <div class="admin-menu-section-label">🛠️ เครื่องมือและการจัดการระบบ</div>
+              <div class="admin-menu-group">
+                <button type="button" id="adminAuditLogBtn" class="admin-menu-item" onclick="handleAdminMenuAction('auditLog')" title="ดูประวัติการบันทึกข้อมูล">
+                  <span class="admin-item-icon" style="background: #f1f5f9; color: #475569; border-color: #cbd5e1;">📋</span>
+                  <div class="admin-item-text">
+                    <div class="admin-item-title">ประวัติการบันทึก (Audit Log)</div>
+                    <div class="admin-item-desc">ตรวจสอบประวัติการแก้ไขและบันทึกข้อมูล</div>
+                  </div>
+                </button>
+                <button type="button" class="admin-menu-item" onclick="handleAdminMenuAction('coopDir')">
+                  <span class="admin-item-icon" style="background: #ede9fe; color: #6d28d9; border-color: #ddd6fe;">🏛️</span>
+                  <div class="admin-item-text">
+                    <div class="admin-item-title">ฐานข้อมูลและทำเนียบสหกรณ์</div>
+                    <div class="admin-item-desc">จัดการรายชื่อสหกรณ์และกลุ่มส่งเสริมฯ</div>
+                  </div>
+                </button>
+                <button type="button" class="admin-menu-item" onclick="handleAdminMenuAction('export')">
+                  <span class="admin-item-icon" style="background: #f0fdf4; color: #15803d; border-color: #bbf7d0;">📑</span>
+                  <div class="admin-item-text">
+                    <div class="admin-item-title">ศูนย์ส่งออกข้อมูลสรุป</div>
+                    <div class="admin-item-desc">ส่งออกข้อมูล PDF, Excel, CSV</div>
+                  </div>
+                </button>
+              </div>
+
+              <div class="admin-menu-divider"></div>
+
+              <!-- Group 3: Logout -->
+              <div class="admin-menu-footer">
+                <button type="button" class="admin-menu-item admin-logout-item" onclick="handleAdminMenuAction('logout')">
+                  <span class="admin-item-icon" style="background: #fee2e2; color: #dc2626; border-color: #fecaca;">🚪</span>
+                  <div class="admin-item-text">
+                    <div class="admin-item-title" style="color: #dc2626;">ออกจากระบบ (Logout)</div>
+                    <div class="admin-item-desc">สิ้นสุดการทำงานของผู้ดูแลระบบ</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
