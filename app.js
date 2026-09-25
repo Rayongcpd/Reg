@@ -62,6 +62,41 @@ const AppState = {
   isLoading: false
 };
 
+/**
+ * ระบุข้อความสถานะที่เสร็จสิ้นของเอกสารตามประเภท (เห็นชอบ / รับทราบ / รับจดทะเบียน)
+ */
+function getRegCompletedStatusText(docType) {
+  if (typeof RegSlaUtil !== 'undefined' && RegSlaUtil.getCompletedStatusText) {
+    return RegSlaUtil.getCompletedStatusText(docType);
+  }
+  const cleanType = String(docType || '').trim();
+  if (cleanType.includes('เห็นชอบ')) return 'เห็นชอบ';
+  if (cleanType.includes('รับทราบ')) return 'รับทราบ';
+  if (cleanType.includes('ข้อบังคับ')) return 'รับจดทะเบียน';
+  return 'รับทราบ';
+}
+
+/**
+ * ตรวจสอบว่าเรื่องระเบียบหรือข้อบังคับเสร็จสิ้น/พิจารณาแล้วหรือไม่
+ */
+function isRegApprovedStatus(status, currentStep, maxSteps = 4) {
+  const s = String(status || '').trim();
+  if (
+    s === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' ||
+    s === 'รับจดทะเบียน/เห็นชอบแล้ว' ||
+    s === 'รับจดทะเบียน' ||
+    s === 'เห็นชอบ' ||
+    s === 'รับทราบ' ||
+    s === 'เสร็จสิ้น'
+  ) {
+    return true;
+  }
+  if (currentStep !== undefined && currentStep !== null && parseInt(currentStep, 10) >= maxSteps) {
+    return true;
+  }
+  return false;
+}
+
 
 // ------------------------------------------------------------------------------
 // 2. API Transport
@@ -265,7 +300,7 @@ function updateHubStatsDisplay() {
   // 2. Regulations Stats on Hub (ระเบียบสหกรณ์)
   const regTotal = AppState.regulations.length;
   const regReview = AppState.regulations.filter(r => r.status === 'อยู่ระหว่างพิจารณา').length;
-  const regDone = AppState.regulations.filter(r => r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= (CONFIG.REGULATION_STEPS?.length || 4)).length;
+  const regDone = AppState.regulations.filter(r => isRegApprovedStatus(r.status, r.currentStep, CONFIG.REGULATION_STEPS?.length || 4)).length;
   const regIssues = AppState.regulations.filter(r => r.status === 'ส่งคืนแก้ไข').length;
 
   const elRegTotal = document.getElementById('hubStatRegTotal');
@@ -280,7 +315,7 @@ function updateHubStatsDisplay() {
   // 3. Bylaws Stats on Hub (ข้อบังคับสหกรณ์)
   const bylawTotal = AppState.bylaws.length;
   const bylawReview = AppState.bylaws.filter(b => b.status === 'อยู่ระหว่างพิจารณา').length;
-  const bylawDone = AppState.bylaws.filter(b => b.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || b.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || b.currentStep >= (CONFIG.REGULATION_STEPS?.length || 4)).length;
+  const bylawDone = AppState.bylaws.filter(b => isRegApprovedStatus(b.status, b.currentStep, CONFIG.REGULATION_STEPS?.length || 4)).length;
   const bylawIssues = AppState.bylaws.filter(b => b.status === 'ส่งคืนแก้ไข').length;
 
   const elBylawTotal = document.getElementById('hubStatBylawTotal');
@@ -1603,7 +1638,7 @@ function applyRegFilters() {
   if (AppState.regFilterStatus === 'IN_REVIEW') {
     list = list.filter(r => r.status === 'อยู่ระหว่างพิจารณา');
   } else if (AppState.regFilterStatus === 'APPROVED') {
-    list = list.filter(r => r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= (CONFIG.REGULATION_STEPS?.length || 4));
+    list = list.filter(r => isRegApprovedStatus(r.status, r.currentStep, CONFIG.REGULATION_STEPS?.length || 4));
   } else if (AppState.regFilterStatus === 'NEED_FIX') {
     list = list.filter(r => r.status === 'ส่งคืนแก้ไข');
   }
@@ -1620,8 +1655,8 @@ function getRegDuration(item) {
   const receiveDate = item.receiveDate || item.submitDate;
   // Step 3 end date (approved by registrar)
   const step3 = item.steps?.find(s => parseInt(s.stepNumber, 10) === 3);
-  const approveDate = item.regApproveDate || step3?.endDate || (item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' ? item.lastUpdated : null);
-  const isApproved = !!approveDate || item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว';
+  const approveDate = item.regApproveDate || step3?.endDate || (isRegApprovedStatus(item.status, item.currentStep, 4) ? item.lastUpdated : null);
+  const isApproved = !!approveDate || isRegApprovedStatus(item.status, item.currentStep, 4);
 
   // Duration is counted strictly from receiveDate to approveDate (Step 3)!
   const dur = WorkingDaysUtil.calculate(receiveDate, isApproved ? approveDate : null, isApproved ? 'เสร็จสิ้น' : 'กำลังดำเนินการ');
@@ -1708,7 +1743,7 @@ function updateRegFilterChipUI() {
 function updateRegStatsDisplay() {
   const total = AppState.regulations.length;
   const inReview = AppState.regulations.filter(r => r.status === 'อยู่ระหว่างพิจารณา').length;
-  const approved = AppState.regulations.filter(r => r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= (CONFIG.REGULATION_STEPS?.length || 4)).length;
+  const approved = AppState.regulations.filter(r => isRegApprovedStatus(r.status, r.currentStep, CONFIG.REGULATION_STEPS?.length || 4)).length;
   const needFix = AppState.regulations.filter(r => r.status === 'ส่งคืนแก้ไข').length;
 
   document.getElementById('regStatTotal').innerText = total;
@@ -1783,7 +1818,7 @@ function renderRegCardIssuesHtml(item) {
 function renderRegGrid(container, items = AppState.filteredRegulations) {
   const maxRegSteps = CONFIG.REGULATION_STEPS?.length || 4;
   container.innerHTML = items.map(item => {
-    const isApproved = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || item.currentStep >= maxRegSteps;
+    const isApproved = isRegApprovedStatus(item.status, item.currentStep, maxRegSteps);
     const isNeedFix = item.status === 'ส่งคืนแก้ไข';
     const progressPercent = Math.min(100, Math.round((item.currentStep / maxRegSteps) * 100));
     const stepObj = CONFIG.REGULATION_STEPS.find(s => s.number === item.currentStep) || { title: `ขั้นตอนที่ ${item.currentStep}` };
@@ -1795,7 +1830,7 @@ function renderRegGrid(container, items = AppState.filteredRegulations) {
     let statusText = '● อยู่ระหว่างพิจารณา';
     if (isApproved) {
       statusBadgeClass = 'completed';
-      statusText = '✓ รับจดทะเบียนแล้ว';
+      statusText = '✓ ' + getRegCompletedStatusText(item.docType);
     } else if (isNeedFix) {
       statusBadgeClass = 'issue';
       statusText = '⚠️ ส่งคืนแก้ไข';
@@ -1885,7 +1920,7 @@ function renderRegTable(container, items = AppState.filteredRegulations, startIn
 
   const maxRegSteps = CONFIG.REGULATION_STEPS?.length || 4;
   tbody.innerHTML = items.map((item, idx) => {
-    const isApproved = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || item.currentStep >= maxRegSteps;
+    const isApproved = isRegApprovedStatus(item.status, item.currentStep, maxRegSteps);
     const isNeedFix = item.status === 'ส่งคืนแก้ไข';
     const progressPercent = Math.min(100, Math.round((item.currentStep / maxRegSteps) * 100));
     const isFarmerGroup = item.coopType && item.coopType.includes('กลุ่มเกษตรกร');
@@ -1896,7 +1931,7 @@ function renderRegTable(container, items = AppState.filteredRegulations, startIn
     let statusText = 'อยู่ระหว่างพิจารณา';
     if (isApproved) {
       statusBadgeClass = 'completed';
-      statusText = 'รับจดทะเบียน/เห็นชอบ/รับทราบ';
+      statusText = getRegCompletedStatusText(item.docType);
     } else if (isNeedFix) {
       statusBadgeClass = 'issue';
       statusText = 'ส่งคืนแก้ไข';
@@ -1994,7 +2029,7 @@ async function openRegDetail(regId) {
     if (document.getElementById('detailRegSendDocNumber')) {
       document.getElementById('detailRegSendDocNumber').innerText = regData.sendDocNumber || '-';
     }
-    const isApproved = regData.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || regData.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || regData.currentStep >= maxRegSteps;
+    const isApproved = isRegApprovedStatus(regData.status, regData.currentStep, maxRegSteps);
     const subDur = WorkingDaysUtil.calculate(regData.receiveDate || regData.submitDate, isApproved ? (regData.regApproveDate || regData.lastUpdated) : null, regData.status);
     document.getElementById('detailRegSubmitDate').innerHTML = formatThaiDate(regData.receiveDate || regData.submitDate) + (subDur.hasData ? ` <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);" title="${escapeHtml(subDur.tooltip)}">(${subDur.workingDays} วันทำการ)</span>` : '');
     document.getElementById('detailRegOfficer').innerText = regData.officerName || '-';
@@ -2002,7 +2037,7 @@ async function openRegDetail(regId) {
     const statusBadge = document.getElementById('detailRegStatusBadge');
     if (isApproved) {
       statusBadge.className = 'status-badge completed';
-      statusBadge.innerText = '✓ รับจดทะเบียน / เห็นชอบ / รับทราบแล้ว';
+      statusBadge.innerText = '✓ ' + getRegCompletedStatusText(regData.docType);
     } else if (regData.status === 'ส่งคืนแก้ไข') {
       statusBadge.className = 'status-badge issue';
       statusBadge.innerText = '⚠️ ส่งคืนแก้ไขปรับปรุง';
@@ -2051,7 +2086,7 @@ function renderRegDetailTimeline() {
   const groupExitDate = regData.groupExitDate || s2?.endDate || '';
   const regApproveDate = regData.regApproveDate || s3?.endDate || '';
   const dispatchDate = regData.dispatchDate || s4?.endDate || '';
-  const isApproved = !!regApproveDate || regData.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || regData.status === 'รับจดทะเบียน/เห็นชอบแล้ว';
+  const isApproved = !!regApproveDate || isRegApprovedStatus(regData.status, regData.currentStep, 4);
 
   // SLA Timer stops at Step 3 (regApproveDate)!
   const totalDur = WorkingDaysUtil.calculate(receiveDate, isApproved ? regApproveDate : null, isApproved ? 'เสร็จสิ้น' : 'กำลังดำเนินการ');
@@ -2378,7 +2413,7 @@ function applyBylawFilters() {
   if (AppState.bylawFilterStatus === 'IN_REVIEW') {
     list = list.filter(r => r.status === 'อยู่ระหว่างพิจารณา');
   } else if (AppState.bylawFilterStatus === 'APPROVED') {
-    list = list.filter(r => r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= (CONFIG.REGULATION_STEPS?.length || 4));
+    list = list.filter(r => isRegApprovedStatus(r.status, r.currentStep, CONFIG.REGULATION_STEPS?.length || 4));
   } else if (AppState.bylawFilterStatus === 'NEED_FIX') {
     list = list.filter(r => r.status === 'ส่งคืนแก้ไข');
   }
@@ -2455,12 +2490,12 @@ function updateBylawFilterChipUI() {
 function updateBylawStatsDisplay() {
   const total = AppState.bylaws.length;
   const inReview = AppState.bylaws.filter(r => r.status === 'อยู่ระหว่างพิจารณา').length;
-  const approved = AppState.bylaws.filter(r => r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= (CONFIG.REGULATION_STEPS?.length || 4)).length;
+  const approved = AppState.bylaws.filter(r => isRegApprovedStatus(r.status, r.currentStep, CONFIG.REGULATION_STEPS?.length || 4)).length;
   const needFix = AppState.bylaws.filter(r => r.status === 'ส่งคืนแก้ไข').length;
 
   // SLA Alert: ใกล้ครบกำหนดหรือเกินกำหนด 14 วันทำการ
   const slaAlert = AppState.bylaws.filter(r => {
-    const isDone = r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= 4;
+    const isDone = isRegApprovedStatus(r.status, r.currentStep, 4);
     if (isDone) return false;
     const dur = getRegDuration(r);
     return dur.sla && (dur.sla.isNearDue || dur.sla.isOverdue);
@@ -3138,7 +3173,18 @@ function openEditRegInfoModal() {
     document.getElementById('editRegOfficerContact').value = regData.officerContact || '';
   }
   if (document.getElementById('editRegOverallStatus')) {
-    document.getElementById('editRegOverallStatus').value = regData.status || 'อยู่ระหว่างพิจารณา';
+    const statusSel = document.getElementById('editRegOverallStatus');
+    const actionWord = getRegCompletedStatusText(regData.docType);
+    const approvedOpt = statusSel.querySelector('option[data-approved="true"]');
+    if (approvedOpt) {
+      approvedOpt.textContent = actionWord;
+      approvedOpt.value = actionWord;
+    }
+    if (isRegApprovedStatus(regData.status, regData.currentStep)) {
+      statusSel.value = approvedOpt ? approvedOpt.value : actionWord;
+    } else {
+      statusSel.value = regData.status || 'อยู่ระหว่างพิจารณา';
+    }
   }
   if (document.getElementById('editRegNote')) {
     document.getElementById('editRegNote').value = regData.note || '';
@@ -3177,7 +3223,13 @@ async function handleEditRegSubmit(e) {
     submitDate: form.submitDate ? fromThaiDateInput(form.submitDate.value) : '',
     officerName: form.officerName ? form.officerName.value.trim() : '',
     officerContact: form.officerContact ? form.officerContact.value.trim() : (regData.officerContact || ''),
-    status: form.status ? form.status.value : (regData.status || 'อยู่ระหว่างพิจารณา'),
+    status: (function() {
+      const raw = form.status ? form.status.value : (regData.status || 'อยู่ระหว่างพิจารณา');
+      if (raw === 'เสร็จสิ้น' || isRegApprovedStatus(raw, regData.currentStep)) {
+        return getRegCompletedStatusText(resolvedDocType);
+      }
+      return raw;
+    })(),
     note: form.note ? form.note.value.trim() : ''
   };
 
@@ -4353,7 +4405,7 @@ function exportCurrentRegPdf() {
           <span class="report-info-label">สถานะการพิจารณา</span>
           <span class="report-info-value">
             <span class="report-badge ${isApproved ? 'report-badge-done' : (regData.status === 'ส่งคืนแก้ไข' ? 'report-badge-issue' : 'report-badge-active')}">
-              ${escapeHtml(regData.status || 'อยู่ระหว่างพิจารณา')}
+              ${escapeHtml(isApproved ? getRegCompletedStatusText(regData.docType) : (regData.status || 'อยู่ระหว่างพิจารณา'))}
             </span>
           </span>
         </div>
@@ -4574,13 +4626,13 @@ function exportRegulationsListPdf() {
   const bylawCount = items.filter(r => r.docType === 'ข้อบังคับสหกรณ์').length;
   const maxRegSteps = CONFIG.REGULATION_STEPS?.length || 4;
   const ruleCount = items.filter(r => r.docType === 'ระเบียบสหกรณ์').length;
-  const doneCount = items.filter(r => r.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || r.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || r.currentStep >= maxRegSteps).length;
-  const pendingCount = items.filter(r => r.status !== 'รับจดทะเบียน/เห็นชอบ/รับทราบ' && r.status !== 'รับจดทะเบียน/เห็นชอบแล้ว' && r.currentStep < maxRegSteps).length;
+  const doneCount = items.filter(r => isRegApprovedStatus(r.status, r.currentStep, maxRegSteps)).length;
+  const pendingCount = items.filter(r => !isRegApprovedStatus(r.status, r.currentStep, maxRegSteps)).length;
 
   const filterDesc = `ตัวกรอง: ประเภทเอกสาร [${AppState.regFilterDocType}] | ขั้นตอน [${AppState.regFilterStep}] | สถานะ [${AppState.regFilterStatus}] ${AppState.regSearchTerm ? '| ค้นหา: "' + AppState.regSearchTerm + '"' : ''}`;
 
   const rows = items.map((item, idx) => {
-    const isDone = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || item.currentStep >= maxRegSteps;
+    const isDone = isRegApprovedStatus(item.status, item.currentStep, maxRegSteps);
 
     return `
       <tr>
@@ -4602,7 +4654,7 @@ function exportRegulationsListPdf() {
         <td style="font-size: 0.76rem;">${escapeHtml(item.officerName || '-')}</td>
         <td style="text-align: center;">
           <span class="report-badge ${isDone ? 'report-badge-done' : (item.status === 'ส่งคืนแก้ไข' ? 'report-badge-issue' : 'report-badge-active')}">
-            ${escapeHtml(item.status || 'อยู่ระหว่างพิจารณา')}
+            ${escapeHtml(isDone ? getRegCompletedStatusText(item.docType) : (item.status || 'อยู่ระหว่างพิจารณา'))}
           </span>
         </td>
       </tr>
@@ -5554,7 +5606,7 @@ function getEffectiveItemDate(item, moduleType, criterion) {
       }
       // 3. If finished/approved, fallback to lastUpdated
       const curStep = parseInt(item.currentStep, 10) || 1;
-      const isDone = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || curStep >= 4;
+      const isDone = isRegApprovedStatus(item.status, curStep, 4);
       if (isDone) {
         return WorkingDaysUtil.parseDate(item.lastUpdated || item.updatedAt);
       }
@@ -5754,7 +5806,7 @@ function getFilteredExportRegulations() {
 
     // 2. Scope / Status check
     const stepNum = parseInt(item.currentStep, 10) || 1;
-    const isDone = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || stepNum >= 4;
+    const isDone = isRegApprovedStatus(item.status, stepNum, 4);
     if (ExportFilterState.scope === 'ACTIVE' && isDone) return false;
     if (ExportFilterState.scope === 'DONE' && !isDone) return false;
 
@@ -5824,7 +5876,7 @@ function getFilteredExportBylaws() {
 
     // 2. Scope / Status check
     const stepNum = parseInt(item.currentStep, 10) || 1;
-    const isDone = item.status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || item.status === 'รับจดทะเบียน/เห็นชอบแล้ว' || stepNum >= 4;
+    const isDone = isRegApprovedStatus(item.status, stepNum, 4);
     if (ExportFilterState.scope === 'ACTIVE' && isDone) return false;
     if (ExportFilterState.scope === 'DONE' && !isDone) return false;
 
@@ -6514,8 +6566,8 @@ function renderActiveExportTables(casesToRender, regsToRender, bylawsToRender = 
               ${dur.hasData ? `${dur.workingDays} วัน` : '-'}
             </td>
             <td style="text-align: center;">
-              <span class="status-badge ${isReturned ? 'issue' : 'active'}" style="font-size: 0.72rem;">
-                ${isReturned ? '⚠️ ส่งคืนแก้ไข' : '● ' + escapeHtml(item.status || 'อยู่ระหว่างพิจารณา')}
+              <span class="status-badge ${isReturned ? 'issue' : (isRegApprovedStatus(item.status, curStepNum, 4) ? 'completed' : 'active')}" style="font-size: 0.72rem;">
+                ${isReturned ? '⚠️ ส่งคืนแก้ไข' : (isRegApprovedStatus(item.status, curStepNum, 4) ? '✓ ' + getRegCompletedStatusText(item.docType) : '● ' + escapeHtml(item.status || 'อยู่ระหว่างพิจารณา'))}
               </span>
             </td>
           </tr>

@@ -699,7 +699,7 @@
                 <span class="chip-check">✓</span> 🔍 อยู่ระหว่างพิจารณา/ตรวจ
               </button>
               <button class="filter-chip" data-reg-status="APPROVED" onclick="setRegFilter('status', 'APPROVED')">
-                <span class="chip-check">✓</span> ✅ รับจดทะเบียนแล้ว
+                <span class="chip-check">✓</span> ✅ เห็นชอบ / รับทราบแล้ว
               </button>
               <button class="filter-chip" data-reg-status="NEED_FIX" onclick="setRegFilter('status', 'NEED_FIX')">
                 <span class="chip-check">✓</span> ✏️ รอแก้ไข/ส่งคืน
@@ -2112,7 +2112,7 @@
               <label>สถานะภาพรวม</label>
               <select id="editRegOverallStatus" name="status" class="form-control">
                 <option value="อยู่ระหว่างพิจารณา">อยู่ระหว่างพิจารณา/ตรวจสอบ</option>
-                <option value="รับจดทะเบียน/เห็นชอบ/รับทราบ">รับจดทะเบียน / เห็นชอบ / รับทราบ</option>
+                <option value="เสร็จสิ้น" data-approved="true">เสร็จสิ้น (เห็นชอบ / รับทราบ / รับจดทะเบียน)</option>
                 <option value="ส่งคืนแก้ไข">ส่งคืนแก้ไข / รอเอกสารเพิ่ม</option>
               </select>
             </div>

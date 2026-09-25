@@ -384,7 +384,7 @@ const WorkingDaysUtil = {
       if (status === 'กำลังดำเนินการ' || status === 'อยู่ระหว่างพิจารณา') {
         end = this.parseDate(new Date());
         isOngoing = true;
-      } else if (status === 'เสร็จสิ้น' || status === 'รับจดทะเบียน/เห็นชอบแล้ว' || status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ') {
+      } else if (status === 'เสร็จสิ้น' || status === 'รับจดทะเบียน/เห็นชอบแล้ว' || status === 'รับจดทะเบียน/เห็นชอบ/รับทราบ' || status === 'รับทราบ' || status === 'เห็นชอบ' || status === 'รับจดทะเบียน') {
         end = new Date(start.getTime()); // fallback วันเดียวกัน
       } else {
         return {
@@ -483,6 +483,18 @@ const RegSlaUtil = {
       return CONFIG.REGULATION_DOC_TYPES.find(t => t.id === 'ระเบียบสหกรณ์ (รับทราบ)');
     }
     return CONFIG.REGULATION_DOC_TYPES[0];
+  },
+
+  getCompletedStatusText(docType) {
+    const conf = this.getDocTypeConfig(docType);
+    if (conf && conf.actionWord) {
+      return conf.actionWord;
+    }
+    const cleanType = String(docType || '').trim();
+    if (cleanType.includes('เห็นชอบ')) return 'เห็นชอบ';
+    if (cleanType.includes('รับทราบ')) return 'รับทราบ';
+    if (cleanType.includes('ข้อบังคับ')) return 'รับจดทะเบียน';
+    return 'รับทราบ';
   },
 
   calculateSla(docType, receiveDateInput, approveDateInput, isFinished) {
