@@ -150,14 +150,14 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 70px;
-  gap: 16px;
+  height: 68px;
+  gap: 12px;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   text-decoration: none;
   transition: transform 0.2s ease;
   flex-shrink: 0;
@@ -168,37 +168,39 @@ button {
 }
 
 .brand-logo {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   background: linear-gradient(135deg, #0e3760 0%, #175492 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-white);
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  box-shadow: 0 4px 12px rgba(14, 55, 96, 0.2);
+  box-shadow: 0 4px 12px rgba(14, 55, 96, 0.18);
   border: 1px solid rgba(255, 255, 255, 0.25);
   position: relative;
   flex-shrink: 0;
 }
 
 .brand-text h1 {
-  font-size: 1.12rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #0e3760;
   letter-spacing: -0.015em;
-  line-height: 1.25;
+  line-height: 1.2;
   margin: 0;
+  white-space: nowrap;
 }
 
 .brand-text p {
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   color: #64748b;
   font-family: var(--font-heading);
-  margin: 2px 0 0 0;
+  margin: 1px 0 0 0;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 /* --- Module Switcher (Segmented Control) --- */
@@ -207,25 +209,26 @@ button {
   align-items: center;
   background: #f1f5f9;
   border-radius: 9999px;
-  padding: 4px;
-  gap: 3px;
+  padding: 3px;
+  gap: 2px;
   border: 1px solid #e2e8f0;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+  flex-shrink: 1;
 }
 
 .nav-module-btn {
   border: none;
   background: transparent;
-  padding: 7px 15px;
+  padding: 6px 12px;
   border-radius: 9999px;
   font-family: var(--font-body);
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   font-weight: 500;
   color: #475569;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
   user-select: none;
@@ -247,7 +250,7 @@ button {
 .navbar-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
@@ -316,9 +319,9 @@ button {
 .btn-nav-quickadd {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  font-size: 0.82rem;
+  gap: 5px;
+  padding: 5px 12px;
+  font-size: 0.80rem;
   font-weight: 600;
   border-radius: 9999px;
   cursor: pointer;
@@ -327,6 +330,7 @@ button {
   border: none;
   color: #ffffff;
   font-family: inherit;
+  flex-shrink: 0;
 }
 
 .btn-nav-quickadd.btn-liq {
@@ -352,13 +356,14 @@ button {
 /* Consolidated Admin Profile Pill & Dropdown */
 .admin-menu-dropdown-container {
   position: relative;
+  flex-shrink: 0;
 }
 
 .admin-profile-pill {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 4px 12px 4px 6px;
+  gap: 8px;
+  padding: 3px 10px 3px 5px;
   background: #f8fafc;
   border: 1.5px solid #e2e8f0;
   border-radius: 9999px;
@@ -366,6 +371,7 @@ button {
   transition: all 0.2s ease;
   outline: none;
   font-family: inherit;
+  flex-shrink: 0;
 }
 
 .admin-profile-pill:hover,
@@ -376,14 +382,14 @@ button {
 }
 
 .admin-avatar-chip {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: linear-gradient(135deg, #0e3760 0%, #1e5288 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.95rem;
+  font-size: 0.90rem;
   position: relative;
   flex-shrink: 0;
   box-shadow: 0 2px 6px rgba(14, 55, 96, 0.2);
@@ -393,8 +399,8 @@ button {
   position: absolute;
   bottom: -1px;
   right: -1px;
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   background: #10b981;
   border: 2px solid #ffffff;
   border-radius: 50%;
@@ -408,10 +414,10 @@ button {
 }
 
 .admin-pill-name {
-  font-size: 0.82rem;
+  font-size: 0.80rem;
   font-weight: 600;
   color: #0e3760;
-  max-width: 120px;
+  max-width: 105px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2385,6 +2391,28 @@ body {
 .toast-container {
   bottom: calc(24px + env(safe-area-inset-bottom, 0));
   right: calc(24px + env(safe-area-inset-right, 0));
+}
+
+/* --- Breakpoint: Laptops & Medium Screens (max-width: 1260px) --- */
+@media (max-width: 1260px) {
+  .brand-text p {
+    display: none;
+  }
+
+  .nav-module-btn {
+    padding: 5px 10px;
+    font-size: 0.80rem;
+    gap: 4px;
+  }
+
+  .btn-nav-utility {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+  }
+
+  .admin-pill-name {
+    max-width: 85px;
+  }
 }
 
 /* --- Breakpoint: Tablet & Small Laptops (max-width: 1024px) --- */

@@ -62,8 +62,8 @@
 
       <!-- Navbar Actions (Public Utilities & Admin Menu Hub) -->
       <div class="navbar-actions">
-        <!-- Public Utilities -->
-        <button class="btn-nav-utility" onclick="openCoopDirectoryModal()" title="ดูทำเนียบสหกรณ์และกลุ่มส่งเสริมฯ ในจังหวัดระยอง">
+        <!-- Public Utilities (for general visitors / hidden when admin logged in to prevent clutter) -->
+        <button id="btnNavCoopDir" class="btn-nav-utility" onclick="openCoopDirectoryModal()" title="ดูทำเนียบสหกรณ์และกลุ่มส่งเสริมฯ ในจังหวัดระยอง">
           <span class="nav-icon">🏛️</span> <span>ทำเนียบสหกรณ์</span>
         </button>
         <button id="btnNavExportActivePdf" class="btn-nav-utility" onclick="openActiveExportModal()"
@@ -78,15 +78,15 @@
 
         <!-- Admin Consolidated Menu Area (Visible when logged in) -->
         <div id="navUserProfile" class="nav-admin-area" style="display: none;">
-          <!-- Quick Add Context Button (Context-aware 1-click addition) -->
+          <!-- Quick Add Context Button (Compact & Context-aware) -->
           <button id="adminAddCaseBtn" class="btn-nav-quickadd btn-liq" onclick="openCreateCaseModal()" style="display: none;" title="เพิ่มรายการชำระบัญชีใหม่">
-            <span>➕</span> เพิ่มรายการชำระบัญชี
+            <span>➕</span> เพิ่มรายการ
           </button>
           <button id="adminAddRegBtn" class="btn-nav-quickadd btn-reg" onclick="openCreateRegModal('ระเบียบ')" style="display: none;" title="ยื่นเรื่องระเบียบใหม่">
-            <span>➕</span> ยื่นเรื่องระเบียบใหม่
+            <span>➕</span> ยื่นเรื่องระเบียบ
           </button>
           <button id="adminAddBylawBtn" class="btn-nav-quickadd btn-bylaw" onclick="openCreateRegModal('ข้อบังคับ')" style="display: none;" title="ยื่นเรื่องข้อบังคับใหม่">
-            <span>➕</span> ยื่นเรื่องข้อบังคับใหม่
+            <span>➕</span> ยื่นเรื่องข้อบังคับ
           </button>
 
           <!-- Consolidated Admin Dropdown Hub -->

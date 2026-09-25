@@ -3498,11 +3498,20 @@ function updateAuthUI() {
   const adminAddBylawBtn = document.getElementById('adminAddBylawBtn');
   const adminAuditLogBtn = document.getElementById('adminAuditLogBtn');
 
+  // Public utility buttons (hidden when admin is logged in to avoid duplicate "overflowing" buttons)
+  const btnNavCoopDir = document.getElementById('btnNavCoopDir');
+  const btnNavExportActivePdf = document.getElementById('btnNavExportActivePdf');
+
   const coopDirBatchImportBtn = document.getElementById('coopDirBatchImportBtn');
   const coopDirClearAllBtn = document.getElementById('coopDirClearAllBtn');
 
   if (AppState.currentUser) {
     if (loginBtn) loginBtn.style.display = 'none';
+    
+    // Hide public utility buttons in navbar (Admin has them consolidated inside the Admin Hub dropdown)
+    if (btnNavCoopDir) btnNavCoopDir.style.display = 'none';
+    if (btnNavExportActivePdf) btnNavExportActivePdf.style.display = 'none';
+
     if (userProfile) {
       userProfile.style.display = 'inline-flex';
       const userName = AppState.currentUser.name || AppState.currentUser.email || 'ผู้ดูแลระบบ';
@@ -3517,7 +3526,7 @@ function updateAuthUI() {
       const adminMenuDisplayName = document.getElementById('adminMenuDisplayName');
       if (adminMenuDisplayName) adminMenuDisplayName.innerText = userName;
     }
-    // Context-aware quick-add buttons in navbar
+    // Context-aware compact quick-add buttons in navbar
     if (adminAddCaseBtn) adminAddCaseBtn.style.display = AppState.currentView === 'liquidation' ? 'inline-flex' : 'none';
     if (adminAddRegBtn) adminAddRegBtn.style.display = AppState.currentView === 'regulations' ? 'inline-flex' : 'none';
     if (adminAddBylawBtn) adminAddBylawBtn.style.display = AppState.currentView === 'bylaws' ? 'inline-flex' : 'none';
@@ -3527,6 +3536,11 @@ function updateAuthUI() {
   } else {
     closeAdminDropdown();
     if (loginBtn) loginBtn.style.display = 'inline-flex';
+    
+    // Show public utility buttons for visitors
+    if (btnNavCoopDir) btnNavCoopDir.style.display = 'inline-flex';
+    if (btnNavExportActivePdf) btnNavExportActivePdf.style.display = 'inline-flex';
+
     if (userProfile) userProfile.style.display = 'none';
     if (adminAddCaseBtn) adminAddCaseBtn.style.display = 'none';
     if (adminAddRegBtn) adminAddRegBtn.style.display = 'none';
