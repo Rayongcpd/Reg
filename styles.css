@@ -720,20 +720,37 @@ button {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 185px), 1fr));
   gap: 1rem;
+}
+
+/* Explicit 4-card and 5-card support on desktop screens */
+@media (min-width: 1025px) {
+  .stats-grid.stats-grid-5,
+  .stats-grid:has(> .stat-card:nth-child(5):last-child),
+  .stats-grid:has(> :nth-child(5)) {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.85rem;
+  }
+
+  .stats-grid.stats-grid-4,
+  .stats-grid:has(> .stat-card:nth-child(4):last-child) {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
 }
 
 .stat-card {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
-  padding: 1.25rem 1.5rem;
+  padding: 1.15rem 1.25rem;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-color);
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.85rem;
   transition: var(--transition);
+  min-width: 0;
 }
 
 .stat-card:hover {
@@ -742,13 +759,13 @@ button {
 }
 
 .stat-icon {
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 1.45rem;
   flex-shrink: 0;
 }
 
@@ -759,17 +776,20 @@ button {
 
 .stat-info {
   flex: 1;
+  min-width: 0;
 }
 
 .stat-info .stat-label {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--text-muted);
   font-weight: 500;
   font-family: var(--font-heading);
+  line-height: 1.3;
+  margin-bottom: 2px;
 }
 
 .stat-info .stat-value {
-  font-size: 1.75rem;
+  font-size: 1.7rem;
   font-weight: 700;
   font-family: var(--font-heading);
   color: var(--text-main);
@@ -2445,6 +2465,10 @@ body {
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .stats-grid .stat-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
   .hub-grid {
     grid-template-columns: 1fr;
     margin-top: -1.5rem;
@@ -2804,6 +2828,13 @@ body {
     gap: 0.65rem;
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .stats-grid .stat-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.85rem;
   }
 
   .stat-icon {
