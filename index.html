@@ -1952,93 +1952,117 @@
       </div>
       <form id="createRegForm">
         <div class="modal-body">
-          <div class="form-row">
-            <div class="form-group coop-autocomplete-wrapper">
-              <label>ชื่อสหกรณ์ที่ยื่นเรื่อง <span style="color: red;">*</span></label>
-              <input type="text" id="createRegCoopName" name="coopName" class="form-control"
-                placeholder="พิมพ์ชื่อสหกรณ์เพื่อค้นหา..." autocomplete="off" required>
-              <div id="createRegCoopDropdown" class="coop-autocomplete-dropdown"></div>
+          <!-- 1. ส่วนชื่อสหกรณ์ที่ยื่นเรื่อง (พร้อม Auto-detected Badges) -->
+          <div class="form-group coop-autocomplete-wrapper" style="margin-bottom: 0.85rem;">
+            <label style="font-weight: 600;">ชื่อสหกรณ์ที่ยื่นเรื่อง <span style="color: red;">*</span></label>
+            <input type="text" id="createRegCoopName" name="coopName" class="form-control"
+              placeholder="พิมพ์ชื่อสหกรณ์เพื่อค้นหา..." autocomplete="off" required>
+            <div id="createRegCoopDropdown" class="coop-autocomplete-dropdown"></div>
+
+            <!-- Auto-detected Badges & Quick Settings -->
+            <div id="createRegCoopMetaBadges" style="display: none; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px;">
+              <span id="createRegCoopTypeBadgeWrap"></span>
+              <span id="createRegPromotionGroupBadgeWrap"></span>
+              <button type="button" id="btnToggleManualCoopMeta" onclick="toggleManualCoopMeta()"
+                style="background: none; border: none; color: var(--text-muted); font-size: 0.74rem; cursor: pointer; text-decoration: underline; padding: 2px 4px; display: inline-flex; align-items: center; gap: 3px;">
+                ⚙️ ปรับเปลี่ยนประเภท/กลุ่ม
+              </button>
             </div>
-            <div class="form-group">
-              <label>ประเภทสถาบัน</label>
-              <select id="createRegCoopType" name="coopType" class="form-control">
-                <optgroup label="🏛️ สหกรณ์ (7 ประเภท)">
-                  <option value="สหกรณ์การเกษตร">สหกรณ์การเกษตร</option>
-                  <option value="สหกรณ์ประมง">สหกรณ์ประมง</option>
-                  <option value="สหกรณ์นิคม">สหกรณ์นิคม</option>
-                  <option value="สหกรณ์ร้านค้า">สหกรณ์ร้านค้า</option>
-                  <option value="สหกรณ์บริการ">สหกรณ์บริการ</option>
-                  <option value="สหกรณ์ออมทรัพย์">สหกรณ์ออมทรัพย์</option>
-                  <option value="สหกรณ์เครดิตยูเนี่ยน">สหกรณ์เครดิตยูเนี่ยน</option>
-                </optgroup>
-                <optgroup label="🌾 กลุ่มเกษตรกร (แยกตามประเภทอาชีพ)">
-                  <option value="กลุ่มเกษตรกรทำนา">กลุ่มเกษตรกรทำนา</option>
-                  <option value="กลุ่มเกษตรกรทำไร่">กลุ่มเกษตรกรทำไร่</option>
-                  <option value="กลุ่มเกษตรกรทำสวน">กลุ่มเกษตรกรทำสวน</option>
-                  <option value="กลุ่มเกษตรกรเลี้ยงสัตว์">กลุ่มเกษตรกรเลี้ยงสัตว์</option>
-                  <option value="กลุ่มเกษตรกรประมง">กลุ่มเกษตรกรประมง (เพาะเลี้ยงสัตว์น้ำ)</option>
-                  <option value="กลุ่มเกษตรกรอื่นๆ">กลุ่มเกษตรกรอื่นๆ</option>
-                </optgroup>
-              </select>
+
+            <!-- Collapsible manual override panel (ซ่อนไว้เป็นค่าเริ่มต้นเพื่อความกระชับ) -->
+            <div id="createRegManualMetaWrap" style="display: none; background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 10px 12px; margin-top: 8px;">
+              <div class="form-row" style="margin-bottom: 0;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label style="font-size: 0.8rem;">ประเภทสถาบัน</label>
+                  <select id="createRegCoopType" name="coopType" class="form-control" style="font-size: 0.84rem;"
+                    onchange="updateCreateRegCoopBadges(this.value, document.getElementById('createRegPromotionGroup').value)">
+                    <optgroup label="🏛️ สหกรณ์ (7 ประเภท)">
+                      <option value="สหกรณ์การเกษตร">สหกรณ์การเกษตร</option>
+                      <option value="สหกรณ์ประมง">สหกรณ์ประมง</option>
+                      <option value="สหกรณ์นิคม">สหกรณ์นิคม</option>
+                      <option value="สหกรณ์ร้านค้า">สหกรณ์ร้านค้า</option>
+                      <option value="สหกรณ์บริการ">สหกรณ์บริการ</option>
+                      <option value="สหกรณ์ออมทรัพย์">สหกรณ์ออมทรัพย์</option>
+                      <option value="สหกรณ์เครดิตยูเนี่ยน">สหกรณ์เครดิตยูเนี่ยน</option>
+                    </optgroup>
+                    <optgroup label="🌾 กลุ่มเกษตรกร (แยกตามประเภทอาชีพ)">
+                      <option value="กลุ่มเกษตรกรทำนา">กลุ่มเกษตรกรทำนา</option>
+                      <option value="กลุ่มเกษตรกรทำไร่">กลุ่มเกษตรกรทำไร่</option>
+                      <option value="กลุ่มเกษตรกรทำสวน">กลุ่มเกษตรกรทำสวน</option>
+                      <option value="กลุ่มเกษตรกรเลี้ยงสัตว์">กลุ่มเกษตรกรเลี้ยงสัตว์</option>
+                      <option value="กลุ่มเกษตรกรประมง">กลุ่มเกษตรกรประมง (เพาะเลี้ยงสัตว์น้ำ)</option>
+                      <option value="กลุ่มเกษตรกรอื่นๆ">กลุ่มเกษตรกรอื่นๆ</option>
+                    </optgroup>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label style="font-size: 0.8rem;">กลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ</label>
+                  <select id="createRegPromotionGroup" name="promotionGroup" class="form-control" style="font-size: 0.84rem;"
+                    onchange="updateCreateRegCoopBadges(document.getElementById('createRegCoopType').value, this.value)">
+                    <option value="">-- ไม่ระบุ / นอกพื้นที่ --</option>
+                    <option value="กลุ่มส่งเสริมสหกรณ์ 1">กลุ่มส่งเสริมสหกรณ์ 1 (อ.เมืองระยอง, อ.บ้านฉาง)</option>
+                    <option value="กลุ่มส่งเสริมสหกรณ์ 2">กลุ่มส่งเสริมสหกรณ์ 2 (อ.แกลง, อ.เขาชะเมา)</option>
+                    <option value="กลุ่มส่งเสริมสหกรณ์ 3">กลุ่มส่งเสริมสหกรณ์ 3 (อ.บ้านค่าย, อ.ปลวกแดง, อ.นิคมพัฒนา)</option>
+                    <option value="นิคมสหกรณ์ชะแวะ">นิคมสหกรณ์ชะแวะ (อ.วังจันทร์)</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>กลุ่มส่งเสริมสหกรณ์ที่รับผิดชอบ</label>
-              <select id="createRegPromotionGroup" name="promotionGroup" class="form-control">
-                <option value="">-- ไม่ระบุ / นอกพื้นที่ --</option>
-                <option value="กลุ่มส่งเสริมสหกรณ์ 1">กลุ่มส่งเสริมสหกรณ์ 1 (อ.เมืองระยอง, อ.บ้านฉาง)</option>
-                <option value="กลุ่มส่งเสริมสหกรณ์ 2">กลุ่มส่งเสริมสหกรณ์ 2 (อ.แกลง, อ.เขาชะเมา)</option>
-                <option value="กลุ่มส่งเสริมสหกรณ์ 3">กลุ่มส่งเสริมสหกรณ์ 3 (อ.บ้านค่าย, อ.ปลวกแดง, อ.นิคมพัฒนา)
-                </option>
-                <option value="นิคมสหกรณ์ชะแวะ">นิคมสหกรณ์ชะแวะ (อ.วังจันทร์)</option>
-              </select>
+          <!-- 2. ส่วนยื่นรายการ (นำขึ้นมาไว้ก่อนตามที่ระบุ) -->
+          <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md, 8px); padding: 12px 14px; margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <div>
+                <h4 id="createRegItemsHeaderTitle" style="font-size: 0.95rem; font-weight: 600; color: var(--primary); margin: 0;">📜
+                  รายการที่ยื่นเรื่อง
+                </h4>
+                <span id="createRegItemsHeaderDesc"
+                  style="font-size: 0.76rem; color: var(--text-muted);">สามารถเพิ่มได้มากกว่า 1 รายการในคราวเดียว</span>
+              </div>
+              <button type="button" id="btnAddRegRowBtn" class="btn btn-secondary btn-sm"
+                onclick="addRegulationRowToCreateForm()">
+                + เพิ่มอีกรายการ
+              </button>
             </div>
+
+            <!-- Container for Dynamic Regulation Input Rows -->
+            <div id="createRegItemsList" style="display: flex; flex-direction: column; gap: 10px;">
+            </div>
+          </div>
+
+          <hr style="border: none; border-top: 1px dashed var(--border-color); margin: 1rem 0;">
+
+          <!-- 3. ส่วนข้อมูลการรับเรื่องและผู้รับผิดชอบ -->
+          <div style="margin-bottom: 0.5rem;">
+            <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em;">📋 ข้อมูลการรับเรื่อง</span>
+          </div>
+
+          <div class="form-row">
             <div class="form-group">
               <label>เลขรับ ฝบท</label>
               <input type="text" name="docNumber" class="form-control"
                 placeholder="เช่น รับที่ 124/67 หรือ สห.ขก 01/2567">
             </div>
-          </div>
-
-          <div class="form-row">
             <div class="form-group">
               <label>วันที่ยื่นเรื่อง / รับเรื่อง</label>
               <input type="text" id="createRegSubmitDate" name="submitDate" class="form-control thai-date-input"
                 placeholder="วว/ดด/ปปปป (พ.ศ.)" maxlength="10">
             </div>
-            <div class="form-group">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" style="flex: 1;">
               <label>เจ้าหน้าที่กลุ่มจัดตั้งฯผู้รับผิดชอบ <span style="color: red;">*</span></label>
               <input type="text" name="officerName" class="form-control" placeholder="เช่น นายสมเกียรติ สหกรณ์ดี"
                 required>
             </div>
           </div>
 
-          <div class="form-group">
+          <div class="form-group" style="margin-bottom: 0;">
             <label>หมายเหตุ / รายละเอียดการประชุม</label>
             <input type="text" name="note" class="form-control"
               placeholder="เช่น มติที่ประชุมใหญ่สามัญประจำปี 2566 เมื่อวันที่ 10 มี.ค. 67">
-          </div>
-
-          <hr style="border: none; border-top: 1px dashed var(--border-color); margin: 1rem 0;">
-
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-            <div>
-              <h4 id="createRegItemsHeaderTitle" style="font-size: 1rem; color: var(--primary); margin: 0;">📜
-                รายการที่ยื่นเรื่อง
-              </h4>
-              <span id="createRegItemsHeaderDesc"
-                style="font-size: 0.78rem; color: var(--text-muted);">สามารถเพิ่มได้มากกว่า 1 รายการในคราวเดียว</span>
-            </div>
-            <button type="button" id="btnAddRegRowBtn" class="btn btn-secondary btn-sm"
-              onclick="addRegulationRowToCreateForm()">
-              + เพิ่มอีกรายการ
-            </button>
-          </div>
-
-          <!-- Container for Dynamic Regulation Input Rows -->
-          <div id="createRegItemsList" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 1rem;">
           </div>
         </div>
 

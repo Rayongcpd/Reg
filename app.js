@@ -2871,6 +2871,55 @@ function removeRegulationRow(btn) {
   }
 }
 
+function updateCreateRegCoopBadges(type, group) {
+  const metaBadges = document.getElementById('createRegCoopMetaBadges');
+  if (!metaBadges) return;
+
+  const typeWrap = document.getElementById('createRegCoopTypeBadgeWrap');
+  const groupWrap = document.getElementById('createRegPromotionGroupBadgeWrap');
+
+  const hasType = type && type.trim() !== '';
+  const hasGroup = group && group.trim() !== '' && group !== '-- ไม่ระบุ / นอกพื้นที่ --';
+
+  if (hasType || hasGroup) {
+    if (typeWrap) {
+      if (hasType) {
+        const isFarmer = type.includes('กลุ่มเกษตรกร');
+        typeWrap.innerHTML = `<span class="case-type-badge ${isFarmer ? 'farmer-group' : 'coop-type-badge'}" style="font-size: 0.74rem; padding: 2px 7px;">${escapeHtml(type)}</span>`;
+        typeWrap.style.display = 'inline-block';
+      } else {
+        typeWrap.innerHTML = '';
+        typeWrap.style.display = 'none';
+      }
+    }
+
+    if (groupWrap) {
+      if (hasGroup) {
+        groupWrap.innerHTML = getGroupBadgeHtml(group);
+        groupWrap.style.display = 'inline-block';
+      } else {
+        groupWrap.innerHTML = '';
+        groupWrap.style.display = 'none';
+      }
+    }
+
+    metaBadges.style.display = 'flex';
+  } else {
+    metaBadges.style.display = 'none';
+  }
+}
+
+function toggleManualCoopMeta() {
+  const wrap = document.getElementById('createRegManualMetaWrap');
+  if (!wrap) return;
+  const isHidden = wrap.style.display === 'none' || !wrap.style.display;
+  wrap.style.display = isHidden ? 'block' : 'none';
+  const btn = document.getElementById('btnToggleManualCoopMeta');
+  if (btn) {
+    btn.innerHTML = isHidden ? '▲ ซ่อนการปรับเปลี่ยน' : '⚙️ ปรับเปลี่ยนประเภท/กลุ่ม';
+  }
+}
+
 function openCreateRegModal(moduleType) {
   if (!AppState.currentUser) {
     showToast('กรุณาเข้าสู่ระบบในฐานะ Admin ก่อน', 'warning');
@@ -2907,6 +2956,15 @@ function openCreateRegModal(moduleType) {
   document.getElementById('createRegForm').reset();
   resetCreateRegItems(defaultCategory);
   document.getElementById('createRegSubmitDate').value = todayThaiDate();
+
+  // Reset coop meta badges and collapsible manual override
+  const metaBadges = document.getElementById('createRegCoopMetaBadges');
+  if (metaBadges) metaBadges.style.display = 'none';
+  const manualWrap = document.getElementById('createRegManualMetaWrap');
+  if (manualWrap) manualWrap.style.display = 'none';
+  const btnToggle = document.getElementById('btnToggleManualCoopMeta');
+  if (btnToggle) btnToggle.innerHTML = '⚙️ ปรับเปลี่ยนประเภท/กลุ่ม';
+
   openModal('createRegModal');
 }
 
@@ -7433,7 +7491,18 @@ function setupCooperativeAutocompletes() {
 
     const regNumInput = document.getElementById('createRegNumber');
     if (regNumInput && coop.regNumber) regNumInput.value = coop.regNumber;
+
+    updateCreateRegCoopBadges(coop.type || (typeSelect ? typeSelect.value : ''), coop.group || (groupSelect ? groupSelect.value : ''));
   });
+
+  const createRegCoopInput = document.getElementById('createRegCoopName');
+  if (createRegCoopInput) {
+    createRegCoopInput.addEventListener('input', () => {
+      if (!createRegCoopInput.value.trim()) {
+        updateCreateRegCoopBadges('', '');
+      }
+    });
+  }
 
   // 2. Edit Regulation Modal
   setupCoopAutocomplete('editRegCoopName', 'editRegCoopDropdown', (coop) => {
@@ -7872,6 +7941,7 @@ function useCoopFromDirectory(coopName) {
     if (document.getElementById('createRegCoopName')) document.getElementById('createRegCoopName').value = coop.name;
     if (document.getElementById('createRegCoopType') && coop.type) document.getElementById('createRegCoopType').value = coop.type;
     if (document.getElementById('createRegPromotionGroup') && coop.group) document.getElementById('createRegPromotionGroup').value = coop.group;
+    updateCreateRegCoopBadges(coop.type, coop.group);
   } else if (caseModal && caseModal.classList.contains('active')) {
     if (document.getElementById('createCaseCoopName')) document.getElementById('createCaseCoopName').value = coop.name;
     if (document.getElementById('createCaseCoopType') && coop.type) document.getElementById('createCaseCoopType').value = coop.type;
@@ -7892,6 +7962,7 @@ function useCoopFromDirectory(coopName) {
         if (document.getElementById('createRegCoopName')) document.getElementById('createRegCoopName').value = coop.name;
         if (document.getElementById('createRegCoopType') && coop.type) document.getElementById('createRegCoopType').value = coop.type;
         if (document.getElementById('createRegPromotionGroup') && coop.group) document.getElementById('createRegPromotionGroup').value = coop.group;
+        updateCreateRegCoopBadges(coop.type, coop.group);
       }, 100);
     } else {
       openCreateCaseModal();
