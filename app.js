@@ -390,6 +390,7 @@ async function initializeApp() {
   }
 
   updateHubStatsDisplay();
+  populateAllOfficerDropdowns();
 
   // โหลด/ซิงค์ฐานข้อมูลรายชื่อสหกรณ์ล่าสุดจาก Google Sheets (CoopDirectory) เบื้องหลัง
   if (typeof CoopDatabaseUtil !== 'undefined' && typeof CoopDatabaseUtil.syncFromRemote === 'function') {
@@ -2965,7 +2966,254 @@ function openCreateRegModal(moduleType) {
   const btnToggle = document.getElementById('btnToggleManualCoopMeta');
   if (btnToggle) btnToggle.innerHTML = '⚙️ ปรับเปลี่ยนประเภท/กลุ่ม';
 
+  populateOfficerDropdown('createRegOfficerSelect', '');
   openModal('createRegModal');
+}
+
+// ------------------------------------------------------------------------------
+// Officer Management System (Master Data for Promotion Group Officers)
+// ------------------------------------------------------------------------------
+const STORAGE_KEY_OFFICERS = 'reg_officers_list';
+const DEFAULT_OFFICERS = [
+  'นายสมเกียรติ สหกรณ์ดี',
+  'นางสาวพิมพ์ใจ รักสหกรณ์',
+  'นายวิชัย พัฒนาการ'
+];
+
+function getOfficersList() {
+  const saved = localStorage.getItem(STORAGE_KEY_OFFICERS);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    } catch (e) {
+      console.warn('Failed to parse saved officers:', e);
+    }
+  }
+
+  // Fallback: extract from AppState.allRegulations if available
+  const extracted = [];
+  if (typeof AppState !== 'undefined' && Array.isArray(AppState.allRegulations)) {
+    AppState.allRegulations.forEach(r => {
+      if (r && r.officerName && typeof r.officerName === 'string') {
+        const name = r.officerName.trim();
+        if (name && name !== '-' && name !== 'ยังไม่ระบุ' && !extracted.includes(name)) {
+          extracted.push(name);
+        }
+      }
+    });
+  }
+
+  const initial = extracted.length > 0 ? extracted : DEFAULT_OFFICERS;
+  try {
+    localStorage.setItem(STORAGE_KEY_OFFICERS, JSON.stringify(initial));
+  } catch (e) {}
+  return initial;
+}
+
+function saveOfficersList(list) {
+  try {
+    localStorage.setItem(STORAGE_KEY_OFFICERS, JSON.stringify(list));
+  } catch (e) {
+    console.error('Error saving officers list:', e);
+  }
+}
+
+function populateOfficerDropdown(selectElOrId, selectedValue = '') {
+  const select = typeof selectElOrId === 'string' ? document.getElementById(selectElOrId) : selectElOrId;
+  if (!select) return;
+
+  const officers = getOfficersList();
+  const currentVal = selectedValue || select.value || '';
+
+  let html = `<option value="">-- เลือกเจ้าหน้าที่ผู้รับผิดชอบ --</option>`;
+
+  // Preserve previous/custom value if not in officers list
+  if (currentVal && currentVal !== '__manage__' && !officers.includes(currentVal)) {
+    html += `<option value="${escapeHtml(currentVal)}">${escapeHtml(currentVal)}</option>`;
+  }
+
+  officers.forEach(name => {
+    html += `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
+  });
+
+  html += `<option value="__manage__" style="color: var(--primary); font-weight: 600;">⚙️ + จัดการรายชื่อเจ้าหน้าที่...</option>`;
+
+  select.innerHTML = html;
+  if (currentVal && currentVal !== '__manage__') {
+    select.value = currentVal;
+    select.dataset.prevValue = currentVal;
+  } else {
+    select.value = '';
+    select.dataset.prevValue = '';
+  }
+}
+
+function populateAllOfficerDropdowns(selectedOfficer = null) {
+  const createSelect = document.getElementById('createRegOfficerSelect');
+  if (createSelect) {
+    const val = selectedOfficer !== null ? selectedOfficer : createSelect.value;
+    populateOfficerDropdown(createSelect, val);
+  }
+
+  const editSelect = document.getElementById('editRegOfficerName');
+  if (editSelect) {
+    const val = selectedOfficer !== null ? selectedOfficer : editSelect.value;
+    populateOfficerDropdown(editSelect, val);
+  }
+}
+
+function handleOfficerSelectChange(selectEl) {
+  if (!selectEl) return;
+  if (selectEl.value === '__manage__') {
+    selectEl.value = selectEl.dataset.prevValue || '';
+    openOfficerManageModal();
+  } else {
+    selectEl.dataset.prevValue = selectEl.value;
+  }
+}
+
+function openOfficerManageModal() {
+  renderOfficerManageList();
+  const input = document.getElementById('newOfficerNameInput');
+  if (input) {
+    input.value = '';
+    setTimeout(() => input.focus(), 150);
+  }
+  openModal('officerManageModal');
+}
+
+function renderOfficerManageList() {
+  const container = document.getElementById('officerListContainer');
+  const countEl = document.getElementById('officerListCount');
+  if (!container) return;
+
+  const officers = getOfficersList();
+  if (countEl) countEl.textContent = officers.length;
+
+  if (officers.length === 0) {
+    container.innerHTML = `
+      <div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+        ยังไม่มีรายชื่อเจ้าหน้าที่ในระบบ กรุณาพิมพ์เพิ่มด้านบน
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = officers.map((name, idx) => `
+    <div class="officer-manage-item" style="display: flex; align-items: center; justify-content: space-between; background: #fff; border: 1px solid var(--border-color); border-radius: 6px; padding: 7px 10px; gap: 8px;">
+      <div id="officerDisplay_${idx}" style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
+        <span style="font-size: 1rem;">👤</span>
+        <span style="font-size: 0.88rem; font-weight: 500; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          ${escapeHtml(name)}
+        </span>
+      </div>
+      <div id="officerEditForm_${idx}" style="display: none; align-items: center; gap: 6px; flex: 1;">
+        <input type="text" id="officerEditInput_${idx}" class="form-control" value="${escapeHtml(name)}" style="font-size: 0.85rem; padding: 4px 8px; height: auto;" onkeydown="if(event.key==='Enter') saveEditOfficer(${idx})">
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveEditOfficer(${idx})" style="padding: 4px 10px; font-size: 0.78rem;">บันทึก</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="cancelEditOfficer(${idx})" style="padding: 4px 8px; font-size: 0.78rem;">ยกเลิก</button>
+      </div>
+      <div id="officerActions_${idx}" style="display: flex; align-items: center; gap: 4px;">
+        <button type="button" class="btn btn-sm" onclick="startEditOfficer(${idx})" title="แก้ไขชื่อ" style="padding: 2px 8px; font-size: 0.75rem; border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 4px; cursor: pointer;">
+          ✏️ แก้ไข
+        </button>
+        <button type="button" class="btn btn-sm" onclick="deleteOfficer(${idx})" title="ลบรายชื่อ" style="padding: 2px 8px; font-size: 0.75rem; border: 1px solid #fee2e2; background: #fef2f2; color: #dc2626; border-radius: 4px; cursor: pointer;">
+          🗑️ ลบ
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function handleAddOfficerSubmit(e) {
+  e.preventDefault();
+  const input = document.getElementById('newOfficerNameInput');
+  if (!input) return;
+  const name = input.value.trim();
+  if (!name) return;
+
+  const officers = getOfficersList();
+  if (officers.some(o => o.toLowerCase() === name.toLowerCase())) {
+    showToast(`มีชื่อ "${name}" อยู่ในระบบแล้ว`, 'warning');
+    return;
+  }
+
+  officers.push(name);
+  saveOfficersList(officers);
+  input.value = '';
+  renderOfficerManageList();
+  populateAllOfficerDropdowns(name);
+  showToast(`เพิ่มเจ้าหน้าที่ "${name}" สำเร็จ`, 'success');
+}
+
+function startEditOfficer(idx) {
+  const display = document.getElementById(`officerDisplay_${idx}`);
+  const editForm = document.getElementById(`officerEditForm_${idx}`);
+  const actions = document.getElementById(`officerActions_${idx}`);
+  const input = document.getElementById(`officerEditInput_${idx}`);
+  if (display && editForm && actions) {
+    display.style.display = 'none';
+    actions.style.display = 'none';
+    editForm.style.display = 'flex';
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }
+}
+
+function cancelEditOfficer(idx) {
+  const display = document.getElementById(`officerDisplay_${idx}`);
+  const editForm = document.getElementById(`officerEditForm_${idx}`);
+  const actions = document.getElementById(`officerActions_${idx}`);
+  if (display && editForm && actions) {
+    display.style.display = 'flex';
+    actions.style.display = 'flex';
+    editForm.style.display = 'none';
+  }
+}
+
+function saveEditOfficer(idx) {
+  const input = document.getElementById(`officerEditInput_${idx}`);
+  if (!input) return;
+  const newName = input.value.trim();
+  if (!newName) {
+    showToast('กรุณาระบุชื่อเจ้าหน้าที่', 'warning');
+    return;
+  }
+
+  const officers = getOfficersList();
+
+  // Check duplicate with another officer
+  const duplicate = officers.some((o, i) => i !== idx && o.toLowerCase() === newName.toLowerCase());
+  if (duplicate) {
+    showToast(`มีชื่อ "${newName}" อยู่ในระบบแล้ว`, 'warning');
+    return;
+  }
+
+  officers[idx] = newName;
+  saveOfficersList(officers);
+  renderOfficerManageList();
+  populateAllOfficerDropdowns(newName);
+  showToast(`แก้ไขชื่อเจ้าหน้าที่เป็น "${newName}" เรียบร้อยแล้ว`, 'success');
+}
+
+function deleteOfficer(idx) {
+  const officers = getOfficersList();
+  const targetName = officers[idx];
+  if (!targetName) return;
+
+  if (!confirm(`คุณต้องการลบรายชื่อเจ้าหน้าที่ "${targetName}" ออกจากระบบหรือไม่?`)) {
+    return;
+  }
+
+  officers.splice(idx, 1);
+  saveOfficersList(officers);
+  renderOfficerManageList();
+  populateAllOfficerDropdowns();
+  showToast(`ลบรายชื่อ "${targetName}" เรียบร้อยแล้ว`, 'info');
 }
 
 async function handleCreateRegSubmit(e) {
@@ -3230,7 +3478,7 @@ function openEditRegInfoModal() {
     document.getElementById('editRegSubmitDate').value = toThaiDateInput(regData.submitDate);
   }
   if (document.getElementById('editRegOfficerName')) {
-    document.getElementById('editRegOfficerName').value = regData.officerName || '';
+    populateOfficerDropdown('editRegOfficerName', regData.officerName || '');
   }
   if (document.getElementById('editRegOfficerContact')) {
     document.getElementById('editRegOfficerContact').value = regData.officerContact || '';
@@ -3876,7 +4124,10 @@ function closeModal(id) {
   const modal = document.getElementById(id);
   if (modal) {
     modal.classList.remove('show');
-    document.body.style.overflow = '';
+    const openModals = document.querySelectorAll('.modal-backdrop.show');
+    if (openModals.length === 0) {
+      document.body.style.overflow = '';
+    }
   }
 }
 
@@ -7998,6 +8249,13 @@ window.useCoopFromDirectory = useCoopFromDirectory;
 window.toggleAdminDropdown = toggleAdminDropdown;
 window.closeAdminDropdown = closeAdminDropdown;
 window.handleAdminMenuAction = handleAdminMenuAction;
+window.openOfficerManageModal = openOfficerManageModal;
+window.handleAddOfficerSubmit = handleAddOfficerSubmit;
+window.startEditOfficer = startEditOfficer;
+window.cancelEditOfficer = cancelEditOfficer;
+window.saveEditOfficer = saveEditOfficer;
+window.deleteOfficer = deleteOfficer;
+window.handleOfficerSelectChange = handleOfficerSelectChange;
 
 // Startup
 if (document.readyState === 'loading') {

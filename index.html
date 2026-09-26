@@ -2053,16 +2053,24 @@
 
           <div class="form-row">
             <div class="form-group" style="flex: 1;">
-              <label>เจ้าหน้าที่กลุ่มจัดตั้งฯผู้รับผิดชอบ <span style="color: red;">*</span></label>
-              <input type="text" name="officerName" class="form-control" placeholder="เช่น นายสมเกียรติ สหกรณ์ดี"
-                required>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label style="margin-bottom: 0;">เจ้าหน้าที่กลุ่มจัดตั้งฯผู้รับผิดชอบ <span style="color: red;">*</span></label>
+                <button type="button" onclick="openOfficerManageModal()" class="btn btn-secondary btn-sm"
+                  style="font-size: 0.74rem; padding: 2px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+                  ⚙️ จัดการรายชื่อ
+                </button>
+              </div>
+              <select id="createRegOfficerSelect" name="officerName" class="form-control" required
+                onchange="handleOfficerSelectChange(this)">
+                <option value="">-- เลือกเจ้าหน้าที่ผู้รับผิดชอบ --</option>
+              </select>
             </div>
           </div>
 
           <div class="form-group" style="margin-bottom: 0;">
-            <label>หมายเหตุ / รายละเอียดการประชุม</label>
+            <label>หมายเหตุ</label>
             <input type="text" name="note" class="form-control"
-              placeholder="เช่น มติที่ประชุมใหญ่สามัญประจำปี 2566 เมื่อวันที่ 10 มี.ค. 67">
+              placeholder="ระบุหมายเหตุเพิ่มเติม (ถ้ามี)">
           </div>
         </div>
 
@@ -2281,8 +2289,17 @@
           </div>
 
           <div class="form-group">
-            <label>เจ้าหน้าที่กลุ่มจัดตั้งฯผู้รับผิดชอบ</label>
-            <input type="text" id="editRegOfficerName" name="officerName" class="form-control">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <label style="margin-bottom: 0;">เจ้าหน้าที่กลุ่มจัดตั้งฯผู้รับผิดชอบ</label>
+              <button type="button" onclick="openOfficerManageModal()" class="btn btn-secondary btn-sm"
+                style="font-size: 0.74rem; padding: 2px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+                ⚙️ จัดการรายชื่อ
+              </button>
+            </div>
+            <select id="editRegOfficerName" name="officerName" class="form-control"
+              onchange="handleOfficerSelectChange(this)">
+              <option value="">-- เลือกเจ้าหน้าที่ผู้รับผิดชอบ --</option>
+            </select>
           </div>
 
           <div class="form-row">
@@ -3108,6 +3125,52 @@
           💡 สหกรณ์ที่นำเข้าจะปรากฏในระบบพิมพ์แนะนำ (Autocomplete) ทันทีที่พิมพ์ชื่อในแบบฟอร์ม
         </div>
         <button class="btn btn-secondary" onclick="closeModal('coopDirectoryModal')">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 16. Officer Management Modal -->
+  <div id="officerManageModal" class="modal-backdrop" style="z-index: 1100;">
+    <div class="modal-container" style="max-width: 520px;">
+      <div class="modal-header" style="border-bottom: 1px solid var(--border-color); background: #f8fafc;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.4rem;">👥</span>
+          <div>
+            <h3 style="margin: 0; font-size: 1.05rem; color: var(--primary);">จัดการรายชื่อเจ้าหน้าที่กลุ่มจัดตั้งฯ</h3>
+            <span style="font-size: 0.76rem; color: var(--text-muted);">เพิ่ม ลบ หรือแก้ไขรายชื่อเจ้าหน้าที่สำหรับเลือกในแบบฟอร์ม</span>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('officerManageModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem;">
+        <!-- Input Form to Add New Officer -->
+        <form id="addOfficerForm" onsubmit="handleAddOfficerSubmit(event)" style="margin-bottom: 1.2rem;">
+          <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; display: block;">➕ เพิ่มเจ้าหน้าที่ใหม่</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="newOfficerNameInput" class="form-control" placeholder="พิมพ์ชื่อ-นามสกุล เช่น นายสมเกียรติ สหกรณ์ดี" autocomplete="off" required style="flex: 1;">
+            <button type="submit" class="btn btn-primary" style="white-space: nowrap; padding: 6px 14px;">
+              + เพิ่ม
+            </button>
+          </div>
+        </form>
+
+        <!-- Officer List Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">
+            📋 รายชื่อในระบบ (<span id="officerListCount">0</span> ท่าน)
+          </span>
+        </div>
+
+        <!-- Officer List Container -->
+        <div id="officerListContainer" style="max-height: 280px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: #f8fafc; padding: 8px; display: flex; flex-direction: column; gap: 6px;">
+          <!-- dynamic rows rendered via renderOfficerManageList() -->
+        </div>
+      </div>
+      <div class="modal-footer" style="background: #f8fafc; justify-content: space-between;">
+        <div style="font-size: 0.78rem; color: var(--text-muted);">
+          💡 รายชื่อที่เพิ่มจะอัปเดตลงใน Dropdown ของแบบฟอร์มทันที
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('officerManageModal')">ปิดหน้าต่าง</button>
       </div>
     </div>
   </div>
